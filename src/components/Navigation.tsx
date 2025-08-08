@@ -1,88 +1,82 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Heart, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Navigation = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
-  const navItems = [
-    { name: 'Home', href: '#home' },
-    { name: 'Impact', href: '#impact' },
-    { name: 'Community', href: '#community' },
-    { name: 'Resources', href: '#resources' },
-  ];
+  const handleAuthAction = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
 
   return (
-    <nav className="fixed top-0 w-full z-50 glass-effect">
+    <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="bg-hero-gradient p-2 rounded-xl">
-              <Heart className="h-6 w-6 text-white" />
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <h1 className="text-2xl font-heading font-bold text-gray-900">
+                Impact<span className="text-blue-600">Hub</span>
+              </h1>
             </div>
-            <span className="text-xl font-heading font-bold text-white">ImpactHub</span>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="text-white/90 hover:text-white transition-colors duration-200 font-medium"
-              >
-                {item.name}
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-4">
+              <a href="#features" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Features
               </a>
-            ))}
-          </div>
-
-          {/* CTA Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" className="text-white hover:bg-white/10">
-              Sign In
-            </Button>
-            <Button className="bg-white text-primary hover:bg-white/90 font-medium">
-              Get Started
-            </Button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden text-white p-2"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-white/20">
-            <div className="flex flex-col space-y-4">
-              {navItems.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="text-white/90 hover:text-white transition-colors duration-200 font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.name}
-                </a>
-              ))}
-              <div className="flex flex-col space-y-2 pt-4 border-t border-white/20">
-                <Button variant="ghost" className="text-white hover:bg-white/10 justify-start">
-                  Sign In
-                </Button>
-                <Button className="bg-white text-primary hover:bg-white/90 font-medium">
-                  Get Started
-                </Button>
-              </div>
+              <a href="#impact" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Impact
+              </a>
+              <a href="#contact" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Contact
+              </a>
             </div>
           </div>
-        )}
+
+          {/* Auth Section */}
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.user_metadata?.avatar_url} />
+                  <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
+                    {user.user_metadata?.name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleAuthAction}
+                >
+                  Dashboard
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={signOut}
+                >
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={handleAuthAction}>
+                Get Started
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     </nav>
   );
