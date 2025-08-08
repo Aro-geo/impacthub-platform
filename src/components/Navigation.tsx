@@ -26,9 +26,19 @@ const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-2xl font-heading font-bold text-gray-900">
-                Impact<span className="text-blue-600">Hub</span>
-              </h1>
+              <button 
+                onClick={() => navigate('/')}
+                className="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-1"
+              >
+                <img 
+                  src="/logo.png" 
+                  alt="ImpactHub Logo" 
+                  className="h-10 w-10 object-contain"
+                />
+                <h1 className="text-2xl font-heading font-bold text-gray-900">
+                  Impact<span className="text-blue-600">Hub</span>
+                </h1>
+              </button>
             </div>
           </div>
 

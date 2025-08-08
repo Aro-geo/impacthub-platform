@@ -25,7 +25,6 @@ import SustainabilityCalculator from '@/components/ai/SustainabilityCalculator';
 import MentorshipMatcher from '@/components/ai/MentorshipMatcher';
 import CommunityForum from '@/components/ai/CommunityForum';
 import AccessibilityTools from '@/components/ai/AccessibilityTools';
-import APITest from '@/components/ai/APITest';
 
 const AIDashboard = () => {
   const { user, signOut } = useAuth();
@@ -128,9 +127,8 @@ const AIDashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="api-test">API Test</TabsTrigger>
             <TabsTrigger value="learning-path">Learning Path</TabsTrigger>
             <TabsTrigger value="quiz-creator">Quiz Creator</TabsTrigger>
             <TabsTrigger value="homework-helper">Homework Help</TabsTrigger>
@@ -239,10 +237,6 @@ const AIDashboard = () => {
           </TabsContent>
 
           {/* AI Feature Tabs */}
-          <TabsContent value="api-test">
-            <APITest />
-          </TabsContent>
-
           <TabsContent value="learning-path">
             <LearningPathGenerator />
           </TabsContent>
