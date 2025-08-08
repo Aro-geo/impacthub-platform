@@ -109,14 +109,21 @@ const AIDashboard = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-heading font-bold text-gray-900">
-                ImpactHub AI
-              </h1>
-              <p className="text-gray-600">
-                Welcome back, {user?.user_metadata?.name || 'Impact Maker'}! 
-                Ready to explore AI-powered social impact tools?
-              </p>
+            <div className="flex items-center space-x-4">
+              <img 
+                src="/logo.png" 
+                alt="ImpactHub Logo" 
+                className="h-12 w-12 object-contain"
+              />
+              <div>
+                <h1 className="text-3xl font-heading font-bold text-gray-900">
+                  ImpactHub AI
+                </h1>
+                <p className="text-gray-600">
+                  Welcome back, {user?.user_metadata?.name || 'Impact Maker'}! 
+                  Ready to explore AI-powered social impact tools?
+                </p>
+              </div>
             </div>
             <Button variant="outline" onClick={signOut}>
               Sign Out

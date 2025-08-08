@@ -26,13 +26,13 @@ const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <button 
+              <button
                 onClick={() => navigate('/')}
                 className="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-1"
               >
-                <img 
-                  src="/logo.png" 
-                  alt="ImpactHub Logo" 
+                <img
+                  src="/logo.png"
+                  alt="ImpactHub Logo"
                   className="h-10 w-10 object-contain"
                 />
                 <h1 className="text-2xl font-heading font-bold text-gray-900">
@@ -67,23 +67,23 @@ const Navigation = () => {
                     {user.user_metadata?.name?.charAt(0) || user.email?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={handleAuthAction}
                 >
                   Dashboard
                 </Button>
-                <Button 
-                  variant="default" 
+                <Button
+                  variant="default"
                   size="sm"
                   onClick={() => navigate('/ai-dashboard')}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
                   AI Tools
                 </Button>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={signOut}
                 >
@@ -100,7 +100,7 @@ const Navigation = () => {
       </div>
 
       {/* Floating Auth Modal */}
-      <FloatingAuthModal 
+      <FloatingAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         initialMode="signup"

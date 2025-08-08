@@ -17,6 +17,15 @@ const HeroSection = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Content */}
           <div className="text-center lg:text-left">
+            {/* Large Logo in Hero */}
+            <div className="flex justify-center lg:justify-start mb-8">
+              <img 
+                src="/logo.png" 
+                alt="ImpactHub Logo" 
+                className="h-24 w-24 object-contain drop-shadow-lg"
+              />
+            </div>
+            
             <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-white text-sm font-medium mb-6 glass-effect">
               <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
               Join 10,000+ changemakers worldwide

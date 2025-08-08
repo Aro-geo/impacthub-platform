@@ -73,6 +73,13 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/logo.png" 
+              alt="ImpactHub Logo" 
+              className="h-16 w-16 object-contain"
+            />
+          </div>
           <CardTitle className="text-2xl font-heading font-bold text-gray-900">
             {isLogin ? 'Welcome Back' : 'Join ImpactHub'}
           </CardTitle>

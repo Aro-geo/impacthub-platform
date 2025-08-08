@@ -176,6 +176,11 @@ const ImpactLearnDashboard = () => {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <img 
+                src="/logo.png" 
+                alt="ImpactHub Logo" 
+                className="h-10 w-10 object-contain"
+              />
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-xl flex items-center justify-center">
                 <BookOpen className="h-5 w-5 text-white" />
               </div>

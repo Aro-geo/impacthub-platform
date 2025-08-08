@@ -82,6 +82,11 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              <img 
+                src="/logo.png" 
+                alt="ImpactHub Logo" 
+                className="h-10 w-10 object-contain"
+              />
               <Avatar className="h-12 w-12">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
                 <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
