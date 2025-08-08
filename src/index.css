@@ -1,10 +1,11 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+/* ImpactHub Design System - All colors, gradients, fonts, etc defined here */
 
 @layer base {
   :root {
@@ -36,61 +37,46 @@ All colors MUST be HSL.
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* ImpactHub Brand Colors */
+    --brand-blue: 217 91% 60%;
+    --brand-purple: 262 83% 58%;
+    --brand-green: 142 71% 45%;
+    --brand-orange: 25 95% 53%;
+    --brand-gradient-hero: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(262 83% 58%) 100%);
+    --brand-gradient-education: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(190 81% 67%) 100%);
+    --brand-gradient-accessibility: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(285 85% 70%) 100%);
+    --brand-gradient-sustainability: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(120 60% 50%) 100%);
+    --brand-gradient-community: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(45 93% 58%) 100%);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Impact Stats Colors */
+    --impact-stat-1: 142 71% 45%;
+    --impact-stat-2: 217 91% 60%;
+    --impact-stat-3: 262 83% 58%;
+    --impact-stat-4: 25 95% 53%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -100,6 +86,71 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+@layer components {
+  /* Hero Gradient Background */
+  .bg-hero-gradient {
+    background: var(--brand-gradient-hero);
+  }
+
+  .bg-education-gradient {
+    background: var(--brand-gradient-education);
+  }
+
+  .bg-accessibility-gradient {
+    background: var(--brand-gradient-accessibility);
+  }
+
+  .bg-sustainability-gradient {
+    background: var(--brand-gradient-sustainability);
+  }
+
+  .bg-community-gradient {
+    background: var(--brand-gradient-community);
+  }
+
+  /* Glass Effect */
+  .glass-effect {
+    @apply backdrop-blur-sm bg-white/10 border border-white/20;
+  }
+
+  /* Impact Card Hover Animation */
+  .impact-card {
+    @apply transform transition-all duration-300 hover:scale-105 hover:shadow-xl;
+  }
+
+  /* Floating Animation */
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Pulse Glow Effect */
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse-glow {
+    from { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+    to { box-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
+  }
+
+  /* Text Gradient */
+  .text-gradient {
+    background: var(--brand-gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
