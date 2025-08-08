@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_recommendations: {
+        Row: {
+          created_at: string | null
+          id: string
+          reason: string | null
+          recommended_id: string | null
+          recommended_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          recommended_id?: string | null
+          recommended_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          recommended_id?: string | null
+          recommended_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
@@ -185,6 +220,77 @@ export type Database = {
           },
         ]
       }
+      learning_modules: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          language: string | null
+          level: string | null
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          language?: string | null
+          level?: string | null
+          title: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          language?: string | null
+          level?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offline_packages: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          download_link: string | null
+          id: string
+          language: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          download_link?: string | null
+          id?: string
+          language?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          download_link?: string | null
+          id?: string
+          language?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       mentorship_matches: {
         Row: {
           created_at: string | null
@@ -310,6 +416,80 @@ export type Database = {
           },
         ]
       }
+      quiz_attempts: {
+        Row: {
+          attempted_at: string | null
+          id: string
+          is_correct: boolean | null
+          quiz_id: string | null
+          selected_answer: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempted_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          quiz_id?: string | null
+          selected_answer?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempted_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          quiz_id?: string | null
+          selected_answer?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quizzes: {
+        Row: {
+          correct_answer: string
+          id: string
+          module_id: string | null
+          options: string[]
+          question: string
+        }
+        Insert: {
+          correct_answer: string
+          id?: string
+          module_id?: string | null
+          options: string[]
+          question: string
+        }
+        Update: {
+          correct_answer?: string
+          id?: string
+          module_id?: string | null
+          options?: string[]
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "learning_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -354,6 +534,48 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_progress: {
+        Row: {
+          id: string
+          is_completed: boolean | null
+          last_accessed: string | null
+          module_id: string
+          progress: number | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_completed?: boolean | null
+          last_accessed?: string | null
+          module_id: string
+          progress?: number | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_completed?: boolean | null
+          last_accessed?: string | null
+          module_id?: string
+          progress?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "learning_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resources: {
         Row: {

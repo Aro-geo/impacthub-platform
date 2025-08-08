@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { aiService } from '@/services/aiService';
+import { learningService } from '@/services/learningService';
+import { aiRecommendationService } from '@/services/aiRecommendationService';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
 export const useAI = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const executeAITask = async <T>(
     task: () => Promise<T>,
@@ -42,11 +46,25 @@ export const useAI = () => {
     executeAITask,
     
     // Education hooks
-    generateLearningPath: (skills: string[], interests: string[], level: string) =>
-      executeAITask(() => aiService.generateLearningPath(skills, interests, level)),
+    generateLearningPath: async (skills: string[], interests: string[], level: string) => {
+      const result = await executeAITask(() => aiService.generateLearningPath(skills, interests, level));
+      
+      // Save recommendation to database if user is logged in
+      if (result && user) {
+        await aiRecommendationService.generateLearningPathRecommendations(user.id, skills, interests, level);
+      }
+      
+      return result;
+    },
     
-    createQuiz: (content: string, difficulty?: string) =>
-      executeAITask(() => aiService.createQuizFromContent(content, difficulty)),
+    createQuiz: async (content: string, difficulty?: string) => {
+      const result = await executeAITask(() => aiService.createQuizFromContent(content, difficulty));
+      
+      // TODO: Save quiz to database if needed
+      // This would require parsing the AI response and creating quiz entries
+      
+      return result;
+    },
     
     getHomeworkHelp: (question: string, subject: string) =>
       executeAITask(() => aiService.provideHomeworkHelp(question, subject)),
