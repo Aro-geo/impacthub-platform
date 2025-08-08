@@ -7,15 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useAI } from '@/hooks/useAI';
 import { Brain, Plus, X, Loader2 } from 'lucide-react';
-import { useState } from 'react';
-import { useState } from 'react';
-import { useState } from 'react';
-import { useState } from 'react';
-import { useState } from 'react';
-import { useState } from 'react';
-import { useState } from 'react';
-import React from 'react';
-import React from 'react';
 
 const LearningPathGenerator = () => {
     const [skills, setSkills] = useState<string[]>([]);
