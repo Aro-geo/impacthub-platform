@@ -1,19 +1,21 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import FloatingAuthModal from '@/components/FloatingAuthModal';
 
 const Navigation = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleAuthAction = () => {
     if (user) {
       navigate('/dashboard');
     } else {
-      navigate('/auth');
+      setShowAuthModal(true);
     }
   };
 
@@ -63,6 +65,14 @@ const Navigation = () => {
                   Dashboard
                 </Button>
                 <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => navigate('/ai-dashboard')}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  AI Tools
+                </Button>
+                <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={signOut}
@@ -78,6 +88,13 @@ const Navigation = () => {
           </div>
         </div>
       </div>
+
+      {/* Floating Auth Modal */}
+      <FloatingAuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialMode="signup"
+      />
     </nav>
   );
 };

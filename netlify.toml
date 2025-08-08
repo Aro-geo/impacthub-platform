@@ -1,0 +1,17 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  VITE_SUPABASE_URL = "https://otxttowidmshxzzfxpdu.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eHR0b3dpZG1zaHh6emZ4cGR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2NDY1MTgsImV4cCI6MjA3MDIyMjUxOH0.-GADeqIFtkHPwkp2Zs91mFrij7vFlcKMfm4ZUldk0kY"
+  VITE_DEEPSEEK_API_KEY = "sk-bae2ace3f963430e8dd4e72964f584d2"
+  VITE_DEEPSEEK_API_URL = "https://api.deepseek.com/v1"
