@@ -7,7 +7,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import MobileNavigation from "@/components/MobileNavigation";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { useOffline } from "@/hooks/useOffline";
 
 // Lazy load all page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -22,6 +24,104 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
+const AppContent = () => {
+  const { isOnline, syncStatus } = useOffline();
+
+  return (
+    <>
+      <Suspense fallback={<LoadingSpinner size="lg" text="Loading application..." />}>
+        <Routes>
+          <Route 
+            path="/" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading home page..." />}>
+                <Index />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/auth" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading authentication..." />}>
+                <Auth />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading dashboard..." />}>
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/ai-dashboard" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading AI dashboard..." />}>
+                <ProtectedRoute>
+                  <AIDashboard />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
+          
+          {/* ImpactLearn Routes */}
+          <Route 
+            path="/impact-learn" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading ImpactLearn..." />}>
+                <ImpactLearnIndex />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/impact-learn/auth" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading ImpactLearn authentication..." />}>
+                <ImpactLearnAuth />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/impact-learn/dashboard" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading ImpactLearn dashboard..." />}>
+                <ProtectedRoute>
+                  <ImpactLearnDashboard />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/impact-learn/guest" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading guest mode..." />}>
+                <ImpactLearnGuest />
+              </Suspense>
+            } 
+          />
+          
+          {/* Catch-all route */}
+          <Route 
+            path="*" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading page..." />}>
+                <NotFound />
+              </Suspense>
+            } 
+          />
+        </Routes>
+      </Suspense>
+      
+      {/* Mobile Navigation */}
+      <MobileNavigation isOnline={isOnline} syncStatus={syncStatus} />
+    </>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -29,92 +129,7 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-          <Suspense fallback={<LoadingSpinner size="lg" text="Loading application..." />}>
-            <Routes>
-              <Route 
-                path="/" 
-                element={
-                  <Suspense fallback={<LoadingSpinner text="Loading home page..." />}>
-                    <Index />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/auth" 
-                element={
-                  <Suspense fallback={<LoadingSpinner text="Loading authentication..." />}>
-                    <Auth />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <Suspense fallback={<LoadingSpinner text="Loading dashboard..." />}>
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/ai-dashboard" 
-                element={
-                  <Suspense fallback={<LoadingSpinner text="Loading AI dashboard..." />}>
-                    <ProtectedRoute>
-                      <AIDashboard />
-                    </ProtectedRoute>
-                  </Suspense>
-                } 
-              />
-              
-              {/* ImpactLearn Routes */}
-              <Route 
-                path="/impact-learn" 
-                element={
-                  <Suspense fallback={<LoadingSpinner text="Loading ImpactLearn..." />}>
-                    <ImpactLearnIndex />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/impact-learn/auth" 
-                element={
-                  <Suspense fallback={<LoadingSpinner text="Loading ImpactLearn authentication..." />}>
-                    <ImpactLearnAuth />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/impact-learn/dashboard" 
-                element={
-                  <Suspense fallback={<LoadingSpinner text="Loading ImpactLearn dashboard..." />}>
-                    <ProtectedRoute>
-                      <ImpactLearnDashboard />
-                    </ProtectedRoute>
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/impact-learn/guest" 
-                element={
-                  <Suspense fallback={<LoadingSpinner text="Loading guest mode..." />}>
-                    <ImpactLearnGuest />
-                  </Suspense>
-                } 
-              />
-              
-              {/* Catch-all route */}
-              <Route 
-                path="*" 
-                element={
-                  <Suspense fallback={<LoadingSpinner text="Loading page..." />}>
-                    <NotFound />
-                  </Suspense>
-                } 
-              />
-            </Routes>
-          </Suspense>
+          <AppContent />
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
