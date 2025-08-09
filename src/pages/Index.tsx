@@ -150,16 +150,6 @@ const Index = () => {
                 <Play className="mr-3 h-6 w-6" />
                 Start Your Journey - Free
               </Button>
-              
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="px-12 py-6 text-xl rounded-2xl border-2"
-                onClick={() => navigate('/ai-dashboard')}
-              >
-                <Zap className="mr-3 h-5 w-5" />
-                Try AI Tools
-              </Button>
             </div>
 
             <div className="text-gray-600">
@@ -326,16 +316,6 @@ const Index = () => {
             >
               <Sparkles className="mr-3 h-6 w-6" />
               Start Learning Today
-            </Button>
-            
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-white text-white hover:bg-white/10 px-12 py-6 text-xl rounded-2xl border-2"
-              onClick={() => navigate('/ai-dashboard')}
-            >
-              <Zap className="mr-3 h-6 w-6" />
-              Explore AI Tools
             </Button>
           </div>
           

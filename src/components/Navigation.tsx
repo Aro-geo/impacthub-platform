@@ -101,14 +101,6 @@ const Navigation = () => {
                 >
                   Dashboard
                 </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => navigate('/ai-dashboard')}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                >
-                  AI Tools
-                </Button>
 
                 {/* Profile Dropdown */}
                 <DropdownMenu>
