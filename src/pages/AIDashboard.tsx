@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import Navigation from '@/components/Navigation';
 import { 
   Brain, 
   FileQuestion, 
@@ -104,35 +105,19 @@ const AIDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <img 
-                src="/logo.png" 
-                alt="ImpactHub Logo" 
-                className="h-12 w-12 object-contain"
-              />
-              <div>
-                <h1 className="text-3xl font-heading font-bold text-gray-900">
-                  ImpactHub AI
-                </h1>
-                <p className="text-gray-600">
-                  Welcome back, {user?.user_metadata?.name || 'Impact Maker'}! 
-                  Ready to explore AI-powered social impact tools?
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" onClick={signOut}>
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <Navigation />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-heading font-bold text-foreground mb-2">
+            ImpactHub AI
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Welcome back, {user?.user_metadata?.name || 'Impact Maker'}! 
+            Ready to explore AI-powered social impact tools?
+          </p>
+        </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Logo } from '@/components/ui/logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import Navigation from '@/components/Navigation';
 import GuestModeCard from '@/components/GuestModeCard';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 
@@ -117,35 +118,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      {/* Header */}
-      <header className="bg-background/95 backdrop-blur-sm shadow-sm sticky top-0 z-50 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Logo size="lg" showText />
-          
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            {user ? (
-              <>
-                <Button onClick={() => navigate('/dashboard')} variant="outline">
-                  Dashboard
-                </Button>
-                <Button onClick={() => navigate('/ai-dashboard')} className="bg-gradient-to-r from-blue-600 to-purple-600">
-                  AI Tools
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" onClick={handleSignIn}>
-                  Sign In
-                </Button>
-                <Button onClick={handleGetStarted} className="bg-gradient-to-r from-blue-600 to-purple-600">
-                  Get Started
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      {/* Navigation */}
+      <Navigation />
 
       {/* Hero Section */}
       <section className="py-20 px-4">

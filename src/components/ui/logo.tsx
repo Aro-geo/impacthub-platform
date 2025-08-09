@@ -167,16 +167,16 @@ export const Logo: React.FC<LogoProps> = ({
           <h1 className={cn(
             'font-heading font-bold leading-none',
             textSize,
-            variant === 'white' ? 'text-white' : 'text-gray-900 dark:text-white'
+            variant === 'white' ? 'text-white' : 'text-foreground'
           )}>
             Impact<span className={cn(
-              variant === 'white' ? 'text-blue-200' : 'text-blue-600 dark:text-blue-400'
+              variant === 'white' ? 'text-blue-200' : 'text-primary'
             )}>Hub</span>
           </h1>
           {size === 'xl' && (
             <p className={cn(
               'text-xs font-medium mt-1',
-              variant === 'white' ? 'text-blue-100' : 'text-gray-600 dark:text-gray-400'
+              variant === 'white' ? 'text-blue-100' : 'text-muted-foreground'
             )}>
               Empowering Change
             </p>

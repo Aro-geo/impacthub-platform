@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
+import Navigation from '@/components/Navigation';
 import { 
   TrendingUp, 
   Users, 
@@ -77,46 +78,26 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50">
-      <div className="bg-white/95 backdrop-blur-sm shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <img 
-                src="/logo.png" 
-                alt="ImpactHub Logo" 
-                className="h-10 w-10 object-contain"
-              />
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                  {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-2xl font-heading font-bold text-gray-900">
-                  Welcome back, {user?.user_metadata?.name || 'Learner'}! 👋
-                </h1>
-                <p className="text-gray-600">Ready to learn and create impact today?</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                onClick={() => navigate('/ai-dashboard')}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                <Brain className="mr-2 h-4 w-4" />
-                AI Tools
-              </Button>
-              <Button variant="outline" onClick={signOut}>
-                Sign Out
-              </Button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <Navigation />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <div className="flex items-center space-x-4 mb-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl">
+                {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-3xl font-heading font-bold text-foreground">
+                Welcome back, {user?.user_metadata?.name || 'Learner'}! 👋
+              </h1>
+              <p className="text-muted-foreground text-lg">Ready to learn and create impact today?</p>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
