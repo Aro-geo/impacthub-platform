@@ -26,7 +26,6 @@ import {
 import { Logo } from '@/components/ui/logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import Navigation from '@/components/Navigation';
-import GuestModeCard from '@/components/GuestModeCard';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 
 const Index = () => {
@@ -241,13 +240,7 @@ const Index = () => {
             </Button>
           </div>
 
-          {/* Guest Mode Section */}
-          <div className="max-w-md mx-auto">
-            <GuestModeCard onAuthClick={() => {
-              setAuthMode('signup');
-              setShowAuthModal(true);
-            }} />
-          </div>
+
         </div>
       </section>
 
