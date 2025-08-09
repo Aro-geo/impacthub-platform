@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, CreditCard, LogOut, Sun, Moon, Monitor } from 'lucide-react';
+import { User, Settings, CreditCard, LogOut, Sun, Moon, Monitor, Play } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 
@@ -22,11 +22,21 @@ const Navigation = () => {
   const { theme, setTheme, actualTheme } = useTheme();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
 
   const handleAuthAction = () => {
     if (user) {
       navigate('/dashboard');
     } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      setAuthMode('signup');
       setShowAuthModal(true);
     }
   };
@@ -211,8 +221,13 @@ const Navigation = () => {
             ) : (
               <div className="flex items-center space-x-3">
                 <ThemeToggle />
-                <Button onClick={handleAuthAction}>
-                  Get Started
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 hover:from-blue-700 hover:via-purple-700 hover:to-green-700 text-white px-6 py-3 text-base rounded-xl shadow-lg"
+                  onClick={handleGetStarted}
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  Start Your Journey
                 </Button>
               </div>
             )}
@@ -224,7 +239,7 @@ const Navigation = () => {
       <FloatingAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        initialMode="signup"
+        initialMode={authMode}
       />
     </nav>
   );
