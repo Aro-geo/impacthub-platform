@@ -9,45 +9,45 @@ const stats = [
     label: 'Lives Impacted',
     description: 'People reached through our programs',
     icon: Users,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50'
+    color: 'text-green-600 dark:text-green-400',
+    bgColor: 'bg-green-50 dark:bg-green-950'
   },
   {
     value: '2,500+',
     label: 'Learners Educated',
     description: 'Students completing our courses',
     icon: TrendingUp,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50'
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-950'
   },
   {
     value: '50+',
     label: 'Countries Reached',
     description: 'Global community presence',
     icon: Globe,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50'
+    color: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-50 dark:bg-purple-950'
   },
   {
     value: '95%',
     label: 'Success Rate',
     description: 'Program completion rate',
     icon: Award,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50'
+    color: 'text-orange-600 dark:text-orange-400',
+    bgColor: 'bg-orange-50 dark:bg-orange-950'
   }
 ];
 
 const ImpactStats = () => {
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-heading font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl font-heading font-bold text-foreground mb-4">
             Our Impact in Numbers
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Real results from real people. See how our community is creating positive change across the globe.
           </p>
         </div>
@@ -57,7 +57,7 @@ const ImpactStats = () => {
           {stats.map((stat, index) => (
             <Card 
               key={index} 
-              className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-gray-50"
+              className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-card"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardContent className="p-8 text-center">
@@ -65,15 +65,15 @@ const ImpactStats = () => {
                   <stat.icon className={`h-8 w-8 ${stat.color}`} />
                 </div>
                 
-                <div className="text-3xl font-heading font-bold text-gray-900 mb-2">
+                <div className="text-3xl font-heading font-bold text-card-foreground mb-2">
                   {stat.value}
                 </div>
                 
-                <div className="text-lg font-semibold text-gray-800 mb-2">
+                <div className="text-lg font-semibold text-card-foreground mb-2">
                   {stat.label}
                 </div>
                 
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {stat.description}
                 </p>
               </CardContent>
@@ -83,11 +83,11 @@ const ImpactStats = () => {
 
         {/* Quote Section */}
         <div className="mt-20 text-center">
-          <div className="max-w-4xl mx-auto bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl p-8 lg:p-12">
-            <blockquote className="text-2xl lg:text-3xl font-heading font-semibold text-gray-900 mb-6">
+          <div className="max-w-4xl mx-auto bg-gradient-to-r from-primary/5 to-purple-500/5 dark:from-primary/10 dark:to-purple-500/10 rounded-3xl p-8 lg:p-12 border border-border">
+            <blockquote className="text-2xl lg:text-3xl font-heading font-semibold text-foreground mb-6">
               "The best way to find yourself is to lose yourself in the service of others."
             </blockquote>
-            <cite className="text-lg text-gray-600 font-medium">— Mahatma Gandhi</cite>
+            <cite className="text-lg text-muted-foreground font-medium">— Mahatma Gandhi</cite>
           </div>
         </div>
       </div>

@@ -11,6 +11,7 @@ import {
   WifiOff,
   RefreshCw
 } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
 import { cn } from '@/lib/utils';
 
 interface MobileNavigationProps {
@@ -104,16 +105,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   return (
     <>
       {/* Status Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-2 md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2 md:hidden safe-area-top">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <img 
-              src="/logo.png" 
-              alt="ImpactHub" 
-              className="h-6 w-6 object-contain"
-            />
-            <span className="font-semibold text-gray-900 text-sm">ImpactHub</span>
-          </div>
+          <Logo size="sm" showText />
           
           <div className={cn("flex items-center space-x-1 text-xs", getSyncColor())}>
             {getSyncIcon()}
@@ -123,7 +117,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border md:hidden safe-area-bottom">
         <div className="grid grid-cols-5 h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -137,18 +131,18 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                   "flex flex-col items-center justify-center space-y-1 transition-colors",
                   "min-h-[44px] px-2 py-1",
                   active 
-                    ? "text-blue-600 bg-blue-50" 
-                    : "text-gray-600 hover:text-gray-900 active:bg-gray-100"
+                    ? "text-primary bg-primary/10" 
+                    : "text-muted-foreground hover:text-foreground active:bg-accent"
                 )}
                 disabled={item.requiresAuth && !user && !isOnline}
               >
                 <Icon className={cn(
                   "h-5 w-5",
-                  active ? "text-blue-600" : "text-gray-600"
+                  active ? "text-primary" : "text-muted-foreground"
                 )} />
                 <span className={cn(
                   "text-xs font-medium",
-                  active ? "text-blue-600" : "text-gray-600"
+                  active ? "text-primary" : "text-muted-foreground"
                 )}>
                   {item.label}
                 </span>
@@ -164,7 +158,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       </nav>
 
       {/* Spacer for fixed navigation */}
-      <div className="h-16 md:hidden" />
+      <div className="h-16 md:hidden safe-area-bottom" />
     </>
   );
 };

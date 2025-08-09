@@ -23,6 +23,8 @@ import {
   Accessibility,
   Sparkles
 } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import GuestModeCard from '@/components/GuestModeCard';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 
@@ -114,23 +116,14 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+      <header className="bg-background/95 backdrop-blur-sm shadow-sm sticky top-0 z-50 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-heading font-bold text-gray-900">
-                ImpactHub AI
-              </h1>
-              <p className="text-sm text-gray-600">AI-Powered Social Impact Platform</p>
-            </div>
-          </div>
+          <Logo size="lg" showText />
           
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             {user ? (
               <>
                 <Button onClick={() => navigate('/dashboard')} variant="outline">
@@ -204,13 +197,13 @@ const Index = () => {
       </section>
 
       {/* Platform Features */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-6">
               Three Powerful Platforms in One
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Advanced AI tools, accessible learning, and community impact - all integrated seamlessly
             </p>
           </div>
@@ -222,16 +215,16 @@ const Index = () => {
                   <div className={`w-16 h-16 ${platform.color} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
                     <platform.icon className="h-8 w-8 text-white" />
                   </div>
-                  <h3 className="text-2xl font-heading font-bold text-gray-900 mb-4 text-center">
+                  <h3 className="text-2xl font-heading font-bold text-foreground mb-4 text-center">
                     {platform.category}
                   </h3>
                   <div className="space-y-3">
                     {platform.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <feature.icon className="h-5 w-5 text-gray-600" />
+                      <div key={idx} className="flex items-center gap-3 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                        <feature.icon className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <div className="font-semibold text-gray-900 text-sm">{feature.name}</div>
-                          <div className="text-gray-600 text-xs">{feature.desc}</div>
+                          <div className="font-semibold text-foreground text-sm">{feature.name}</div>
+                          <div className="text-muted-foreground text-xs">{feature.desc}</div>
                         </div>
                       </div>
                     ))}
@@ -311,13 +304,13 @@ const Index = () => {
       </section>
 
       {/* Success Stories */}
-      <section className="py-20 px-4 bg-gray-50">
+      <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-4">
               Real Stories, Real Impact
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               See how our AI-powered platform is transforming lives across the globe
             </p>
           </div>
@@ -330,14 +323,14 @@ const Index = () => {
                   <div className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4">
                     {testimonial.feature}
                   </div>
-                  <p className="text-gray-700 text-lg mb-6 leading-relaxed italic">
+                  <p className="text-foreground text-lg mb-6 leading-relaxed italic">
                     "{testimonial.text}"
                   </p>
                   <div>
-                    <div className="font-semibold text-gray-900 text-lg">
+                    <div className="font-semibold text-foreground text-lg">
                       {testimonial.name}
                     </div>
-                    <div className="text-gray-500">
+                    <div className="text-muted-foreground">
                       {testimonial.location}
                     </div>
                   </div>
@@ -386,16 +379,11 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 px-4">
+      <footer className="bg-slate-900 dark:bg-slate-950 text-white py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-white" />
-                </div>
-                <h3 className="text-xl font-heading font-bold">ImpactHub AI</h3>
-              </div>
+              <Logo size="md" variant="white" showText className="mb-4" />
               <p className="text-gray-400 mb-4">
                 Empowering global communities through AI-powered education, accessibility tools, and social impact initiatives.
               </p>

@@ -80,7 +80,7 @@ const Auth = () => {
               className="h-16 w-16 object-contain"
             />
           </div>
-          <CardTitle className="text-2xl font-heading font-bold text-gray-900">
+          <CardTitle className="text-2xl font-heading font-bold text-foreground">
             {isLogin ? 'Welcome Back' : 'Join ImpactHub'}
           </CardTitle>
           <CardDescription>

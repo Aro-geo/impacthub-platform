@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, PlayCircle } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
 
 const HeroSection = () => {
   return (
@@ -19,11 +20,7 @@ const HeroSection = () => {
           <div className="text-center lg:text-left">
             {/* Large Logo in Hero */}
             <div className="flex justify-center lg:justify-start mb-8">
-              <img 
-                src="/logo.png" 
-                alt="ImpactHub Logo" 
-                className="h-24 w-24 object-contain drop-shadow-lg"
-              />
+              <Logo size="xl" variant="white" className="drop-shadow-lg" />
             </div>
             
             <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-white text-sm font-medium mb-6 glass-effect">

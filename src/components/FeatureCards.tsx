@@ -45,14 +45,14 @@ const features = [
 
 const FeatureCards = () => {
   return (
-    <section id="impact" className="py-20 bg-gradient-to-br from-gray-50 to-white">
+    <section id="impact" className="py-20 bg-gradient-to-br from-muted/30 to-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-heading font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl font-heading font-bold text-foreground mb-4">
             Four Pillars of Impact
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Our mission is built on creating meaningful change across these four critical areas, 
             ensuring no one is left behind in our journey toward a better world.
           </p>
@@ -63,7 +63,7 @@ const FeatureCards = () => {
           {features.map((feature, index) => (
             <Card 
               key={feature.id} 
-              className="impact-card border-0 shadow-lg hover:shadow-2xl bg-white overflow-hidden group"
+              className="impact-card border-0 shadow-lg hover:shadow-2xl bg-card overflow-hidden group"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardContent className="p-0">
@@ -77,13 +77,13 @@ const FeatureCards = () => {
 
                 {/* Content */}
                 <div className="p-6">
-                  <p className="text-gray-600 mb-6 leading-relaxed">{feature.description}</p>
+                  <p className="text-muted-foreground mb-6 leading-relaxed">{feature.description}</p>
                   
                   {/* Benefits List */}
                   <div className="space-y-2 mb-6">
                     {feature.benefits.map((benefit, idx) => (
-                      <div key={idx} className="flex items-center text-sm text-gray-700">
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-3"></div>
+                      <div key={idx} className="flex items-center text-sm text-card-foreground">
+                        <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3"></div>
                         {benefit}
                       </div>
                     ))}
@@ -92,7 +92,7 @@ const FeatureCards = () => {
                   {/* CTA Button */}
                   <Button 
                     variant="ghost" 
-                    className="w-full group-hover:bg-gray-50 text-gray-900 font-medium"
+                    className="w-full group-hover:bg-accent text-card-foreground font-medium"
                   >
                     Learn More
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -105,8 +105,8 @@ const FeatureCards = () => {
 
         {/* Bottom CTA */}
         <div className="text-center mt-16">
-          <div className="inline-flex items-center px-4 py-2 bg-blue-50 rounded-full text-blue-700 text-sm font-medium mb-6">
-            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
+          <div className="inline-flex items-center px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-medium mb-6">
+            <span className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse"></span>
             Ready to make an impact?
           </div>
           <Button size="lg" className="bg-primary hover:bg-primary/90 font-semibold px-8 py-4 rounded-xl">
