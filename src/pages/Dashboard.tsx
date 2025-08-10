@@ -33,10 +33,10 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   const stats = [
-    { label: 'Impact Points', value: '1,250', icon: Award, color: 'text-blue-600' },
-    { label: 'Lessons Completed', value: '24', icon: BookOpen, color: 'text-green-600' },
-    { label: 'AI Interactions', value: '89', icon: Brain, color: 'text-purple-600' },
-    { label: 'Community Connections', value: '15', icon: Users, color: 'text-orange-600' },
+    { label: 'Impact Points', value: '0', icon: Award, color: 'text-blue-600' },
+    { label: 'Lessons Completed', value: '0', icon: BookOpen, color: 'text-green-600' },
+    { label: 'AI Interactions', value: '0', icon: Brain, color: 'text-purple-600' },
+    { label: 'Community Connections', value: '0', icon: Users, color: 'text-orange-600' },
   ];
 
   const quickActions = [
@@ -52,7 +52,7 @@ const Dashboard = () => {
       description: 'Visual, voice-guided lessons for all levels',
       icon: BookOpen,
       color: 'bg-green-500',
-      action: () => setActiveTab('lessons')
+      action: () => navigate('/simple-lessons')
     },
     {
       title: 'Voice Practice',
@@ -70,12 +70,7 @@ const Dashboard = () => {
     }
   ];
 
-  const recentLessons = [
-    { title: 'Basic English Greetings', progress: 100, type: 'English', duration: '5 min' },
-    { title: 'AI Learning Path Generator', progress: 75, type: 'AI Tools', duration: '10 min' },
-    { title: 'Healthy Eating Basics', progress: 60, type: 'Health', duration: '7 min' },
-    { title: 'Voice Q&A Practice', progress: 40, type: 'Speaking', duration: '8 min' }
-  ];
+  const recentLessons = [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
@@ -92,9 +87,9 @@ const Dashboard = () => {
             </Avatar>
             <div>
               <h1 className="text-3xl font-heading font-bold text-foreground">
-                Welcome back, {user?.user_metadata?.name || 'Learner'}! 👋
+                Dashboard
               </h1>
-              <p className="text-muted-foreground text-lg">Ready to learn and create impact today?</p>
+              <p className="text-muted-foreground text-lg">Track your learning progress and achievements</p>
             </div>
           </div>
         </div>
@@ -159,31 +154,19 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
-                        <div>
-                          <h3 className="font-semibold text-blue-900">Current Focus</h3>
-                          <p className="text-blue-700">AI-Enhanced Learning Path</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-blue-600">Progress</p>
-                          <p className="text-3xl font-bold text-blue-900">75%</p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="p-4 bg-green-50 rounded-xl">
-                          <h4 className="font-semibold text-green-900 flex items-center gap-2">
-                            <BookOpen className="h-4 w-4" />
-                            This Week
-                          </h4>
-                          <p className="text-green-700">12 lessons completed</p>
-                        </div>
-                        <div className="p-4 bg-purple-50 rounded-xl">
-                          <h4 className="font-semibold text-purple-900 flex items-center gap-2">
-                            <Brain className="h-4 w-4" />
-                            AI Interactions
-                          </h4>
-                          <p className="text-purple-700">25 AI-powered sessions</p>
+                      <div className="text-center py-12">
+                        <div className="text-6xl mb-4">🚀</div>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">Start Your Learning Journey</h3>
+                        <p className="text-gray-600 mb-6">Begin exploring our AI-powered tools and track your progress</p>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <Button onClick={() => navigate('/ai-dashboard')} className="bg-blue-600 hover:bg-blue-700">
+                            <Brain className="mr-2 h-4 w-4" />
+                            Try AI Tools
+                          </Button>
+                          <Button variant="outline" onClick={() => navigate('/simple-lessons')}>
+                            <BookOpen className="mr-2 h-4 w-4" />
+                            Browse Lessons
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -201,29 +184,37 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {recentLessons.map((lesson, index) => (
-                        <div key={index} className="p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-gray-900 text-sm">{lesson.title}</h4>
-                            <Badge variant="outline" className="text-xs">{lesson.type}</Badge>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <Clock className="h-3 w-3" />
-                              {lesson.duration}
+                      {recentLessons.length > 0 ? (
+                        recentLessons.map((lesson, index) => (
+                          <div key={index} className="p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-medium text-gray-900 text-sm">{lesson.title}</h4>
+                              <Badge variant="outline" className="text-xs">{lesson.type}</Badge>
                             </div>
-                            <div className="text-xs font-medium text-green-600">
-                              {lesson.progress}%
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <Clock className="h-3 w-3" />
+                                {lesson.duration}
+                              </div>
+                              <div className="text-xs font-medium text-green-600">
+                                {lesson.progress}%
+                              </div>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                              <div 
+                                className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full"
+                                style={{ width: `${lesson.progress}%` }}
+                              ></div>
                             </div>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                            <div 
-                              className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full"
-                              style={{ width: `${lesson.progress}%` }}
-                            ></div>
-                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                          <p className="text-gray-500 text-sm">No lessons completed yet</p>
+                          <p className="text-gray-400 text-xs">Start learning to see your progress here</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -236,19 +227,10 @@ const Dashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Badge className="bg-blue-100 text-blue-800 justify-center py-2">
-                        🎓 AI Learner
-                      </Badge>
-                      <Badge className="bg-green-100 text-green-800 justify-center py-2">
-                        🌱 Eco Warrior
-                      </Badge>
-                      <Badge className="bg-purple-100 text-purple-800 justify-center py-2">
-                        🤝 Community Helper
-                      </Badge>
-                      <Badge className="bg-orange-100 text-orange-800 justify-center py-2">
-                        🔥 5-Day Streak
-                      </Badge>
+                    <div className="text-center py-6">
+                      <Award className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm">No achievements yet</p>
+                      <p className="text-gray-400 text-xs">Complete lessons to earn badges</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -278,7 +260,7 @@ const Dashboard = () => {
                     <div className="text-4xl mb-3">📚</div>
                     <h3 className="font-semibold mb-2">Simple Lessons</h3>
                     <p className="text-sm text-gray-600 mb-3">Visual, voice-guided learning</p>
-                    <Button size="sm">
+                    <Button size="sm" onClick={() => navigate('/simple-lessons')}>
                       <Play className="mr-2 h-4 w-4" />
                       Start
                     </Button>

@@ -61,61 +61,18 @@ const ImpactLearnDashboard = () => {
   }, []);
 
   const fetchLessons = async () => {
-    // Mock data for now - in real app, fetch from Supabase
-    const mockLessons: Lesson[] = [
-      {
-        id: '1',
-        title: 'Basic English Greetings',
-        description: 'Learn how to say hello and introduce yourself',
-        category: 'English',
-        duration: 5,
-        difficulty: 'beginner',
-        completed: true
-      },
-      {
-        id: '2',
-        title: 'Counting Numbers 1-20',
-        description: 'Practice numbers with voice and visuals',
-        category: 'English',
-        duration: 7,
-        difficulty: 'beginner'
-      },
-      {
-        id: '3',
-        title: 'Family Members',
-        description: 'Learn words for family relationships',
-        category: 'English',
-        duration: 6,
-        difficulty: 'beginner'
-      },
-      {
-        id: '4',
-        title: 'Basic Health Tips',
-        description: 'Important health information for daily life',
-        category: 'Health',
-        duration: 10,
-        difficulty: 'beginner'
-      },
-      {
-        id: '5',
-        title: 'Using Mobile Money',
-        description: 'Safe digital payments and savings',
-        category: 'Financial',
-        duration: 8,
-        difficulty: 'intermediate'
-      }
-    ];
-    setLessons(mockLessons);
+    // In real app, fetch from Supabase
+    setLessons([]);
   };
 
   const fetchUserProgress = async () => {
-    // Mock progress data
+    // In real app, fetch from Supabase
     setProgress({
-      totalLessons: 50,
-      completedLessons: 12,
-      currentStreak: 5,
-      totalPoints: 1250,
-      badges: ['First Lesson', 'Week Streak', 'English Basics']
+      totalLessons: 0,
+      completedLessons: 0,
+      currentStreak: 0,
+      totalPoints: 0,
+      badges: []
     });
   };
 
@@ -186,9 +143,9 @@ const ImpactLearnDashboard = () => {
               </div>
               <div>
                 <h1 className="text-xl font-heading font-bold text-gray-900">
-                  Welcome back, {user?.user_metadata?.name || 'Learner'}! 👋
+                  Learning Dashboard
                 </h1>
-                <p className="text-gray-600 text-sm">Ready for today's lesson?</p>
+                <p className="text-gray-600 text-sm">Continue your learning journey</p>
               </div>
             </div>
             
@@ -283,44 +240,56 @@ const ImpactLearnDashboard = () => {
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {lessons.map((lesson) => (
-                  <Card key={lesson.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <Badge className={getCategoryColor(lesson.category)}>
-                          {lesson.category}
-                        </Badge>
-                        <div className="text-lg">{getDifficultyIcon(lesson.difficulty)}</div>
-                      </div>
-                      
-                      <h3 className="font-semibold text-gray-900 mb-2 text-lg">
-                        {lesson.title}
-                      </h3>
-                      
-                      <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-                        {lesson.description}
-                      </p>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Clock className="h-4 w-4" />
-                          {lesson.duration} min
+                {lessons.length > 0 ? (
+                  lessons.map((lesson) => (
+                    <Card key={lesson.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <Badge className={getCategoryColor(lesson.category)}>
+                            {lesson.category}
+                          </Badge>
+                          <div className="text-lg">{getDifficultyIcon(lesson.difficulty)}</div>
                         </div>
                         
-                        {lesson.completed ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            ✓ Completed
-                          </Badge>
-                        ) : (
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                            <Play className="mr-1 h-3 w-3" />
-                            Start
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <h3 className="font-semibold text-gray-900 mb-2 text-lg">
+                          {lesson.title}
+                        </h3>
+                        
+                        <p className="text-gray-600 mb-4 text-sm leading-relaxed">
+                          {lesson.description}
+                        </p>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Clock className="h-4 w-4" />
+                            {lesson.duration} min
+                          </div>
+                          
+                          {lesson.completed ? (
+                            <Badge className="bg-green-100 text-green-800">
+                              ✓ Completed
+                            </Badge>
+                          ) : (
+                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                              <Play className="mr-1 h-3 w-3" />
+                              Start
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-12">
+                    <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No lessons available yet</h3>
+                    <p className="text-gray-600 mb-6">Lessons will appear here as they become available</p>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Play className="mr-2 h-4 w-4" />
+                      Explore Other Features
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -407,12 +376,20 @@ const ImpactLearnDashboard = () => {
                 <Card className="p-6">
                   <h3 className="text-xl font-semibold mb-4">Achievements</h3>
                   <div className="space-y-3">
-                    {progress.badges.map((badge, index) => (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                        <Award className="h-6 w-6 text-yellow-600" />
-                        <span className="font-medium text-gray-900">{badge}</span>
+                    {progress.badges.length > 0 ? (
+                      progress.badges.map((badge, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+                          <Award className="h-6 w-6 text-yellow-600" />
+                          <span className="font-medium text-gray-900">{badge}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6">
+                        <Award className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500 text-sm">No achievements yet</p>
+                        <p className="text-gray-400 text-xs">Complete lessons to earn badges</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </Card>
                 

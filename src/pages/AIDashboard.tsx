@@ -98,10 +98,10 @@ const AIDashboard = () => {
   ];
 
   const stats = [
-    { label: 'AI Interactions', value: '127', icon: Sparkles, color: 'text-blue-600' },
-    { label: 'Learning Hours', value: '48', icon: TrendingUp, color: 'text-green-600' },
-    { label: 'Goals Achieved', value: '12', icon: Target, color: 'text-purple-600' },
-    { label: 'Impact Points', value: '1,250', icon: Award, color: 'text-orange-600' },
+    { label: 'AI Interactions', value: '0', icon: Sparkles, color: 'text-blue-600' },
+    { label: 'Learning Hours', value: '0', icon: TrendingUp, color: 'text-green-600' },
+    { label: 'Goals Achieved', value: '0', icon: Target, color: 'text-purple-600' },
+    { label: 'Impact Points', value: '0', icon: Award, color: 'text-orange-600' },
   ];
 
   return (
@@ -114,8 +114,7 @@ const AIDashboard = () => {
             ImpactHub AI
           </h1>
           <p className="text-muted-foreground text-lg">
-            Welcome back, {user?.user_metadata?.name || 'Impact Maker'}! 
-            Ready to explore AI-powered social impact tools?
+            Explore AI-powered tools designed to amplify your social impact
           </p>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

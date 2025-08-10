@@ -45,9 +45,16 @@ const LearningPathGenerator = () => {
             return;
         }
 
-        const result = await generateLearningPath(skills, interests, currentLevel);
-        if (result) {
-            setLearningPath(result);
+        try {
+            const result = await generateLearningPath(skills, interests, currentLevel);
+            if (result) {
+                setLearningPath(result);
+            } else {
+                setLearningPath("Sorry, I couldn't generate a learning path right now. Please try again later.");
+            }
+        } catch (error) {
+            console.error('Learning path generation error:', error);
+            setLearningPath("There was an error generating your learning path. Please check your internet connection and try again.");
         }
     };
 

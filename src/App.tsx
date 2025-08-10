@@ -21,6 +21,7 @@ const ImpactLearnIndex = lazy(() => import("./pages/ImpactLearnIndex"));
 const ImpactLearnAuth = lazy(() => import("./pages/ImpactLearnAuth"));
 const ImpactLearnDashboard = lazy(() => import("./pages/ImpactLearnDashboard"));
 const ImpactLearnGuest = lazy(() => import("./pages/ImpactLearnGuest"));
+const SimpleLessonDashboard = lazy(() => import("./pages/SimpleLessonDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -104,6 +105,16 @@ const AppContent = () => {
               </Suspense>
             } 
           />
+          <Route 
+            path="/simple-lessons" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading Simple Lesson Dashboard..." />}>
+                <ProtectedRoute>
+                  <SimpleLessonDashboard />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
           
           {/* Catch-all route */}
           <Route 
@@ -130,7 +141,12 @@ const App = () => (
         <Toaster />
         <Sonner />
         <AuthProvider>
-          <BrowserRouter>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true
+            }}
+          >
             <AppContent />
           </BrowserRouter>
         </AuthProvider>

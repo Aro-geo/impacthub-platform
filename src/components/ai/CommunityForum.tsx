@@ -71,6 +71,7 @@ const CommunityForum = () => {
 
   const fetchPosts = async () => {
     try {
+      console.log('Fetching posts...');
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -79,7 +80,12 @@ const CommunityForum = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching posts:', error);
+        throw error;
+      }
+
+      console.log('Posts fetched:', data);
 
       // Analyze sentiment for each post
       const postsWithSentiment = await Promise.all(
@@ -96,11 +102,14 @@ const CommunityForum = () => {
       setPosts(postsWithSentiment);
     } catch (error) {
       console.error('Error fetching posts:', error);
+      // Set empty posts array on error so UI doesn't break
+      setPosts([]);
     }
   };
 
   const fetchComments = async (postId: string) => {
     try {
+      console.log('Fetching comments for post:', postId);
       const { data, error } = await supabase
         .from('comments')
         .select(`
@@ -110,10 +119,16 @@ const CommunityForum = () => {
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching comments:', error);
+        throw error;
+      }
+
+      console.log('Comments fetched:', data);
       setComments(data || []);
     } catch (error) {
       console.error('Error fetching comments:', error);
+      setComments([]);
     }
   };
 
@@ -342,7 +357,19 @@ const CommunityForum = () => {
 
           {/* Posts List */}
           <div className="space-y-4">
-            {posts.map((post) => (
+            {posts.length === 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No posts yet</h3>
+                  <p className="text-gray-600 mb-6">Be the first to start a conversation in the community!</p>
+                  <Button onClick={() => setShowCreatePost(true)}>
+                    Create First Post
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              posts.map((post) => (
               <Card key={post.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
@@ -399,7 +426,8 @@ const CommunityForum = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
@@ -434,7 +462,14 @@ const CommunityForum = () => {
 
             {/* Comments List */}
             <div className="space-y-3">
-              {comments.map((comment) => (
+              {comments.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No comments yet</p>
+                  <p className="text-gray-400 text-xs">Be the first to comment on this post</p>
+                </div>
+              ) : (
+                comments.map((comment) => (
                 <div key={comment.id} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={comment.profiles?.avatar_url} />
@@ -452,7 +487,8 @@ const CommunityForum = () => {
                     <p className="text-sm">{comment.content}</p>
                   </div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

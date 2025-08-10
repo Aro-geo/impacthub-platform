@@ -6,13 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { GraduationCap } from 'lucide-react';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [grade, setGrade] = useState<string>('');
   const [loading, setLoading] = useState(false);
   
   const { signIn, signUp, user } = useAuth();
@@ -44,7 +47,18 @@ const Auth = () => {
           });
         }
       } else {
-        const { error } = await signUp(email, password, name);
+        // Validate grade selection for sign up
+        if (!grade) {
+          toast({
+            title: "Grade Required",
+            description: "Please select your current grade to continue.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await signUp(email, password, name, parseInt(grade));
         if (error) {
           toast({
             title: "Sign Up Error",
@@ -80,17 +94,41 @@ const Auth = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your full name"
-                  required={!isLogin}
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter your full name"
+                    required={!isLogin}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="grade" className="flex items-center space-x-2">
+                    <GraduationCap className="h-4 w-4" />
+                    <span>Select Your Grade</span>
+                  </Label>
+                  <Select value={grade} onValueChange={setGrade} required={!isLogin}>
+                    <SelectTrigger id="grade">
+                      <SelectValue placeholder="Choose your current grade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((gradeNum) => (
+                        <SelectItem key={gradeNum} value={gradeNum.toString()}>
+                          Grade {gradeNum}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    This helps us personalize your learning experience
+                  </p>
+                </div>
+              </>
             )}
             
             <div className="space-y-2">

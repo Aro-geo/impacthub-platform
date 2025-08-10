@@ -29,21 +29,151 @@ const QuizCreator = () => {
   const { createQuiz, loading } = useAI();
 
   const handleCreateQuiz = async () => {
-    if (!content.trim()) return;
+    if (!content.trim()) {
+      alert('Please enter some content to create a quiz from.');
+      return;
+    }
 
-    const result = await createQuiz(content, difficulty);
-    if (result) {
-      try {
-        const parsedQuiz = JSON.parse(result);
-        setQuiz(parsedQuiz);
-        setCurrentQuestion(0);
-        setUserAnswers([]);
-        setShowResults(false);
-      } catch (error) {
-        console.error('Failed to parse quiz JSON:', error);
+    console.log('Creating quiz with content:', content);
+    console.log('Difficulty:', difficulty);
+
+    try {
+      const result = await createQuiz(content, difficulty);
+      console.log('Quiz creation result:', result);
+      console.log('Result type:', typeof result);
+      console.log('Result length:', result?.length);
+
+      if (!result) {
+        console.error('createQuiz returned null or undefined');
+        alert('The AI service encountered an error while creating the quiz. This might be due to content length, API limits, or service issues. Try with shorter content or use the sample quiz.');
+        return;
       }
+
+      if (typeof result !== 'string') {
+        console.error('createQuiz returned non-string result:', result);
+        alert('Unexpected response format from AI service. Please try again.');
+        return;
+      }
+
+      if (result.length === 0) {
+        console.error('createQuiz returned empty string');
+        alert('AI service returned empty response. Please try with different content.');
+        return;
+      }
+
+      // Clean the result in case there's extra text around the JSON
+      const cleanResult = result.trim();
+      console.log('Cleaned result:', cleanResult);
+
+      let jsonStart = cleanResult.indexOf('{');
+      let jsonEnd = cleanResult.lastIndexOf('}') + 1;
+
+      if (jsonStart === -1 || jsonEnd === 0) {
+        console.error('No JSON found in response');
+        // Try to create a fallback quiz
+        createFallbackQuiz();
+        return;
+      }
+
+      const jsonString = cleanResult.substring(jsonStart, jsonEnd);
+      console.log('Extracted JSON:', jsonString);
+
+      const parsedQuiz = JSON.parse(jsonString);
+      console.log('Parsed quiz:', parsedQuiz);
+
+      // Validate the quiz structure
+      if (!parsedQuiz.questions || !Array.isArray(parsedQuiz.questions)) {
+        console.error('Invalid quiz format:', parsedQuiz);
+        createFallbackQuiz();
+        return;
+      }
+
+      if (parsedQuiz.questions.length === 0) {
+        console.error('No questions in quiz');
+        createFallbackQuiz();
+        return;
+      }
+
+      setQuiz(parsedQuiz);
+      setCurrentQuestion(0);
+      setUserAnswers([]);
+      setShowResults(false);
+    } catch (error) {
+      console.error('Quiz creation error:', error);
+      alert(`Error creating quiz: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
+
+  const createFallbackQuiz = () => {
+    console.log('Creating fallback quiz');
+    const fallbackQuiz: Quiz = {
+      questions: [
+        {
+          question: "What is the main topic of the content you provided?",
+          options: [
+            "The content discusses important concepts",
+            "The content is about learning",
+            "The content covers various topics",
+            "The content is educational material"
+          ],
+          correct: 0,
+          explanation: "This is a general question about your content since the AI couldn't generate specific questions."
+        },
+        {
+          question: "What would you like to learn more about from this content?",
+          options: [
+            "Key concepts and definitions",
+            "Practical applications",
+            "Historical background",
+            "Related topics"
+          ],
+          correct: 0,
+          explanation: "This helps identify areas for further study."
+        },
+        {
+          question: "How would you rate your understanding of this content?",
+          options: [
+            "I understand the basics",
+            "I need more explanation",
+            "I'm familiar with most concepts",
+            "I'm ready for advanced topics"
+          ],
+          correct: 0,
+          explanation: "Self-assessment helps track your learning progress."
+        },
+        {
+          question: "What type of learning approach works best for you with this content?",
+          options: [
+            "Visual examples and diagrams",
+            "Step-by-step explanations",
+            "Hands-on practice",
+            "Discussion and questions"
+          ],
+          correct: 0,
+          explanation: "Understanding your learning style helps improve comprehension."
+        },
+        {
+          question: "How can you apply what you've learned from this content?",
+          options: [
+            "In real-world situations",
+            "For academic purposes",
+            "To teach others",
+            "For personal development"
+          ],
+          correct: 0,
+          explanation: "Application helps reinforce learning and makes it meaningful."
+        }
+      ]
+    };
+
+    setQuiz(fallbackQuiz);
+    setCurrentQuestion(0);
+    setUserAnswers([]);
+    setShowResults(false);
+    alert('AI service unavailable. Here\'s a general quiz to help you think about your content.');
+  };
+
+
 
   const handleAnswerSelect = (answerIndex: number) => {
     const newAnswers = [...userAnswers];
@@ -67,7 +197,7 @@ const QuizCreator = () => {
 
   const calculateScore = () => {
     if (!quiz) return 0;
-    const correct = userAnswers.filter((answer, index) => 
+    const correct = userAnswers.filter((answer, index) =>
       answer === quiz.questions[index].correct
     ).length;
     return Math.round((correct / quiz.questions.length) * 100);
@@ -115,20 +245,23 @@ const QuizCreator = () => {
             </div>
 
             {/* Generate Button */}
-            <Button 
-              onClick={handleCreateQuiz}
-              disabled={loading || !content.trim()}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Quiz...
-                </>
-              ) : (
-                'Generate Quiz'
-              )}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                onClick={handleCreateQuiz}
+                disabled={loading || !content.trim()}
+                className="w-full"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Quiz...
+                  </>
+                ) : (
+                  'Generate Quiz'
+                )}
+              </Button>
+
+            </div>
           </>
         )}
 

@@ -21,6 +21,7 @@ const AccessibilityTools = () => {
   const languages = [
     { code: 'es', name: 'Spanish' },
     { code: 'fr', name: 'French' },
+    { code: 'sw', name: 'Swahili' },
     { code: 'de', name: 'German' },
     { code: 'it', name: 'Italian' },
     { code: 'pt', name: 'Portuguese' },

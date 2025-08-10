@@ -416,13 +416,13 @@ export type Database = {
           },
         ]
       }
-      quiz_attempts: {
+      lesson_quiz_attempts: {
         Row: {
           attempted_at: string | null
           id: string
           is_correct: boolean | null
           quiz_id: string | null
-          selected_answer: string | null
+          selected_answer: number | null
           user_id: string | null
         }
         Insert: {
@@ -430,7 +430,7 @@ export type Database = {
           id?: string
           is_correct?: boolean | null
           quiz_id?: string | null
-          selected_answer?: string | null
+          selected_answer?: number | null
           user_id?: string | null
         }
         Update: {
@@ -438,19 +438,19 @@ export type Database = {
           id?: string
           is_correct?: boolean | null
           quiz_id?: string | null
-          selected_answer?: string | null
+          selected_answer?: number | null
           user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "quiz_attempts_quiz_id_fkey"
+            foreignKeyName: "lesson_quiz_attempts_quiz_id_fkey"
             columns: ["quiz_id"]
             isOneToOne: false
-            referencedRelation: "quizzes"
+            referencedRelation: "lesson_quizzes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "quiz_attempts_user_id_fkey"
+            foreignKeyName: "lesson_quiz_attempts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -497,6 +497,7 @@ export type Database = {
           bio: string | null
           created_at: string | null
           email: string | null
+          grade: number | null
           id: string
           impact_points: number | null
           location: string | null
@@ -511,6 +512,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           email?: string | null
+          grade?: number | null
           id: string
           impact_points?: number | null
           location?: string | null
@@ -525,6 +527,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           email?: string | null
+          grade?: number | null
           id?: string
           impact_points?: number | null
           location?: string | null
@@ -534,6 +537,427 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      subjects: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      simple_lessons: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          description: string | null
+          difficulty_level: string | null
+          duration_minutes: number | null
+          grade: number | null
+          id: string
+          is_published: boolean | null
+          order_index: number | null
+          subject_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          grade?: number | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          subject_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          grade?: number | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          subject_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simple_lessons_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_progress: {
+        Row: {
+          completed_at: string | null
+          id: string
+          last_accessed: string | null
+          lesson_id: string
+          progress_percentage: number | null
+          started_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          last_accessed?: string | null
+          lesson_id: string
+          progress_percentage?: number | null
+          started_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          last_accessed?: string | null
+          lesson_id?: string
+          progress_percentage?: number | null
+          started_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "simple_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_quizzes: {
+        Row: {
+          correct_answer: number
+          created_at: string | null
+          explanation: string | null
+          id: string
+          lesson_id: string
+          options: Json
+          order_index: number | null
+          question: string
+        }
+        Insert: {
+          correct_answer: number
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          lesson_id: string
+          options: Json
+          order_index?: number | null
+          question: string
+        }
+        Update: {
+          correct_answer?: number
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          lesson_id?: string
+          options?: Json
+          order_index?: number | null
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "simple_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_streaks: {
+        Row: {
+          current_streak: number | null
+          id: string
+          last_activity_date: string | null
+          longest_streak: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_streaks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_bookmarks: {
+        Row: {
+          created_at: string | null
+          id: string
+          lesson_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lesson_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lesson_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bookmarks_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "simple_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_featured: boolean | null
+          lesson_id: string | null
+          post_type: string | null
+          subject_id: string | null
+          title: string
+          content: string
+          updated_at: string | null
+          upvotes: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_featured?: boolean | null
+          lesson_id?: string | null
+          post_type?: string | null
+          subject_id?: string | null
+          title: string
+          content: string
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_featured?: boolean | null
+          lesson_id?: string | null
+          post_type?: string | null
+          subject_id?: string | null
+          title?: string
+          content?: string
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "simple_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_posts_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_replies: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          post_id: string
+          updated_at: string | null
+          upvotes: number | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_replies_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_replies_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_upvotes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_upvotes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reply_upvotes: {
+        Row: {
+          created_at: string | null
+          id: string
+          reply_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          reply_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          reply_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reply_upvotes_reply_id_fkey"
+            columns: ["reply_id"]
+            isOneToOne: false
+            referencedRelation: "community_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reply_upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_progress: {
         Row: {

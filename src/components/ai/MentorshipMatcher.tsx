@@ -90,7 +90,15 @@ const MentorshipMatcher = () => {
   };
 
   const isProfileComplete = (profile: Profile) => {
-    return profile.name && profile.skills.length > 0 && profile.goals && profile.timeZone;
+    const isComplete = profile.name && profile.skills.length > 0 && profile.goals && profile.timeZone;
+    console.log('Profile completeness check:', {
+      name: !!profile.name,
+      skills: profile.skills.length > 0,
+      goals: !!profile.goals,
+      timeZone: !!profile.timeZone,
+      isComplete
+    });
+    return isComplete;
   };
 
   return (

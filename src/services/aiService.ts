@@ -83,6 +83,11 @@ class AIService {
 
   // Clean markdown formatting for simple text output
   private cleanMarkdown(text: string): string {
+    // For JSON responses, don't clean too aggressively
+    if (text.trim().startsWith('{') && text.trim().endsWith('}')) {
+      return text.trim();
+    }
+    
     return text
       // Remove markdown headers
       .replace(/#{1,6}\s+/g, '')
@@ -91,8 +96,15 @@ class AIService {
       .replace(/\*(.*?)\*/g, '$1')
       .replace(/__(.*?)__/g, '$1')
       .replace(/_(.*?)_/g, '$1')
-      // Remove code blocks
-      .replace(/```[\s\S]*?```/g, '')
+      // Remove code blocks but preserve content
+      .replace(/```[\s\S]*?```/g, (match) => {
+        // If it looks like JSON inside code blocks, preserve it
+        const content = match.replace(/```[a-z]*\n?/g, '').replace(/```/g, '');
+        if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
+          return content;
+        }
+        return '';
+      })
       .replace(/`(.*?)`/g, '$1')
       // Remove bullet points and replace with simple text
       .replace(/^\s*[-*+]\s+/gm, '')
@@ -105,6 +117,8 @@ class AIService {
 
   // Education Features
   async generateLearningPath(userSkills: string[], interests: string[], currentLevel: string): Promise<string> {
+    console.log('Generating learning path with:', { userSkills, interests, currentLevel });
+    
     const messages = [
       {
         role: 'system',
@@ -115,21 +129,30 @@ class AIService {
         content: `I am a ${currentLevel} student. My skills are: ${userSkills.join(', ')}. I am interested in: ${interests.join(', ')}. Please create a simple learning plan for me. Keep it short and easy to understand.`
       }
     ];
-    return this.makeRequest(messages, 0.3, 600);
+    
+    try {
+      const result = await this.makeRequest(messages, 0.3, 600);
+      console.log('Learning path generated successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Error generating learning path:', error);
+      throw error;
+    }
   }
 
   async createQuizFromContent(content: string, difficulty: string = 'easy'): Promise<string> {
     const messages = [
       {
         role: 'system',
-        content: 'You are a teacher creating simple quizzes for students. Make questions easy to understand. Use simple words. Create exactly 3 questions. Return only valid JSON format with no extra text.'
+        content: 'You are a teacher creating simple quizzes for students. Make questions easy to understand. Use simple words. Create exactly 5 questions. Return ONLY valid JSON format with no extra text, explanations, or markdown. The JSON must be properly formatted and parseable.'
       },
       {
         role: 'user',
-        content: `Create a simple quiz from this text: "${content}". Make it ${difficulty} level. Return JSON: {"questions": [{"question": "simple question?", "options": ["option 1", "option 2", "option 3"], "correct": 0, "explanation": "simple explanation"}]}`
+        content: `Create a simple ${difficulty} level quiz from this text: "${content}". Return only this JSON format with exactly 5 questions: {"questions": [{"question": "What is the main topic?", "options": ["Option A", "Option B", "Option C", "Option D"], "correct": 0, "explanation": "Brief explanation"}]}`
       }
     ];
-    return this.makeRequest(messages, 0.2, 500);
+    
+    return this.makeRequest(messages, 0.1, 800);
   }
 
   async provideHomeworkHelp(question: string, subject: string): Promise<string> {

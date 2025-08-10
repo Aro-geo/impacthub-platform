@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { aiService } from '@/services/aiService';
-import { learningService } from '@/services/learningService';
 import { aiRecommendationService } from '@/services/aiRecommendationService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -49,9 +48,14 @@ export const useAI = () => {
     generateLearningPath: async (skills: string[], interests: string[], level: string) => {
       const result = await executeAITask(() => aiService.generateLearningPath(skills, interests, level));
       
-      // Save recommendation to database if user is logged in
+      // Try to save recommendation to database if user is logged in, but don't fail if it doesn't work
       if (result && user) {
-        await aiRecommendationService.generateLearningPathRecommendations(user.id, skills, interests, level);
+        try {
+          await aiRecommendationService.generateLearningPathRecommendations(user.id, skills, interests, level);
+        } catch (dbError) {
+          console.warn('Failed to save recommendation to database:', dbError);
+          // Don't throw error - the AI result is still valid
+        }
       }
       
       return result;

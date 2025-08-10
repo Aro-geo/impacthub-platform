@@ -28,6 +28,9 @@ const HomeworkHelper = () => {
     'Philosophy',
     'Art',
     'Music',
+    'Social Studies',
+    'General Science',
+    'Kiswahili',
     'Other'
   ];
 
