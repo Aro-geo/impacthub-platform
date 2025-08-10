@@ -141,9 +141,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    // Redirect to landing page after logout
-    window.location.href = '/';
+    try {
+      await supabase.auth.signOut();
+      // Clear user state immediately
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      // Redirect to landing page after logout
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Force redirect even if there's an error
+      window.location.href = '/';
+    }
   };
 
   const updateUserGrade = async (grade: number) => {

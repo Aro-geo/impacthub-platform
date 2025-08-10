@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, CreditCard, LogOut, Sun, Moon, Monitor, Play } from 'lucide-react';
+import { User, Settings, LogOut, Sun, Moon, Monitor, Play } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 
@@ -161,14 +161,6 @@ const Navigation = () => {
                         <span>Settings</span>
                       </DropdownMenuItem>
                       
-                      <DropdownMenuItem 
-                        className="cursor-pointer p-3 rounded-lg"
-                        onClick={() => navigate('/pricing')}
-                      >
-                        <CreditCard className="mr-3 h-4 w-4" />
-                        <span>Plan & Pricing</span>
-                      </DropdownMenuItem>
-
                       <DropdownMenuSeparator className="my-2" />
 
                       {/* Theme Selection */}
@@ -209,7 +201,15 @@ const Navigation = () => {
 
                       <DropdownMenuItem 
                         className="cursor-pointer p-3 rounded-lg text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
-                        onClick={signOut}
+                        onClick={async () => {
+                          try {
+                            await signOut();
+                          } catch (error) {
+                            console.error('Logout failed:', error);
+                            // Force redirect even if signOut fails
+                            window.location.href = '/';
+                          }
+                        }}
                       >
                         <LogOut className="mr-3 h-4 w-4" />
                         <span>Logout</span>
