@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -13,13 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Sun, Moon, Monitor, Play } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
+import { User, Settings, LogOut, Play, GraduationCap } from 'lucide-react';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 
 const Navigation = () => {
-  const { user, signOut } = useAuth();
-  const { theme, setTheme, actualTheme } = useTheme();
+  const { user, signOut, userProfile } = useAuth();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
@@ -81,15 +79,34 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              <a href="#features" className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Features
-              </a>
-              <a href="#impact" className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Impact
-              </a>
-              <a href="#contact" className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Contact
-              </a>
+              {user ? (
+                <>
+                  <button
+                    onClick={() => navigate('/community')}
+                    className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Community
+                  </button>
+                  <a href="#features" className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    Features
+                  </a>
+                  <a href="#impact" className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    Impact
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a href="#features" className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    Features
+                  </a>
+                  <a href="#impact" className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    Impact
+                  </a>
+                  <a href="#contact" className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    Contact
+                  </a>
+                </>
+              )}
             </div>
           </div>
 
@@ -140,6 +157,14 @@ const Navigation = () => {
                         <p className="text-xs text-muted-foreground">
                           {user.email}
                         </p>
+                        {userProfile?.grade && (
+                          <div className="flex items-center space-x-1">
+                            <GraduationCap className="h-3 w-3 text-blue-600" />
+                            <span className="text-xs text-blue-600 font-medium">
+                              Grade {userProfile.grade}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -161,42 +186,6 @@ const Navigation = () => {
                         <span>Settings</span>
                       </DropdownMenuItem>
                       
-                      <DropdownMenuSeparator className="my-2" />
-
-                      {/* Theme Selection */}
-                      <div className="px-3 py-2">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Theme</p>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant={theme === 'light' ? 'default' : 'ghost'}
-                            size="sm"
-                            className="flex-1 h-8"
-                            onClick={() => setTheme('light')}
-                          >
-                            <Sun className="mr-2 h-3 w-3" />
-                            Light
-                          </Button>
-                          <Button
-                            variant={theme === 'dark' ? 'default' : 'ghost'}
-                            size="sm"
-                            className="flex-1 h-8"
-                            onClick={() => setTheme('dark')}
-                          >
-                            <Moon className="mr-2 h-3 w-3" />
-                            Dark
-                          </Button>
-                          <Button
-                            variant={theme === 'system' ? 'default' : 'ghost'}
-                            size="sm"
-                            className="flex-1 h-8"
-                            onClick={() => setTheme('system')}
-                          >
-                            <Monitor className="mr-2 h-3 w-3" />
-                            Auto
-                          </Button>
-                        </div>
-                      </div>
-
                       <DropdownMenuSeparator className="my-2" />
 
                       <DropdownMenuItem 

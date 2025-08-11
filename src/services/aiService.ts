@@ -69,9 +69,9 @@ class AIService {
         throw new Error('AI API returned empty response');
       }
 
-      // Clean up any markdown formatting that might appear
-      const cleanContent = this.cleanMarkdown(content);
-      return cleanContent;
+      // Format content for structured display
+      const formattedContent = this.formatStructuredResponse(content);
+      return formattedContent;
     } catch (error) {
       console.error('AI Service Error:', error);
       if (error instanceof Error) {
@@ -81,36 +81,15 @@ class AIService {
     }
   }
 
-  // Clean markdown formatting for simple text output
-  private cleanMarkdown(text: string): string {
-    // For JSON responses, don't clean too aggressively
+  // Format markdown for structured display with headers and points
+  private formatStructuredResponse(text: string): string {
+    // For JSON responses, don't format
     if (text.trim().startsWith('{') && text.trim().endsWith('}')) {
       return text.trim();
     }
-    
+
+    // Clean up extra whitespace but preserve structure
     return text
-      // Remove markdown headers
-      .replace(/#{1,6}\s+/g, '')
-      // Remove bold/italic markers
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/__(.*?)__/g, '$1')
-      .replace(/_(.*?)_/g, '$1')
-      // Remove code blocks but preserve content
-      .replace(/```[\s\S]*?```/g, (match) => {
-        // If it looks like JSON inside code blocks, preserve it
-        const content = match.replace(/```[a-z]*\n?/g, '').replace(/```/g, '');
-        if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
-          return content;
-        }
-        return '';
-      })
-      .replace(/`(.*?)`/g, '$1')
-      // Remove bullet points and replace with simple text
-      .replace(/^\s*[-*+]\s+/gm, '')
-      // Remove numbered lists
-      .replace(/^\s*\d+\.\s+/gm, '')
-      // Clean up extra whitespace
       .replace(/\n\s*\n\s*\n/g, '\n\n')
       .trim();
   }
@@ -118,20 +97,34 @@ class AIService {
   // Education Features
   async generateLearningPath(userSkills: string[], interests: string[], currentLevel: string): Promise<string> {
     console.log('Generating learning path with:', { userSkills, interests, currentLevel });
-    
+
     const messages = [
       {
         role: 'system',
-        content: 'You are a friendly teacher helping students learn. Write in simple, clear language that a high school student can understand. Do not use markdown, bullet points, or special formatting. Write in plain text with short sentences.'
+        content: 'You are a friendly teacher helping students learn. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Write in simple, clear language that a high school student can understand.'
       },
       {
         role: 'user',
-        content: `I am a ${currentLevel} student. My skills are: ${userSkills.join(', ')}. I am interested in: ${interests.join(', ')}. Please create a simple learning plan for me. Keep it short and easy to understand.`
+        content: `I am a ${currentLevel} student. My skills are: ${userSkills.join(', ')}. I am interested in: ${interests.join(', ')}. Please create a structured learning plan for me with the following sections:
+
+## Your Personalized Learning Path
+
+### Current Assessment
+- Analyze my current skills
+
+### Recommended Learning Areas
+- List 3-4 key areas to focus on
+
+### Step-by-Step Plan
+- Provide a clear progression path
+
+### Resources & Next Steps
+- Suggest specific resources and actions`
       }
     ];
-    
+
     try {
-      const result = await this.makeRequest(messages, 0.3, 600);
+      const result = await this.makeRequest(messages, 0.3, 800);
       console.log('Learning path generated successfully:', result);
       return result;
     } catch (error) {
@@ -151,7 +144,7 @@ class AIService {
         content: `Create a simple ${difficulty} level quiz from this text: "${content}". Return only this JSON format with exactly 5 questions: {"questions": [{"question": "What is the main topic?", "options": ["Option A", "Option B", "Option C", "Option D"], "correct": 0, "explanation": "Brief explanation"}]}`
       }
     ];
-    
+
     return this.makeRequest(messages, 0.1, 800);
   }
 
@@ -159,14 +152,29 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a friendly teacher helping a student. Explain things in very simple words that a primary or high school student can understand. Use short sentences. Do not use markdown or special formatting. Be encouraging and positive.'
+        content: 'You are a friendly teacher helping a student. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Explain things in simple words that a primary or high school student can understand. Be encouraging and positive.'
       },
       {
         role: 'user',
-        content: `Please help me with this ${subject} question: "${question}". Explain it step by step in simple words.`
+        content: `Please help me with this ${subject} question: "${question}". Structure your response as follows:
+
+## Understanding the Question
+- Break down what the question is asking
+
+## Key Concepts
+- Explain the main ideas needed
+
+## Step-by-Step Solution
+- Provide clear steps to solve this
+
+## Final Answer
+- Give the complete answer
+
+## Tips for Similar Problems
+- Helpful hints for future questions`
       }
     ];
-    return this.makeRequest(messages, 0.3, 400);
+    return this.makeRequest(messages, 0.3, 600);
   }
 
   // Accessibility Features
@@ -174,11 +182,24 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are an accessibility expert. Generate concise, descriptive alt text for images that helps visually impaired users understand the content.'
+        content: 'You are an accessibility expert. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Generate concise, descriptive alt text for images that helps visually impaired users understand the content.'
       },
       {
         role: 'user',
-        content: `Generate alt text for an image described as: "${imageDescription}"`
+        content: `Generate alt text for an image described as: "${imageDescription}". Structure your response as follows:
+
+## Alt Text Generation
+
+### Recommended Alt Text
+- Provide the concise alt text
+
+### Key Visual Elements
+- List important visual components
+- Describe colors, shapes, or notable features
+
+### Context Considerations
+- Explain why these elements matter
+- Suggest variations for different contexts`
       }
     ];
     return this.makeRequest(messages);
@@ -203,28 +224,63 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a teacher explaining how to help the environment. Use simple words that students can understand. Give practical tips they can actually do. Do not use markdown or bullet points.'
+        content: 'You are a teacher explaining how to help the environment. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Use simple words that students can understand. Give practical tips they can actually do.'
       },
       {
         role: 'user',
-        content: `I live in ${location} and my lifestyle is ${lifestyle}. Give me 3 simple ways to help the environment that I can do easily.`
+        content: `I live in ${location} and my lifestyle is ${lifestyle}. Structure your environmental advice as follows:
+
+## Your Environmental Impact Plan
+
+### Current Situation Analysis
+- Assess your location and lifestyle impact
+
+### Top 3 Easy Actions You Can Take
+- Action 1: [Specific action with explanation]
+- Action 2: [Specific action with explanation] 
+- Action 3: [Specific action with explanation]
+
+### Expected Impact
+- How these actions help the environment
+
+### Getting Started
+- First steps to begin today`
       }
     ];
-    return this.makeRequest(messages, 0.3, 400);
+    return this.makeRequest(messages, 0.3, 600);
   }
 
   async calculateSustainabilityImpact(activities: string[]): Promise<string> {
     const messages = [
       {
         role: 'system',
-        content: 'You are a teacher explaining environmental impact to students. Use simple words and give encouraging feedback. Explain how their actions help the planet in ways they can understand.'
+        content: 'You are a teacher explaining environmental impact to students. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Use simple words and give encouraging feedback. Explain how their actions help the planet in ways they can understand.'
       },
       {
         role: 'user',
-        content: `I did these good things for the environment: ${activities.join(', ')}. Tell me how this helps the planet. Use simple words and be encouraging.`
+        content: `I did these good things for the environment: ${activities.join(', ')}. Structure your impact analysis as follows:
+
+## Your Environmental Impact Report
+
+### Great Job! Here's What You Accomplished
+- List each activity and its positive impact
+
+### Environmental Benefits
+- How your actions help reduce pollution
+- How they save natural resources
+- How they protect wildlife
+
+### Your Impact Numbers
+- Estimated CO2 saved
+- Resources conserved
+- Positive effects created
+
+### Keep It Up!
+- Encouragement and next steps
+- Ways to do even more`
       }
     ];
-    return this.makeRequest(messages, 0.3, 500);
+    return this.makeRequest(messages, 0.3, 700);
   }
 
   async classifyWaste(wasteDescription: string): Promise<string> {
@@ -246,14 +302,37 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a mentorship matching expert. Analyze profiles and provide compatibility scores and recommendations.'
+        content: 'You are a mentorship matching expert. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Analyze profiles and provide compatibility scores and recommendations.'
       },
       {
         role: 'user',
-        content: `Analyze mentorship compatibility between mentor: ${JSON.stringify(mentorProfile)} and mentee: ${JSON.stringify(menteeProfile)}. Provide compatibility score and recommendations.`
+        content: `Analyze mentorship compatibility between mentor: ${JSON.stringify(mentorProfile)} and mentee: ${JSON.stringify(menteeProfile)}. Structure your analysis as follows:
+
+## Mentorship Compatibility Analysis
+
+### Compatibility Score: [X/10]
+- Overall compatibility rating
+
+### Strengths of This Match
+- Shared interests and goals
+- Complementary skills
+- Communication style compatibility
+
+### Potential Challenges
+- Areas that might need attention
+- Differences to be aware of
+
+### Recommendations
+- How to make this mentorship successful
+- Suggested meeting frequency
+- Key topics to focus on
+
+### Next Steps
+- How to initiate the mentorship
+- First meeting suggestions`
       }
     ];
-    return this.makeRequest(messages);
+    return this.makeRequest(messages, 0.3, 800);
   }
 
   async recommendOpportunities(userProfile: any, opportunities: any[]): Promise<string> {
@@ -274,14 +353,43 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are an innovation expert. Evaluate project ideas for feasibility, impact, and provide constructive feedback.'
+        content: 'You are an innovation expert. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Evaluate project ideas for feasibility, impact, and provide constructive feedback.'
       },
       {
         role: 'user',
-        content: `Evaluate this ${category} project idea and provide feedback with a score (1-10): "${ideaDescription}"`
+        content: `Evaluate this ${category} project idea: "${ideaDescription}". Structure your evaluation as follows:
+
+## Project Idea Evaluation
+
+### Idea Summary
+- Brief overview of the concept
+
+### Strengths
+- What makes this idea good
+- Unique advantages
+- Potential benefits
+
+### Areas for Improvement
+- Challenges to consider
+- Potential obstacles
+- Suggestions for enhancement
+
+### Feasibility Assessment
+- Technical feasibility
+- Resource requirements
+- Timeline considerations
+
+### Impact Potential
+- Who will benefit
+- Scale of impact
+- Long-term effects
+
+### Overall Score: [X/10]
+- Final rating with justification
+- Key recommendations for moving forward`
       }
     ];
-    return this.makeRequest(messages);
+    return this.makeRequest(messages, 0.3, 800);
   }
 
   // Content & Collaboration Features
@@ -303,14 +411,51 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a grant writing expert. Help create compelling, well-structured grant proposals.'
+        content: 'You are a grant writing expert. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Help create compelling, well-structured grant proposals.'
       },
       {
         role: 'user',
-        content: `Help write a grant proposal for a ${category} project: "${projectDescription}" requesting ${fundingAmount}. Include key sections and persuasive language.`
+        content: `Help write a grant proposal for a ${category} project: "${projectDescription}" requesting ${fundingAmount}. Structure the proposal as follows:
+
+## Grant Proposal Framework
+
+### Executive Summary
+- Project overview in 2-3 sentences
+- Funding request amount
+- Expected impact
+
+### Problem Statement
+- What issue does this project address
+- Why it's important to solve now
+- Who is affected
+
+### Project Description
+- Detailed explanation of your solution
+- How it works
+- What makes it innovative
+
+### Goals and Objectives
+- Primary goal
+- Specific measurable objectives
+- Timeline for achievement
+
+### Budget Justification
+- How the ${fundingAmount} will be used
+- Key expense categories
+- Cost-effectiveness explanation
+
+### Expected Outcomes
+- Short-term results
+- Long-term impact
+- Success metrics
+
+### Next Steps
+- Implementation plan
+- Key milestones
+- Reporting schedule`
       }
     ];
-    return this.makeRequest(messages);
+    return this.makeRequest(messages, 0.3, 1000);
   }
 
   // Sentiment Analysis
@@ -325,7 +470,7 @@ class AIService {
         content: `Analyze the sentiment of this text: "${text}"`
       }
     ];
-    
+
     try {
       const response = await this.makeRequest(messages);
       return JSON.parse(response);
@@ -347,7 +492,7 @@ class AIService {
           content: 'Hello, can you confirm you are working?'
         }
       ];
-      
+
       const response = await this.makeRequest(messages, 0.1, 100);
       return {
         success: true,

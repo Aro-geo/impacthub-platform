@@ -21,10 +21,11 @@ import {
   Megaphone,
   Share2,
   Search,
-  Filter,
   TrendingUp,
-  Clock,
-  Award
+  Brain,
+  Leaf,
+  GraduationCap,
+  Accessibility
 } from 'lucide-react';
 
 interface Subject {
@@ -37,7 +38,7 @@ interface CommunityPost {
   id: string;
   title: string;
   content: string;
-  post_type: 'question' | 'discussion' | 'resource' | 'announcement';
+  post_type: 'question' | 'discussion' | 'resource' | 'announcement' | 'ai_help' | 'sustainability';
   upvotes: number;
   is_featured: boolean;
   created_at: string;
@@ -45,6 +46,7 @@ interface CommunityPost {
   user_id: string;
   lesson_id?: string;
   subject_id?: string;
+  category?: string; // For AI posts
   subject?: Subject;
   lesson?: {
     id: string;
@@ -70,7 +72,17 @@ interface CommunityReply {
   };
 }
 
-const CommunitySection = () => {
+interface UnifiedCommunityForumProps {
+  context?: 'simple-lessons' | 'ai-tools' | 'general';
+  title?: string;
+  description?: string;
+}
+
+const UnifiedCommunityForum = ({ 
+  context = 'general',
+  title = "Community Forum",
+  description = "Connect, discuss, and learn together"
+}: UnifiedCommunityForumProps) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -84,13 +96,40 @@ const CommunitySection = () => {
     title: '',
     content: '',
     post_type: 'discussion' as const,
-    subject_id: ''
+    subject_id: '',
+    category: ''
   });
+
+  // Get post types based on context
+  const getPostTypes = () => {
+    const baseTypes = [
+      { value: 'discussion', label: 'Discussion', icon: MessageSquare },
+      { value: 'question', label: 'Question', icon: HelpCircle },
+      { value: 'resource', label: 'Resource', icon: BookOpen }
+    ];
+
+    if (context === 'ai-tools') {
+      return [
+        ...baseTypes,
+        { value: 'ai_help', label: 'AI Help', icon: Brain },
+        { value: 'sustainability', label: 'Sustainability', icon: Leaf }
+      ];
+    }
+
+    if (context === 'simple-lessons') {
+      return [
+        ...baseTypes,
+        { value: 'announcement', label: 'Announcement', icon: Megaphone }
+      ];
+    }
+
+    return baseTypes;
+  };
 
   useEffect(() => {
     fetchSubjects();
     fetchPosts();
-  }, [selectedSubject, selectedType, sortBy]);
+  }, [selectedSubject, selectedType, sortBy, context]);
 
   const fetchSubjects = async () => {
     try {
@@ -128,6 +167,13 @@ const CommunitySection = () => {
             avatar_url
           )
         `);
+
+      // Filter by context if specified
+      if (context === 'ai-tools') {
+        query = query.in('post_type', ['ai_help', 'sustainability', 'discussion', 'question', 'resource']);
+      } else if (context === 'simple-lessons') {
+        query = query.in('post_type', ['discussion', 'question', 'resource', 'announcement']);
+      }
 
       // Apply filters
       if (selectedSubject !== 'all') {
@@ -211,7 +257,8 @@ const CommunitySection = () => {
         title: '',
         content: '',
         post_type: 'discussion',
-        subject_id: ''
+        subject_id: '',
+        category: ''
       });
       setShowNewPostDialog(false);
       fetchPosts();
@@ -265,6 +312,8 @@ const CommunitySection = () => {
       case 'question': return <HelpCircle className="h-4 w-4" />;
       case 'resource': return <BookOpen className="h-4 w-4" />;
       case 'announcement': return <Megaphone className="h-4 w-4" />;
+      case 'ai_help': return <Brain className="h-4 w-4" />;
+      case 'sustainability': return <Leaf className="h-4 w-4" />;
       default: return <MessageSquare className="h-4 w-4" />;
     }
   };
@@ -274,6 +323,8 @@ const CommunitySection = () => {
       case 'question': return 'bg-blue-100 text-blue-800';
       case 'resource': return 'bg-green-100 text-green-800';
       case 'announcement': return 'bg-purple-100 text-purple-800';
+      case 'ai_help': return 'bg-indigo-100 text-indigo-800';
+      case 'sustainability': return 'bg-emerald-100 text-emerald-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -304,8 +355,8 @@ const CommunitySection = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Community Forum</h2>
-          <p className="text-gray-600">Connect, discuss, and learn together</p>
+          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <p className="text-gray-600">{description}</p>
         </div>
         <Dialog open={showNewPostDialog} onOpenChange={setShowNewPostDialog}>
           <DialogTrigger asChild>
@@ -334,34 +385,41 @@ const CommunitySection = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="discussion">Discussion</SelectItem>
-                    <SelectItem value="question">Question</SelectItem>
-                    <SelectItem value="resource">Resource</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Subject (Optional)
-                </label>
-                <Select 
-                  value={newPost.subject_id} 
-                  onValueChange={(value) => setNewPost(prev => ({ ...prev, subject_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">No specific subject</SelectItem>
-                    {subjects.map(subject => (
-                      <SelectItem key={subject.id} value={subject.id}>
-                        {subject.name}
+                    {getPostTypes().map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        <div className="flex items-center space-x-2">
+                          <type.icon className="h-4 w-4" />
+                          <span>{type.label}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {context !== 'ai-tools' && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Subject (Optional)
+                  </label>
+                  <Select 
+                    value={newPost.subject_id} 
+                    onValueChange={(value) => setNewPost(prev => ({ ...prev, subject_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No specific subject</SelectItem>
+                      {subjects.map(subject => (
+                        <SelectItem key={subject.id} value={subject.id}>
+                          {subject.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -415,19 +473,21 @@ const CommunitySection = () => {
               </div>
             </div>
             
-            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Subjects" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Subjects</SelectItem>
-                {subjects.map(subject => (
-                  <SelectItem key={subject.id} value={subject.id}>
-                    {subject.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {context !== 'ai-tools' && (
+              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Subjects" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
+                  {subjects.map(subject => (
+                    <SelectItem key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger>
@@ -435,10 +495,11 @@ const CommunitySection = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="discussion">Discussions</SelectItem>
-                <SelectItem value="question">Questions</SelectItem>
-                <SelectItem value="resource">Resources</SelectItem>
-                <SelectItem value="announcement">Announcements</SelectItem>
+                {getPostTypes().map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -513,7 +574,7 @@ const CommunitySection = () => {
                     <div className="flex items-center space-x-2 mb-2">
                       <Badge className={getPostTypeColor(post.post_type)}>
                         {getPostTypeIcon(post.post_type)}
-                        <span className="ml-1 capitalize">{post.post_type}</span>
+                        <span className="ml-1 capitalize">{post.post_type.replace('_', ' ')}</span>
                       </Badge>
                       
                       {post.subject && (
@@ -593,4 +654,4 @@ const CommunitySection = () => {
   );
 };
 
-export default CommunitySection;
+export default UnifiedCommunityForum;

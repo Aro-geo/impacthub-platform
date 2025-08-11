@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAI } from '@/hooks/useAI';
+import MarkdownRenderer from '@/components/ui/markdown-renderer';
 import { Leaf, Plus, X, Loader2, TreePine } from 'lucide-react';
 
 const SustainabilityCalculator = () => {
@@ -136,16 +137,11 @@ const SustainabilityCalculator = () => {
         {/* Impact Report */}
         {impactReport && (
           <Card className="bg-green-50 border-green-200">
-            <CardHeader>
-              <CardTitle className="text-green-800 flex items-center gap-2">
-                <TreePine className="h-5 w-5" />
-                Your Environmental Impact Report
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-green-800 text-base leading-relaxed whitespace-pre-line">
-                {impactReport}
-              </div>
+            <CardContent className="pt-6">
+              <MarkdownRenderer 
+                content={impactReport} 
+                className="text-green-800"
+              />
             </CardContent>
           </Card>
         )}

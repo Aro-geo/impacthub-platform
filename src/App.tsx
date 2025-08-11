@@ -22,6 +22,9 @@ const ImpactLearnAuth = lazy(() => import("./pages/ImpactLearnAuth"));
 const ImpactLearnDashboard = lazy(() => import("./pages/ImpactLearnDashboard"));
 const ImpactLearnGuest = lazy(() => import("./pages/ImpactLearnGuest"));
 const SimpleLessonDashboard = lazy(() => import("./pages/SimpleLessonDashboard"));
+const Community = lazy(() => import("./pages/Community"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -111,6 +114,36 @@ const AppContent = () => {
               <Suspense fallback={<LoadingSpinner text="Loading Simple Lesson Dashboard..." />}>
                 <ProtectedRoute>
                   <SimpleLessonDashboard />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/community" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading Community..." />}>
+                <ProtectedRoute>
+                  <Community />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading Profile..." />}>
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading Settings..." />}>
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               </Suspense>
             } 

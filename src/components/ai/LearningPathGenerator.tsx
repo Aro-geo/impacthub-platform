@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useAI } from '@/hooks/useAI';
+import MarkdownRenderer from '@/components/ui/markdown-renderer';
 import { Brain, Plus, X, Loader2 } from 'lucide-react';
 
 const LearningPathGenerator = () => {
@@ -158,11 +159,11 @@ const LearningPathGenerator = () => {
 
                 {/* Results */}
                 {learningPath && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                        <h3 className="font-semibold text-blue-900 mb-3">Your Personalized Learning Path</h3>
-                        <div className="text-blue-800 text-base leading-relaxed whitespace-pre-line">
-                            {learningPath}
-                        </div>
+                    <div className="mt-6 p-6 bg-blue-50 rounded-lg border border-blue-200">
+                        <MarkdownRenderer 
+                            content={learningPath} 
+                            className="text-blue-800"
+                        />
                     </div>
                 )}
             </CardContent>

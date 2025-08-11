@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAI } from '@/hooks/useAI';
 import Navigation from '@/components/Navigation';
-import { 
-  Brain, 
-  FileQuestion, 
-  GraduationCap, 
-  Leaf, 
-  Users, 
+import {
+  Brain,
+  FileQuestion,
+  GraduationCap,
+  Leaf,
+  Users,
   MessageSquare,
   Sparkles,
   TrendingUp,
@@ -24,12 +25,25 @@ import QuizCreator from '@/components/ai/QuizCreator';
 import HomeworkHelper from '@/components/ai/HomeworkHelper';
 import SustainabilityCalculator from '@/components/ai/SustainabilityCalculator';
 import MentorshipMatcher from '@/components/ai/MentorshipMatcher';
-import CommunityForum from '@/components/ai/CommunityForum';
+import OptimizedUnifiedCommunityForum from '@/components/shared/OptimizedUnifiedCommunityForum';
 import AccessibilityTools from '@/components/ai/AccessibilityTools';
 
 const AIDashboard = () => {
   const { user, signOut } = useAuth();
+  const { getUserStats } = useAI();
   const [activeTab, setActiveTab] = useState('overview');
+  const [aiStats, setAiStats] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchAIStats = async () => {
+      if (user) {
+        const stats = await getUserStats();
+        setAiStats(stats);
+      }
+    };
+
+    fetchAIStats();
+  }, [user, getUserStats]);
 
   const aiFeatures = [
     {
@@ -98,16 +112,16 @@ const AIDashboard = () => {
   ];
 
   const stats = [
-    { label: 'AI Interactions', value: '0', icon: Sparkles, color: 'text-blue-600' },
-    { label: 'Learning Hours', value: '0', icon: TrendingUp, color: 'text-green-600' },
-    { label: 'Goals Achieved', value: '0', icon: Target, color: 'text-purple-600' },
+    { label: 'AI Interactions', value: aiStats?.totalInteractions?.toString() || '0', icon: Sparkles, color: 'text-blue-600' },
+    { label: 'Successful Requests', value: aiStats?.successfulInteractions?.toString() || '0', icon: TrendingUp, color: 'text-green-600' },
+    { label: 'Tools Used', value: aiStats?.mostUsedTypes?.length?.toString() || '0', icon: Target, color: 'text-purple-600' },
     { label: 'Impact Points', value: '0', icon: Award, color: 'text-orange-600' },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-heading font-bold text-foreground mb-2">
@@ -163,8 +177,8 @@ const AIDashboard = () => {
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {aiFeatures.map((feature) => (
-                  <Card 
-                    key={feature.id} 
+                  <Card
+                    key={feature.id}
                     className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
                     onClick={() => setActiveTab(feature.id)}
                   >
@@ -198,24 +212,24 @@ const AIDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-4">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="h-20 flex-col gap-2"
                     onClick={() => setActiveTab('learning-path')}
                   >
                     <Brain className="h-6 w-6" />
                     Generate Learning Path
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="h-20 flex-col gap-2"
                     onClick={() => setActiveTab('sustainability')}
                   >
                     <Leaf className="h-6 w-6" />
                     Calculate Impact
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="h-20 flex-col gap-2"
                     onClick={() => setActiveTab('forum')}
                   >
@@ -253,7 +267,11 @@ const AIDashboard = () => {
           </TabsContent>
 
           <TabsContent value="forum">
-            <CommunityForum />
+            <OptimizedUnifiedCommunityForum
+              context="ai-tools"
+              title="AI Community Forum"
+              description="Discuss AI tools, get help, and share insights"
+            />
           </TabsContent>
         </Tabs>
       </div>

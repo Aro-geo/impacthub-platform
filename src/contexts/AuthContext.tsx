@@ -11,6 +11,9 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, name?: string, grade?: number) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (password: string) => Promise<{ error: any }>;
+  updateProfile: (updates: any) => Promise<{ error: any }>;
   updateUserGrade: (grade: number) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
 }
@@ -58,14 +61,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           const profile = await fetchUserProfile(session.user.id);
           setUserProfile(profile);
         } else {
           setUserProfile(null);
         }
-        
+
         setLoading(false);
       }
     );
@@ -74,12 +77,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         const profile = await fetchUserProfile(session.user.id);
         setUserProfile(profile);
       }
-      
+
       setLoading(false);
     });
 
@@ -96,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, name?: string, grade?: number) => {
     const redirectUrl = `${window.location.origin}/dashboard`;
-    
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -182,6 +185,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?mode=reset`,
+    });
+    return { error };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: password
+    });
+    return { error };
+  };
+
+  const updateProfile = async (updates: any) => {
+    if (!user) return { error: 'No user logged in' };
+
+    try {
+      // Update auth user metadata if needed
+      if (updates.name || updates.avatar_url) {
+        const { error: authError } = await supabase.auth.updateUser({
+          data: {
+            name: updates.name,
+            avatar_url: updates.avatar_url
+          }
+        });
+        if (authError) return { error: authError };
+      }
+
+      // Update profile table
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          ...updates,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
+
+      if (!error) {
+        // Refresh the profile data
+        const profile = await fetchUserProfile(user.id);
+        setUserProfile(profile);
+      }
+
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
       const profile = await fetchUserProfile(user.id);
@@ -197,6 +252,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signUp,
     signOut,
+    resetPassword,
+    updatePassword,
+    updateProfile,
     updateUserGrade,
     refreshProfile,
   };

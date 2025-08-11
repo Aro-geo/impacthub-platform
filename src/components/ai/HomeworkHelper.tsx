@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAI } from '@/hooks/useAI';
+import MarkdownRenderer from '@/components/ui/markdown-renderer';
 import { GraduationCap, Loader2, BookOpen } from 'lucide-react';
 
 const HomeworkHelper = () => {
@@ -123,16 +124,11 @@ const HomeworkHelper = () => {
         {/* Explanation Display */}
         {explanation && (
           <Card className="bg-green-50 border-green-200">
-            <CardHeader>
-              <CardTitle className="text-green-800 flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Step-by-Step Explanation
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-green-800 text-base leading-relaxed whitespace-pre-line">
-                {explanation}
-              </div>
+            <CardContent className="pt-6">
+              <MarkdownRenderer 
+                content={explanation} 
+                className="text-green-800"
+              />
             </CardContent>
           </Card>
         )}

@@ -76,6 +76,9 @@ const LessonsSection = () => {
     try {
       setLoading(true);
       
+      // Get user grade from userProfile instead of making separate query
+      const userGrade = userProfile?.grade;
+      
       let query = supabase
         .from('simple_lessons')
         .select(`
@@ -85,44 +88,25 @@ const LessonsSection = () => {
           difficulty_level,
           duration_minutes,
           grade,
-          subjects (
+          subject_id,
+          subjects!inner (
             id,
             name,
             color,
             icon
           )
         `)
-        .eq('is_published', true);
+        .eq('is_published', true)
+        .limit(50); // Limit results for better performance
 
       // Apply grade filter if user has a grade set
-      if (user) {
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('grade')
-            .eq('id', user.id)
-            .single();
-
-          if (!profileError && profile?.grade) {
-            // Show lessons for user's grade and one grade above/below for flexibility
-            const userGrade = profile.grade;
-            const gradeFilter = `grade.is.null,grade.eq.${userGrade}`;
-            
-            // Add adjacent grades if they're valid (1-12 range)
-            if (userGrade > 1) {
-              query = query.or(`${gradeFilter},grade.eq.${userGrade - 1}`);
-            }
-            if (userGrade < 12) {
-              const currentFilter = userGrade > 1 ? `${gradeFilter},grade.eq.${userGrade - 1}` : gradeFilter;
-              query = query.or(`${currentFilter},grade.eq.${userGrade + 1}`);
-            } else {
-              query = query.or(gradeFilter);
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching user profile for grade filtering:', error);
-          // Continue without grade filtering if there's an error
-        }
+      if (userGrade) {
+        // Show lessons for user's grade and one grade above/below for flexibility
+        const gradeFilters = [userGrade];
+        if (userGrade > 1) gradeFilters.push(userGrade - 1);
+        if (userGrade < 12) gradeFilters.push(userGrade + 1);
+        
+        query = query.or(`grade.is.null,grade.in.(${gradeFilters.join(',')})`);
       }
 
       // Apply filters
@@ -149,33 +133,37 @@ const LessonsSection = () => {
           query = query.order('order_index');
       }
 
-      const { data: lessonsData, error } = await query;
-      if (error) throw error;
-
-      // Get user progress and bookmarks
-      let progressData: any[] = [];
-      let bookmarksData: any[] = [];
-
-      if (user) {
-        const { data: progress } = await supabase
+      // Batch all queries for better performance
+      const [
+        { data: lessonsData, error: lessonsError },
+        { data: progressData },
+        { data: bookmarksData }
+      ] = await Promise.all([
+        query,
+        user ? supabase
           .from('lesson_progress')
           .select('lesson_id, status, progress_percentage')
-          .eq('user_id', user.id);
-
-        const { data: bookmarks } = await supabase
+          .eq('user_id', user.id) : Promise.resolve({ data: [] }),
+        user ? supabase
           .from('user_bookmarks')
           .select('lesson_id')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id) : Promise.resolve({ data: [] })
+      ]);
 
-        progressData = progress || [];
-        bookmarksData = bookmarks || [];
-      }
+      if (lessonsError) throw lessonsError;
 
-      // Combine data
-      const lessonsWithProgress = lessonsData?.map(lesson => {
-        const progress = progressData.find(p => p.lesson_id === lesson.id);
-        const isBookmarked = bookmarksData.some(b => b.lesson_id === lesson.id);
+      // Create lookup maps for better performance
+      const progressMap = new Map(
+        (progressData || []).map(p => [p.lesson_id, p])
+      );
+      const bookmarksSet = new Set(
+        (bookmarksData || []).map(b => b.lesson_id)
+      );
 
+      // Combine data efficiently
+      const lessonsWithProgress = (lessonsData || []).map(lesson => {
+        const progress = progressMap.get(lesson.id);
+        
         return {
           ...lesson,
           subject: lesson.subjects,
@@ -183,13 +171,14 @@ const LessonsSection = () => {
             status: progress.status,
             progress_percentage: progress.progress_percentage
           } : { status: 'not_started' as const, progress_percentage: 0 },
-          is_bookmarked: isBookmarked
+          is_bookmarked: bookmarksSet.has(lesson.id)
         };
-      }) || [];
+      });
 
       setLessons(lessonsWithProgress);
     } catch (error) {
       console.error('Error fetching lessons:', error);
+      setLessons([]);
     } finally {
       setLoading(false);
     }

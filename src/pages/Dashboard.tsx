@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAI } from '@/hooks/useAI';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,13 +30,26 @@ import {
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
+  const { getUserStats } = useAI();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const [aiStats, setAiStats] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchAIStats = async () => {
+      if (user) {
+        const stats = await getUserStats();
+        setAiStats(stats);
+      }
+    };
+    
+    fetchAIStats();
+  }, [user, getUserStats]);
 
   const stats = [
     { label: 'Impact Points', value: '0', icon: Award, color: 'text-blue-600' },
     { label: 'Lessons Completed', value: '0', icon: BookOpen, color: 'text-green-600' },
-    { label: 'AI Interactions', value: '0', icon: Brain, color: 'text-purple-600' },
+    { label: 'AI Interactions', value: aiStats?.totalInteractions?.toString() || '0', icon: Brain, color: 'text-purple-600' },
     { label: 'Community Connections', value: '0', icon: Users, color: 'text-orange-600' },
   ];
 
@@ -66,7 +80,7 @@ const Dashboard = () => {
       description: 'Connect with learners and mentors',
       icon: Users,
       color: 'bg-orange-500',
-      action: () => setActiveTab('community')
+      action: () => navigate('/community')
     }
   ];
 
