@@ -5,11 +5,8 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  BookOpen, 
-  Target, 
-  Trophy, 
-  Flame,
+import {
+  BookOpen,
   Play,
   ArrowRight,
   TrendingUp,
@@ -69,17 +66,17 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
         .select(`
           lesson_id,
           progress_percentage,
-          simple_lessons (
+          simple_lessons!inner (
             id,
             title,
-            subjects (name)
+            subjects!inner (name)
           )
         `)
         .eq('user_id', user?.id)
         .eq('status', 'in_progress')
         .order('last_accessed', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (inProgressLesson?.simple_lessons) {
         setContinueLesson({
@@ -90,7 +87,23 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
         });
       }
 
-      // Get suggested lessons (lessons not started yet, ordered by popularity/difficulty)
+      // Get user profile for grade filtering
+      let userGrade = null;
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('grade')
+          .eq('id', user?.id)
+          .single();
+
+        if (!profileError && profile?.grade) {
+          userGrade = profile.grade;
+        }
+      } catch (error) {
+        console.error('Error fetching user profile for grade filtering:', error);
+      }
+
+      // Build suggested lessons query with grade filtering
       let suggestedQuery = supabase
         .from('simple_lessons')
         .select(`
@@ -100,48 +113,43 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
           difficulty_level,
           duration_minutes,
           grade,
-          subjects (name)
+          subjects!inner (name)
         `)
         .eq('is_published', true)
-        .not('id', 'in', 
-          `(SELECT lesson_id FROM lesson_progress WHERE user_id = '${user?.id}' AND status IN ('completed', 'in_progress'))`
-        );
+        .not('subject_id', 'is', null);
 
       // Apply grade filter if user has a grade set
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('grade')
-          .eq('id', user?.id)
-          .single();
+      if (userGrade) {
+        const gradeFilters = [`grade.is.null`, `grade.eq.${userGrade}`];
 
-        if (!profileError && profile?.grade) {
-          // Show lessons for user's grade and one grade above/below for flexibility
-          const userGrade = profile.grade;
-          const gradeFilter = `grade.is.null,grade.eq.${userGrade}`;
-          
-          // Add adjacent grades if they're valid (1-12 range)
-          if (userGrade > 1) {
-            suggestedQuery = suggestedQuery.or(`${gradeFilter},grade.eq.${userGrade - 1}`);
-          }
-          if (userGrade < 12) {
-            const currentFilter = userGrade > 1 ? `${gradeFilter},grade.eq.${userGrade - 1}` : gradeFilter;
-            suggestedQuery = suggestedQuery.or(`${currentFilter},grade.eq.${userGrade + 1}`);
-          } else {
-            suggestedQuery = suggestedQuery.or(gradeFilter);
-          }
+        // Add adjacent grades if they're valid (1-12 range)
+        if (userGrade > 1) {
+          gradeFilters.push(`grade.eq.${userGrade - 1}`);
         }
-      } catch (error) {
-        console.error('Error fetching user profile for grade filtering:', error);
-        // Continue without grade filtering if there's an error
+        if (userGrade < 12) {
+          gradeFilters.push(`grade.eq.${userGrade + 1}`);
+        }
+
+        suggestedQuery = suggestedQuery.or(gradeFilters.join(','));
       }
 
-      const { data: suggested } = await suggestedQuery
-        .order('order_index')
-        .limit(3);
+      const [{ data: suggested }, { data: userProgress }] = await Promise.all([
+        suggestedQuery.order('order_index').limit(10), // Get more lessons to filter from
+        supabase
+          .from('lesson_progress')
+          .select('lesson_id')
+          .eq('user_id', user?.id)
+          .in('status', ['completed', 'in_progress'])
+      ]);
 
       if (suggested) {
-        setSuggestedLessons(suggested.map(lesson => ({
+        // Filter out lessons that are already completed or in progress
+        const progressLessonIds = new Set(userProgress?.map(p => p.lesson_id) || []);
+        const filteredSuggested = suggested
+          .filter(lesson => !progressLessonIds.has(lesson.id))
+          .slice(0, 3); // Take only 3 after filtering
+
+        setSuggestedLessons(filteredSuggested.map(lesson => ({
           ...lesson,
           subject_name: lesson.subjects?.name || 'Unknown'
         })));
@@ -174,7 +182,7 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
 
   const getMotivationalMessage = () => {
     const { completionPercentage, currentStreak } = userStats;
-    
+
     if (completionPercentage === 0) {
       return "Welcome! Start your learning journey today 🚀";
     } else if (completionPercentage < 25) {
@@ -209,7 +217,7 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
     <div className="space-y-6">
       {/* Grade Information */}
       <GradeInfo />
-      
+
       {/* Progress Overview */}
       <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
         <CardContent className="p-6">
@@ -223,8 +231,8 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
               <div className="text-blue-100 text-sm">Complete</div>
             </div>
           </div>
-          <Progress 
-            value={userStats.completionPercentage} 
+          <Progress
+            value={userStats.completionPercentage}
             className="h-3 bg-blue-500"
           />
           <div className="mt-2 text-blue-100 text-sm">
@@ -233,56 +241,7 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
         </CardContent>
       </Card>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <BookOpen className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {userStats.totalLessonsCompleted}
-            </div>
-            <div className="text-sm text-gray-600">Lessons Completed</div>
-          </CardContent>
-        </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Target className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {userStats.totalQuizzesAttempted}
-            </div>
-            <div className="text-sm text-gray-600">Quizzes Attempted</div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Flame className="h-6 w-6 text-orange-600" />
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {userStats.currentStreak}
-            </div>
-            <div className="text-sm text-gray-600">Day Streak</div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Trophy className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {Math.floor(userStats.totalLessonsCompleted / 5)}
-            </div>
-            <div className="text-sm text-gray-600">Badges Earned</div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Continue Learning & Suggestions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

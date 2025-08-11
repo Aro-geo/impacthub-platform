@@ -139,15 +139,20 @@ async function cacheFirstStrategy(request, cacheName) {
   }
 }
 
-// Stale while revalidate strategy
+// Stale while revalidate strategy - Fixed clone issue
 async function staleWhileRevalidateStrategy(request) {
   const cachedResponse = await caches.match(request);
   
   const networkResponsePromise = fetch(request)
-    .then((networkResponse) => {
-      if (networkResponse.ok) {
-        const cache = caches.open(DYNAMIC_CACHE);
-        cache.then(c => c.put(request, networkResponse.clone()));
+    .then(async (networkResponse) => {
+      if (networkResponse.ok && networkResponse.body) {
+        try {
+          const cache = await caches.open(DYNAMIC_CACHE);
+          // Clone before using to prevent "body already used" error
+          await cache.put(request, networkResponse.clone());
+        } catch (error) {
+          console.warn('Failed to cache response:', error);
+        }
       }
       return networkResponse;
     })

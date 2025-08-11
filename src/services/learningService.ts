@@ -3,8 +3,8 @@ import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase
 
 export type LearningModule = Tables<'learning_modules'>;
 export type UserProgress = Tables<'user_progress'>;
-export type Quiz = Tables<'quizzes'>;
-export type QuizAttempt = Tables<'quiz_attempts'>;
+export type Quiz = Tables<'lesson_quizzes'>;
+export type QuizAttempt = Tables<'lesson_quiz_attempts'>;
 
 // Learning Modules
 export const learningService = {
@@ -95,21 +95,22 @@ export const learningService = {
     return data;
   },
 
-  // Get quizzes for a module
-  async getModuleQuizzes(moduleId: string) {
+  // Get quizzes for a lesson
+  async getLessonQuizzes(lessonId: string) {
     const { data, error } = await supabase
-      .from('quizzes')
+      .from('lesson_quizzes')
       .select('*')
-      .eq('module_id', moduleId);
+      .eq('lesson_id', lessonId)
+      .order('order_index');
 
     if (error) throw error;
     return data;
   },
 
-  // Create quiz
-  async createQuiz(quiz: TablesInsert<'quizzes'>) {
+  // Create lesson quiz
+  async createLessonQuiz(quiz: TablesInsert<'lesson_quizzes'>) {
     const { data, error } = await supabase
-      .from('quizzes')
+      .from('lesson_quizzes')
       .insert(quiz)
       .select()
       .single();
@@ -119,9 +120,9 @@ export const learningService = {
   },
 
   // Submit quiz attempt
-  async submitQuizAttempt(attempt: TablesInsert<'quiz_attempts'>) {
+  async submitQuizAttempt(attempt: TablesInsert<'lesson_quiz_attempts'>) {
     const { data, error } = await supabase
-      .from('quiz_attempts')
+      .from('lesson_quiz_attempts')
       .insert(attempt)
       .select()
       .single();
@@ -133,14 +134,14 @@ export const learningService = {
   // Get user quiz attempts
   async getUserQuizAttempts(userId: string, quizId?: string) {
     let query = supabase
-      .from('quiz_attempts')
+      .from('lesson_quiz_attempts')
       .select(`
         *,
-        quizzes (
+        quiz:lesson_quizzes (
           id,
           question,
           correct_answer,
-          module_id
+          lesson_id
         )
       `)
       .eq('user_id', userId);

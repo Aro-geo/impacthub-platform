@@ -25,7 +25,8 @@ import {
   Star,
   Clock,
   Heart,
-  Sparkles
+  Sparkles,
+  Flame
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -50,7 +51,9 @@ const Dashboard = () => {
     { label: 'Impact Points', value: '0', icon: Award, color: 'text-blue-600' },
     { label: 'Lessons Completed', value: '0', icon: BookOpen, color: 'text-green-600' },
     { label: 'AI Interactions', value: aiStats?.totalInteractions?.toString() || '0', icon: Brain, color: 'text-purple-600' },
-    { label: 'Community Connections', value: '0', icon: Users, color: 'text-orange-600' },
+    { label: 'Quizzes Attempted', value: '0', icon: Target, color: 'text-green-600' },
+    { label: 'Day Streak', value: '0', icon: Flame, color: 'text-orange-600' },
+    { label: 'Community Connections', value: '0', icon: Users, color: 'text-indigo-600' },
   ];
 
   const quickActions = [
@@ -108,7 +111,7 @@ const Dashboard = () => {
           </div>
         </div>
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md">
               <CardContent className="p-6">
@@ -241,10 +244,24 @@ const Dashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-6">
-                      <Award className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500 text-sm">No achievements yet</p>
-                      <p className="text-gray-400 text-xs">Complete lessons to earn badges</p>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <Award className="h-5 w-5 text-yellow-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">Badges Earned</p>
+                            <p className="text-sm text-gray-600">Learning milestones</p>
+                          </div>
+                        </div>
+                        <div className="text-2xl font-bold text-yellow-600">0</div>
+                      </div>
+                      <div className="text-center py-4">
+                        <Award className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-gray-500 text-sm">No badges yet</p>
+                        <p className="text-gray-400 text-xs">Complete lessons to earn your first badge</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

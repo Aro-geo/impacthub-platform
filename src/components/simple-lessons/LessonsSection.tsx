@@ -1,25 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Search, 
-  Filter, 
   BookOpen, 
-  Play, 
-  CheckCircle, 
-  Clock, 
-  Bookmark, 
-  BookmarkCheck,
   Grid,
-  List,
-  Star
+  List
 } from 'lucide-react';
 import GradeExplanation from './GradeExplanation';
+import LessonCard from './LessonCard';
 
 interface Subject {
   id: string;
@@ -53,16 +46,29 @@ const LessonsSection = () => {
   const [sortBy, setSortBy] = useState<string>('title');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  // Debounced search to prevent excessive API calls
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   useEffect(() => {
     fetchSubjects();
-    fetchLessons();
-  }, [user, selectedSubject, selectedDifficulty, sortBy]);
+  }, []); // Only fetch subjects once
 
-  const fetchSubjects = async () => {
+  useEffect(() => {
+    fetchLessons();
+  }, [user, selectedSubject, selectedDifficulty, sortBy]); // Removed userProfile dependency
+
+  const fetchSubjects = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('subjects')
-        .select('*')
+        .select('id, name, color, icon') // Only select needed fields
         .order('name');
 
       if (error) throw error;
@@ -70,15 +76,13 @@ const LessonsSection = () => {
     } catch (error) {
       console.error('Error fetching subjects:', error);
     }
-  };
+  }, []);
 
-  const fetchLessons = async () => {
+  const fetchLessons = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Get user grade from userProfile instead of making separate query
-      const userGrade = userProfile?.grade;
-      
+      // Optimized query with minimal data selection
       let query = supabase
         .from('simple_lessons')
         .select(`
@@ -87,7 +91,6 @@ const LessonsSection = () => {
           description,
           difficulty_level,
           duration_minutes,
-          grade,
           subject_id,
           subjects!inner (
             id,
@@ -97,17 +100,8 @@ const LessonsSection = () => {
           )
         `)
         .eq('is_published', true)
-        .limit(50); // Limit results for better performance
-
-      // Apply grade filter if user has a grade set
-      if (userGrade) {
-        // Show lessons for user's grade and one grade above/below for flexibility
-        const gradeFilters = [userGrade];
-        if (userGrade > 1) gradeFilters.push(userGrade - 1);
-        if (userGrade < 12) gradeFilters.push(userGrade + 1);
-        
-        query = query.or(`grade.is.null,grade.in.(${gradeFilters.join(',')})`);
-      }
+        .not('subject_id', 'is', null)
+        .limit(20); // Reduced limit for faster loading
 
       // Apply filters
       if (selectedSubject !== 'all') {
@@ -118,7 +112,7 @@ const LessonsSection = () => {
         query = query.eq('difficulty_level', selectedDifficulty);
       }
 
-      // Apply sorting
+      // Apply sorting with index optimization
       switch (sortBy) {
         case 'title':
           query = query.order('title');
@@ -130,29 +124,44 @@ const LessonsSection = () => {
           query = query.order('duration_minutes');
           break;
         default:
-          query = query.order('order_index');
+          query = query.order('order_index', { ascending: true }); // Use indexed column
       }
 
-      // Batch all queries for better performance
-      const [
-        { data: lessonsData, error: lessonsError },
-        { data: progressData },
-        { data: bookmarksData }
-      ] = await Promise.all([
+      // Batch queries with timeout protection
+      const queryPromises = [
         query,
         user ? supabase
           .from('lesson_progress')
           .select('lesson_id, status, progress_percentage')
-          .eq('user_id', user.id) : Promise.resolve({ data: [] }),
+          .eq('user_id', user.id)
+          .limit(100) : Promise.resolve({ data: [] }),
         user ? supabase
           .from('user_bookmarks')
           .select('lesson_id')
-          .eq('user_id', user.id) : Promise.resolve({ data: [] })
-      ]);
+          .eq('user_id', user.id)
+          .limit(100) : Promise.resolve({ data: [] })
+      ];
 
-      if (lessonsError) throw lessonsError;
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout')), 10000)
+      );
 
-      // Create lookup maps for better performance
+      const [
+        { data: lessonsData, error: lessonsError },
+        { data: progressData },
+        { data: bookmarksData }
+      ] = await Promise.race([
+        Promise.all(queryPromises),
+        timeoutPromise
+      ]) as any;
+
+      if (lessonsError) {
+        console.error('Lessons query error:', lessonsError);
+        throw lessonsError;
+      }
+
+      // Optimized data processing
       const progressMap = new Map(
         (progressData || []).map(p => [p.lesson_id, p])
       );
@@ -160,7 +169,7 @@ const LessonsSection = () => {
         (bookmarksData || []).map(b => b.lesson_id)
       );
 
-      // Combine data efficiently
+      // Efficient data combination
       const lessonsWithProgress = (lessonsData || []).map(lesson => {
         const progress = progressMap.get(lesson.id);
         
@@ -182,16 +191,23 @@ const LessonsSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSubject, selectedDifficulty, sortBy, user]);
 
-  const toggleBookmark = async (lessonId: string) => {
+  const toggleBookmark = useCallback(async (lessonId: string) => {
     if (!user) return;
+
+    // Optimistic update for better UX
+    setLessons(prev => prev.map(l => 
+      l.id === lessonId 
+        ? { ...l, is_bookmarked: !l.is_bookmarked }
+        : l
+    ));
 
     try {
       const lesson = lessons.find(l => l.id === lessonId);
       if (!lesson) return;
 
-      if (lesson.is_bookmarked) {
+      if (!lesson.is_bookmarked) { // Note: inverted because we already updated optimistically
         await supabase
           .from('user_bookmarks')
           .delete()
@@ -205,23 +221,34 @@ const LessonsSection = () => {
             lesson_id: lessonId
           });
       }
-
-      // Update local state
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      // Revert optimistic update on error
       setLessons(prev => prev.map(l => 
         l.id === lessonId 
           ? { ...l, is_bookmarked: !l.is_bookmarked }
           : l
       ));
-    } catch (error) {
-      console.error('Error toggling bookmark:', error);
     }
-  };
+  }, [user, lessons]);
 
-  const startLesson = async (lessonId: string) => {
+  const startLesson = useCallback(async (lessonId: string) => {
     if (!user) return;
 
+    // Optimistic update
+    setLessons(prev => prev.map(l => 
+      l.id === lessonId 
+        ? { 
+            ...l, 
+            progress: { 
+              status: 'in_progress' as const, 
+              progress_percentage: l.progress?.progress_percentage || 0 
+            }
+          }
+        : l
+    ));
+
     try {
-      // Create or update progress
       await supabase
         .from('lesson_progress')
         .upsert({
@@ -231,77 +258,63 @@ const LessonsSection = () => {
           started_at: new Date().toISOString(),
           last_accessed: new Date().toISOString()
         });
-
-      // Refresh lessons to show updated progress
-      fetchLessons();
     } catch (error) {
       console.error('Error starting lesson:', error);
+      // Revert optimistic update on error
+      setLessons(prev => prev.map(l => 
+        l.id === lessonId 
+          ? { 
+              ...l, 
+              progress: { 
+                status: 'not_started' as const, 
+                progress_percentage: 0 
+              }
+            }
+          : l
+      ));
     }
-  };
+  }, [user]);
 
-  const filteredLessons = lessons.filter(lesson =>
-    lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lesson.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lesson.subject.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Memoized filtering for better performance
+  const filteredLessons = useMemo(() => {
+    if (!debouncedSearchTerm.trim()) return lessons;
+    
+    const searchLower = debouncedSearchTerm.toLowerCase();
+    return lessons.filter(lesson =>
+      lesson.title.toLowerCase().includes(searchLower) ||
+      lesson.description.toLowerCase().includes(searchLower) ||
+      (lesson.subject?.name && lesson.subject.name.toLowerCase().includes(searchLower))
+    );
+  }, [lessons, debouncedSearchTerm]);
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'in_progress':
-        return <Play className="h-4 w-4 text-blue-600" />;
-      default:
-        return <BookOpen className="h-4 w-4 text-gray-400" />;
-    }
-  };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed': return 'Completed';
-      case 'in_progress': return 'In Progress';
-      default: return 'Not Started';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // Optimized loading skeleton
+  const LoadingSkeleton = useMemo(() => (
+    <div className="space-y-6">
+      <div className="h-8 bg-gray-200 rounded w-1/4 animate-pulse"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-full mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  ), []);
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mb-4"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
+    return LoadingSkeleton;
   }
 
   return (
     <div className="space-y-6">
+
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -394,91 +407,12 @@ const LessonsSection = () => {
           : "space-y-4"
         }>
           {filteredLessons.map((lesson) => (
-            <Card key={lesson.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {lesson.subject.name}
-                    </Badge>
-                    <Badge className={getDifficultyColor(lesson.difficulty_level)}>
-                      {lesson.difficulty_level}
-                    </Badge>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleBookmark(lesson.id)}
-                    className="h-8 w-8 p-0"
-                  >
-                    {lesson.is_bookmarked ? (
-                      <BookmarkCheck className="h-4 w-4 text-blue-600" />
-                    ) : (
-                      <Bookmark className="h-4 w-4 text-gray-400" />
-                    )}
-                  </Button>
-                </div>
-
-                <h3 className="font-semibold text-gray-900 mb-2 text-lg">
-                  {lesson.title}
-                </h3>
-
-                <p className="text-gray-600 mb-4 text-sm leading-relaxed line-clamp-3">
-                  {lesson.description}
-                </p>
-
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{lesson.duration_minutes} min</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      {getStatusIcon(lesson.progress?.status || 'not_started')}
-                      <span>{getStatusText(lesson.progress?.status || 'not_started')}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {lesson.progress?.status === 'in_progress' && (
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-600">Progress</span>
-                      <span className="text-gray-900 font-medium">
-                        {lesson.progress.progress_percentage}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${lesson.progress.progress_percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center space-x-2">
-                  {lesson.progress?.status === 'completed' ? (
-                    <Button variant="outline" className="flex-1">
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Review
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700"
-                      onClick={() => startLesson(lesson.id)}
-                    >
-                      <Play className="mr-2 h-4 w-4" />
-                      {lesson.progress?.status === 'in_progress' ? 'Continue' : 'Start'}
-                    </Button>
-                  )}
-                  
-                  <Badge className={getStatusColor(lesson.progress?.status || 'not_started')}>
-                    {getStatusText(lesson.progress?.status || 'not_started')}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <LessonCard
+              key={lesson.id}
+              lesson={lesson}
+              onToggleBookmark={toggleBookmark}
+              onStartLesson={startLesson}
+            />
           ))}
         </div>
       ) : (

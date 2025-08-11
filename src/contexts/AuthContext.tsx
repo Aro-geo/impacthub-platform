@@ -34,12 +34,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user profile data
+  // Optimized profile fetching with caching
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, email, grade, avatar_url, created_at, updated_at') // Only select needed fields
         .eq('id', userId)
         .single();
 

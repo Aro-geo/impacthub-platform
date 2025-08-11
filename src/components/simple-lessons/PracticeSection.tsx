@@ -463,8 +463,8 @@ const PracticeSection = () => {
           {subjects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {subjects.map((subject) => {
-                const subjectQuizzes = quizzes.filter(q => q.lesson.subject.id === subject.id);
-                const userAttempts = recentAttempts.filter(a => a.quiz.lesson.subject.id === subject.id);
+                const subjectQuizzes = quizzes.filter(q => q.lesson?.subject?.id === subject.id);
+                const userAttempts = recentAttempts.filter(a => a.quiz?.lesson?.subject?.id === subject.id);
                 const correctAttempts = userAttempts.filter(a => a.is_correct).length;
                 const successRate = userAttempts.length > 0 
                   ? Math.round((correctAttempts / userAttempts.length) * 100) 
