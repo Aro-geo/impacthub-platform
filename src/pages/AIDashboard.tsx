@@ -25,6 +25,7 @@ import MentorshipMatcher from '@/components/ai/MentorshipMatcher';
 import OptimizedUnifiedCommunityForum from '@/components/shared/OptimizedUnifiedCommunityForum';
 import AccessibilityTools from '@/components/ai/AccessibilityTools';
 import AIPerformanceMonitor from '@/components/ai/AIPerformanceMonitor';
+import MarkdownTest from '@/components/ai/MarkdownTest';
 
 const AIDashboard = () => {
   const { user, signOut } = useAuth();
@@ -190,7 +191,7 @@ const AIDashboard = () => {
             setActiveTab(value);
           }
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="learning-path">Learning Path</TabsTrigger>
             <TabsTrigger value="quiz-creator">Quiz Creator</TabsTrigger>
@@ -200,6 +201,7 @@ const AIDashboard = () => {
             <TabsTrigger value="mentorship">Mentorship</TabsTrigger>
             <TabsTrigger value="forum">Forum</TabsTrigger>
             <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="test">Test</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -316,6 +318,10 @@ const AIDashboard = () => {
 
           <TabsContent value="performance">
             <AIPerformanceMonitor />
+          </TabsContent>
+
+          <TabsContent value="test">
+            <MarkdownTest />
           </TabsContent>
         </Tabs>
       </div>

@@ -196,17 +196,18 @@ class AIService {
     });
   }
 
-  // Format markdown for structured display with headers and points
+  // Format structured response - preserve markdown formatting
   private formatStructuredResponse(text: string): string {
     // For JSON responses, don't format
     if (text.trim().startsWith('{') && text.trim().endsWith('}')) {
       return text.trim();
     }
 
-    // Clean up extra whitespace but preserve structure
+    // Clean up excessive whitespace while preserving markdown structure
     return text
-      .replace(/\n\s*\n\s*\n/g, '\n\n')
-      .trim();
+      .replace(/\n\s*\n\s*\n/g, '\n\n') // Remove triple+ line breaks
+      .replace(/^\s+|\s+$/g, '') // Trim start and end
+      .replace(/[ \t]+$/gm, ''); // Remove trailing spaces on each line
   }
 
   // Education Features
@@ -216,7 +217,7 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a friendly teacher helping students learn. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Write in simple, clear language that a high school student can understand.'
+        content: 'You are a friendly teacher helping students learn. Structure your response with clear headers and bullet points. Use markdown formatting: ## for main headers, ### for subheaders, and - for bullet points. Write in simple, clear language. Always start with a main header (##) and organize content in logical sections with bullet points for key information.'
       },
       {
         role: 'user',
@@ -267,7 +268,7 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a friendly teacher helping a student. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Explain things in simple words that a primary or high school student can understand. Be encouraging and positive.'
+        content: 'You are a friendly teacher helping a student. Structure your response with clear headers and bullet points. Use markdown formatting: ## for main headers, ### for subheaders, and - for bullet points. Explain things in simple words that a primary or high school student can understand. Be encouraging and positive. Always organize your response with proper headers and bullet points.'
       },
       {
         role: 'user',
@@ -297,7 +298,7 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are an accessibility expert. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Generate concise, descriptive alt text for images that helps visually impaired users understand the content.'
+        content: 'You are an accessibility expert. Structure your response with clear headers and bullet points. Use markdown formatting: ## for main headers, ### for subheaders, and - for bullet points. Generate concise, descriptive alt text for images that helps visually impaired users understand the content. Always organize your response with proper headers.'
       },
       {
         role: 'user',
@@ -339,7 +340,7 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a teacher explaining how to help the environment. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Use simple words that students can understand. Give practical tips they can actually do.'
+        content: 'You are a teacher explaining how to help the environment. Structure your response with clear headers and bullet points. Use markdown formatting: ## for main headers, ### for subheaders, and - for bullet points. Use simple words that students can understand. Give practical tips they can actually do. Always start with a main header and organize content clearly.'
       },
       {
         role: 'user',
@@ -369,7 +370,7 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a teacher explaining environmental impact to students. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Use simple words and give encouraging feedback. Explain how their actions help the planet in ways they can understand.'
+        content: 'You are a teacher explaining environmental impact to students. Structure your response with clear headers and bullet points. Use markdown formatting: ## for main headers, ### for subheaders, and - for bullet points. Use simple words and give encouraging feedback. Explain how their actions help the planet in ways they can understand. Always organize with proper headers and bullet points.'
       },
       {
         role: 'user',
@@ -417,7 +418,7 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a mentorship matching expert. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Analyze profiles and provide compatibility scores and recommendations.'
+        content: 'You are a mentorship matching expert. Structure your response with clear headers and bullet points. Use markdown formatting: ## for main headers, ### for subheaders, and - for bullet points. Analyze profiles and provide compatibility scores and recommendations. Always organize your analysis with proper headers and bullet points.'
       },
       {
         role: 'user',
@@ -468,7 +469,7 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are an innovation expert. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Evaluate project ideas for feasibility, impact, and provide constructive feedback.'
+        content: 'You are an innovation expert. Structure your response with clear headers and bullet points. Use markdown formatting: ## for main headers, ### for subheaders, and - for bullet points. Evaluate project ideas for feasibility, impact, and provide constructive feedback. Always organize your evaluation with proper headers and bullet points.'
       },
       {
         role: 'user',
@@ -526,7 +527,7 @@ class AIService {
     const messages = [
       {
         role: 'system',
-        content: 'You are a grant writing expert. Structure your response with clear headers and bullet points. Use markdown formatting with ## for main headers, ### for subheaders, and - for bullet points. Help create compelling, well-structured grant proposals.'
+        content: 'You are a grant writing expert. Structure your response with clear headers and bullet points. Use markdown formatting: ## for main headers, ### for subheaders, and - for bullet points. Help create compelling, well-structured grant proposals. Always organize your proposal framework with proper headers and bullet points.'
       },
       {
         role: 'user',
