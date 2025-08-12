@@ -35,7 +35,17 @@ interface Lesson {
   is_bookmarked: boolean;
 }
 
-const LessonsSection = () => {
+interface LessonsSectionProps {
+  showSearch?: boolean;
+  maxLessons?: number;
+  className?: string;
+}
+
+const LessonsSection: React.FC<LessonsSectionProps> = ({ 
+  showSearch = true, 
+  maxLessons,
+  className = ''
+}) => {
   const { user, userProfile } = useAuth();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -257,35 +267,62 @@ const LessonsSection = () => {
           status: 'in_progress',
           started_at: new Date().toISOString(),
           last_accessed: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,lesson_id',
+          ignoreDuplicates: false
         });
     } catch (error) {
       console.error('Error starting lesson:', error);
-      // Revert optimistic update on error
-      setLessons(prev => prev.map(l => 
-        l.id === lessonId 
-          ? { 
-              ...l, 
-              progress: { 
-                status: 'not_started' as const, 
-                progress_percentage: 0 
+      
+      // Try to update existing record instead
+      try {
+        await supabase
+          .from('lesson_progress')
+          .update({
+            status: 'in_progress',
+            last_accessed: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('lesson_id', lessonId);
+      } catch (updateError) {
+        console.error('Error updating lesson progress:', updateError);
+        // Revert optimistic update on error
+        setLessons(prev => prev.map(l => 
+          l.id === lessonId 
+            ? { 
+                ...l, 
+                progress: { 
+                  status: 'not_started' as const, 
+                  progress_percentage: 0 
+                }
               }
-            }
-          : l
-      ));
+            : l
+        ));
+      }
     }
   }, [user]);
 
   // Memoized filtering for better performance
   const filteredLessons = useMemo(() => {
-    if (!debouncedSearchTerm.trim()) return lessons;
+    let filtered = lessons;
     
-    const searchLower = debouncedSearchTerm.toLowerCase();
-    return lessons.filter(lesson =>
-      lesson.title.toLowerCase().includes(searchLower) ||
-      lesson.description.toLowerCase().includes(searchLower) ||
-      (lesson.subject?.name && lesson.subject.name.toLowerCase().includes(searchLower))
-    );
-  }, [lessons, debouncedSearchTerm]);
+    // Apply search filter if search term exists
+    if (debouncedSearchTerm.trim()) {
+      const searchLower = debouncedSearchTerm.toLowerCase();
+      filtered = filtered.filter(lesson =>
+        lesson.title.toLowerCase().includes(searchLower) ||
+        lesson.description.toLowerCase().includes(searchLower) ||
+        (lesson.subject?.name && lesson.subject.name.toLowerCase().includes(searchLower))
+      );
+    }
+    
+    // Apply maxLessons limit if specified
+    if (maxLessons && maxLessons > 0) {
+      filtered = filtered.slice(0, maxLessons);
+    }
+    
+    return filtered;
+  }, [lessons, debouncedSearchTerm, maxLessons]);
 
 
 
@@ -312,7 +349,7 @@ const LessonsSection = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${className}`}>
 
       
       {/* Header */}
@@ -345,7 +382,8 @@ const LessonsSection = () => {
       )}
 
       {/* Filters */}
-      <Card>
+      {showSearch && (
+        <Card>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-2">
@@ -399,6 +437,7 @@ const LessonsSection = () => {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Lessons Grid/List */}
       {filteredLessons.length > 0 ? (

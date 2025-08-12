@@ -257,6 +257,11 @@ class IncidentAnalysisService {
           console.warn(`Table ${table} does not exist. Please run the database setup script.`);
           console.warn('Setup instructions: https://github.com/your-repo/docs/INCIDENT_ANALYSIS_SETUP.md');
         }
+        // Check if it's an authentication error (401)
+        else if (error.message?.includes('JWT') || error.code === 'PGRST301' || error.code === '401') {
+          console.warn(`Authentication error accessing ${table}. This may be due to missing RLS policies or the table not being set up.`);
+          console.warn('Please ensure the incident tracking migration has been applied to your Supabase project.');
+        }
         throw error;
       }
     } catch (error: any) {
