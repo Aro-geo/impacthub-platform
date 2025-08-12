@@ -9,10 +9,12 @@ import {
   Search, 
   BookOpen, 
   Grid,
-  List
+  List,
+  CheckCircle
 } from 'lucide-react';
 import GradeExplanation from './GradeExplanation';
 import LessonCard from './LessonCard';
+import LessonViewer from './LessonViewer';
 
 interface Subject {
   id: string;
@@ -28,11 +30,13 @@ interface Lesson {
   difficulty_level: string;
   duration_minutes: number;
   subject: Subject;
+  order_index: number;
   progress?: {
     status: 'not_started' | 'in_progress' | 'completed';
     progress_percentage: number;
   };
   is_bookmarked: boolean;
+  is_locked: boolean;
 }
 
 interface LessonsSectionProps {
@@ -55,6 +59,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('title');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
   // Debounced search to prevent excessive API calls
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -102,6 +107,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
           difficulty_level,
           duration_minutes,
           subject_id,
+          order_index,
           subjects!inner (
             id,
             name,
@@ -179,20 +185,34 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
         (bookmarksData || []).map(b => b.lesson_id)
       );
 
-      // Efficient data combination
-      const lessonsWithProgress = (lessonsData || []).map(lesson => {
-        const progress = progressMap.get(lesson.id);
-        
-        return {
-          ...lesson,
-          subject: lesson.subjects,
-          progress: progress ? {
-            status: progress.status,
-            progress_percentage: progress.progress_percentage
-          } : { status: 'not_started' as const, progress_percentage: 0 },
-          is_bookmarked: bookmarksSet.has(lesson.id)
-        };
-      });
+      // Efficient data combination with unlock-after-first-completion logic
+      const lessonsWithProgress = (lessonsData || [])
+        .sort((a, b) => a.order_index - b.order_index) // Sort by order first
+        .map((lesson, index, sortedLessons) => {
+          const progress = progressMap.get(lesson.id);
+          
+          // Determine if lesson is locked - only lock if no lessons have been completed yet
+          let isLocked = false;
+          if (index > 0) {
+            // Check if ANY lesson has been completed (not just previous ones)
+            const hasAnyCompletedLesson = Array.from(progressMap.values()).some(
+              p => p.status === 'completed'
+            );
+            // Lock only if no lessons have been completed yet
+            isLocked = !hasAnyCompletedLesson;
+          }
+          
+          return {
+            ...lesson,
+            subject: lesson.subjects,
+            progress: progress ? {
+              status: progress.status,
+              progress_percentage: progress.progress_percentage
+            } : { status: 'not_started' as const, progress_percentage: 0 },
+            is_bookmarked: bookmarksSet.has(lesson.id),
+            is_locked: isLocked
+          };
+        });
 
       setLessons(lessonsWithProgress);
     } catch (error) {
@@ -245,19 +265,17 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
   const startLesson = useCallback(async (lessonId: string) => {
     if (!user) return;
 
-    // Optimistic update
-    setLessons(prev => prev.map(l => 
-      l.id === lessonId 
-        ? { 
-            ...l, 
-            progress: { 
-              status: 'in_progress' as const, 
-              progress_percentage: l.progress?.progress_percentage || 0 
-            }
-          }
-        : l
-    ));
+    // Check if lesson is locked
+    const lesson = lessons.find(l => l.id === lessonId);
+    if (lesson?.is_locked) {
+      alert('Please complete any lesson first to unlock all other lessons.');
+      return;
+    }
 
+    // Open the lesson viewer instead of just updating status
+    setSelectedLessonId(lessonId);
+
+    // Update lesson status to in_progress
     try {
       await supabase
         .from('lesson_progress')
@@ -271,36 +289,13 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
           onConflict: 'user_id,lesson_id',
           ignoreDuplicates: false
         });
+      
+      // Refresh lessons to update UI
+      fetchLessons();
     } catch (error) {
       console.error('Error starting lesson:', error);
-      
-      // Try to update existing record instead
-      try {
-        await supabase
-          .from('lesson_progress')
-          .update({
-            status: 'in_progress',
-            last_accessed: new Date().toISOString()
-          })
-          .eq('user_id', user.id)
-          .eq('lesson_id', lessonId);
-      } catch (updateError) {
-        console.error('Error updating lesson progress:', updateError);
-        // Revert optimistic update on error
-        setLessons(prev => prev.map(l => 
-          l.id === lessonId 
-            ? { 
-                ...l, 
-                progress: { 
-                  status: 'not_started' as const, 
-                  progress_percentage: 0 
-                }
-              }
-            : l
-        ));
-      }
     }
-  }, [user]);
+  }, [user, lessons, fetchLessons]);
 
   // Memoized filtering for better performance
   const filteredLessons = useMemo(() => {
@@ -348,6 +343,22 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
     return LoadingSkeleton;
   }
 
+  // Show lesson viewer if a lesson is selected
+  if (selectedLessonId) {
+    return (
+      <LessonViewer
+        lessonId={selectedLessonId}
+        onClose={() => setSelectedLessonId(null)}
+        onLessonComplete={() => {
+          // Refresh lessons when lesson is completed to unlock next lesson
+          fetchLessons();
+          // Close the lesson viewer after completion
+          setSelectedLessonId(null);
+        }}
+      />
+    );
+  }
+
   return (
     <div className={`space-y-6 ${className}`}>
 
@@ -356,7 +367,14 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Browse Lessons</h2>
-          <p className="text-gray-600">Explore and learn at your own pace</p>
+          <p className="text-gray-600">
+            {user && filteredLessons.some(l => !l.is_locked) && filteredLessons.some(l => l.is_locked)
+              ? "Complete any lesson to unlock all others"
+              : user && filteredLessons.every(l => !l.is_locked) && filteredLessons.length > 0
+              ? "All lessons unlocked! Choose any lesson to continue learning"
+              : "Explore and learn at your own pace"
+            }
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -379,6 +397,32 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       {/* Grade Explanation */}
       {userProfile?.grade && (
         <GradeExplanation userGrade={userProfile.grade} />
+      )}
+
+      {/* Unlock Status Notification */}
+      {user && filteredLessons.length > 0 && (
+        <>
+          {filteredLessons.every(l => !l.is_locked) && filteredLessons.some(l => l.progress?.status === 'completed') && (
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2 text-green-800">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-medium">🎉 Great job! All lessons are now unlocked. Choose any lesson to continue your learning journey!</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {filteredLessons.some(l => l.is_locked) && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2 text-blue-800">
+                  <BookOpen className="h-5 w-5" />
+                  <span className="font-medium">Start with the first lesson to unlock all others and explore freely!</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
       {/* Filters */}

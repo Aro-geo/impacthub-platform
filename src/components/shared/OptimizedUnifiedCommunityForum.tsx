@@ -82,7 +82,7 @@ const OptimizedUnifiedCommunityForum = ({
     title: '',
     content: '',
     post_type: 'discussion' as const,
-    subject_id: '',
+    subject_id: 'none',
     category: ''
   });
 
@@ -145,12 +145,12 @@ const OptimizedUnifiedCommunityForum = ({
           created_at,
           user_id,
           subject_id,
-          subjects!inner (
+          subjects (
             id,
             name,
             color
           ),
-          profiles!inner (
+          profiles (
             name,
             avatar_url
           )
@@ -259,7 +259,7 @@ const OptimizedUnifiedCommunityForum = ({
           title: newPost.title,
           content: newPost.content,
           post_type: newPost.post_type,
-          subject_id: newPost.subject_id || null,
+          subject_id: newPost.subject_id === 'none' ? null : newPost.subject_id,
           user_id: user.id
         });
 
@@ -269,7 +269,7 @@ const OptimizedUnifiedCommunityForum = ({
         title: '',
         content: '',
         post_type: 'discussion',
-        subject_id: '',
+        subject_id: 'none',
         category: ''
       });
       setShowNewPostDialog(false);
@@ -443,13 +443,13 @@ const OptimizedUnifiedCommunityForum = ({
                   </label>
                   <Select 
                     value={newPost.subject_id} 
-                    onValueChange={(value) => setNewPost(prev => ({ ...prev, subject_id: value }))}
+                    onValueChange={(value) => setNewPost(prev => ({ ...prev, subject_id: value === "none" ? "" : value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No specific subject</SelectItem>
+                      <SelectItem value="none">No specific subject</SelectItem>
                       {subjects.map(subject => (
                         <SelectItem key={subject.id} value={subject.id}>
                           {subject.name}

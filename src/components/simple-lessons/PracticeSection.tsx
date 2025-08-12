@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import QuizInterface from './QuizInterface';
 import { 
   Target, 
   Trophy, 
@@ -68,6 +69,7 @@ const PracticeSection = () => {
   const [recentAttempts, setRecentAttempts] = useState<(QuizAttempt & { quiz: Quiz })[]>([]);
   const [loading, setLoading] = useState(true);
   const [practiceMode, setPracticeMode] = useState<'review' | 'timed' | 'random'>('review');
+  const [showQuizInterface, setShowQuizInterface] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -129,14 +131,22 @@ const PracticeSection = () => {
     const { data, error } = await query;
     if (error) throw error;
 
-    const formattedQuizzes = data?.map(quiz => ({
-      ...quiz,
-      lesson: {
-        id: quiz.simple_lessons.id,
-        title: quiz.simple_lessons.title,
-        subject: quiz.simple_lessons.subjects
-      }
-    })) || [];
+    const formattedQuizzes = data?.map(quiz => {
+      // Convert correct_answer to number for consistency
+      
+      return {
+        ...quiz,
+        // Ensure correct_answer is a number for consistency
+        correct_answer: typeof quiz.correct_answer === 'string' 
+          ? parseInt(quiz.correct_answer, 10) 
+          : quiz.correct_answer,
+        lesson: quiz.simple_lessons ? {
+          id: quiz.simple_lessons.id,
+          title: quiz.simple_lessons.title,
+          subject: quiz.simple_lessons.subjects
+        } : null
+      };
+    }).filter(quiz => quiz.lesson !== null) || [];
 
     setQuizzes(formattedQuizzes);
   };
@@ -213,11 +223,11 @@ const PracticeSection = () => {
       ...attempt,
       quiz: {
         ...attempt.lesson_quizzes,
-        lesson: {
+        lesson: attempt.lesson_quizzes.simple_lessons ? {
           id: attempt.lesson_quizzes.simple_lessons.id,
           title: attempt.lesson_quizzes.simple_lessons.title,
           subject: attempt.lesson_quizzes.simple_lessons.subjects
-        }
+        } : null
       }
     })) || [];
 
@@ -225,13 +235,17 @@ const PracticeSection = () => {
   };
 
   const retryQuiz = async (quizId: string) => {
-    // In a real implementation, this would navigate to the quiz interface
-    console.log('Retrying quiz:', quizId);
+    // Find the quiz and set up practice session for that specific quiz
+    const quiz = recentAttempts.find(attempt => attempt.quiz_id === quizId);
+    if (quiz) {
+      setSelectedSubject(quiz.quiz.lesson.subject.id);
+      setPracticeMode('review');
+      setShowQuizInterface(true);
+    }
   };
 
   const startPracticeSession = async () => {
-    // In a real implementation, this would start a practice session
-    console.log('Starting practice session in mode:', practiceMode);
+    setShowQuizInterface(true);
   };
 
   const getScoreColor = (score: number) => {
@@ -260,6 +274,21 @@ const PracticeSection = () => {
           ))}
         </div>
       </div>
+    );
+  }
+
+  // Show quiz interface if practice session is started
+  if (showQuizInterface) {
+    return (
+      <QuizInterface
+        practiceMode={practiceMode}
+        selectedSubject={selectedSubject}
+        onClose={() => {
+          setShowQuizInterface(false);
+          // Refresh data when returning from quiz
+          fetchData();
+        }}
+      />
     );
   }
 
@@ -334,7 +363,7 @@ const PracticeSection = () => {
               <span>Start Practice Session</span>
             </CardTitle>
             <CardDescription>
-              Choose your practice mode and subject
+              Choose your practice mode and subject to start taking quizzes
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -347,9 +376,24 @@ const PracticeSection = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="review">Review Mode</SelectItem>
-                  <SelectItem value="timed">Timed Practice</SelectItem>
-                  <SelectItem value="random">Random Questions</SelectItem>
+                  <SelectItem value="review">
+                    <div className="flex flex-col">
+                      <span>Review Mode</span>
+                      <span className="text-xs text-gray-500">Take your time, see explanations</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="timed">
+                    <div className="flex flex-col">
+                      <span>Timed Practice</span>
+                      <span className="text-xs text-gray-500">10 questions in 10 minutes</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="random">
+                    <div className="flex flex-col">
+                      <span>Random Questions</span>
+                      <span className="text-xs text-gray-500">Mixed questions from all topics</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -376,13 +420,22 @@ const PracticeSection = () => {
             <Button 
               className="w-full bg-green-600 hover:bg-green-700"
               onClick={startPracticeSession}
+              disabled={quizzes.length === 0}
             >
               <Play className="mr-2 h-4 w-4" />
-              Start Practice
+              Start Practice Session
             </Button>
 
             <div className="text-sm text-gray-600 text-center">
-              {quizzes.length} questions available
+              {quizzes.length > 0 ? (
+                <span className="text-green-600 font-medium">
+                  {quizzes.length} questions available
+                </span>
+              ) : (
+                <span className="text-gray-400">
+                  No questions available for selected subject
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -448,75 +501,7 @@ const PracticeSection = () => {
         </Card>
       </div>
 
-      {/* Available Quizzes by Subject */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Trophy className="h-5 w-5 text-purple-600" />
-            <span>Available Quizzes</span>
-          </CardTitle>
-          <CardDescription>
-            Practice quizzes organized by subject
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {subjects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {subjects.map((subject) => {
-                const subjectQuizzes = quizzes.filter(q => q.lesson?.subject?.id === subject.id);
-                const userAttempts = recentAttempts.filter(a => a.quiz?.lesson?.subject?.id === subject.id);
-                const correctAttempts = userAttempts.filter(a => a.is_correct).length;
-                const successRate = userAttempts.length > 0 
-                  ? Math.round((correctAttempts / userAttempts.length) * 100) 
-                  : 0;
 
-                return (
-                  <Card key={subject.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-gray-900">{subject.name}</h3>
-                        <Badge variant="secondary" className="text-xs">
-                          {subjectQuizzes.length} quizzes
-                        </Badge>
-                      </div>
-                      
-                      {userAttempts.length > 0 && (
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-gray-600">Success Rate</span>
-                            <span className={`font-medium ${getScoreColor(successRate)}`}>
-                              {successRate}%
-                            </span>
-                          </div>
-                          <Progress value={successRate} className="h-2" />
-                        </div>
-                      )}
-
-                      <Button 
-                        size="sm" 
-                        className="w-full"
-                        onClick={() => {
-                          setSelectedSubject(subject.id);
-                          startPracticeSession();
-                        }}
-                      >
-                        <Play className="mr-2 h-3 w-3" />
-                        Practice {subject.name}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Trophy className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No quizzes available</h3>
-              <p className="text-gray-600">Quizzes will appear here as lessons are added</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 };

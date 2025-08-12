@@ -13,7 +13,6 @@ import {
   Clock,
   CheckCircle,
   Play,
-  Pause,
   RotateCcw
 } from 'lucide-react';
 
@@ -23,7 +22,7 @@ interface LessonContent {
   description: string;
   content: string;
   duration_minutes?: number;
-  difficulty_level: 'beginner' | 'intermediate' | 'advanced';
+  difficulty_level: string;
   is_published: boolean;
   created_at: string;
   updated_at: string;
@@ -45,13 +44,15 @@ interface LessonViewerProps {
   onClose: () => void;
   onNext?: () => void;
   onPrevious?: () => void;
+  onLessonComplete?: () => void;
 }
 
 const LessonViewer: React.FC<LessonViewerProps> = ({
   lessonId,
   onClose,
   onNext,
-  onPrevious
+  onPrevious,
+  onLessonComplete
 }) => {
   const { user } = useAuth();
   const [lesson, setLesson] = useState<LessonContent | null>(null);
@@ -150,6 +151,11 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
       if (progressData) {
         setProgress(progressData);
         setIsStarted(false);
+
+        // Notify parent component that lesson is completed to refresh lessons list
+        if (onLessonComplete) {
+          onLessonComplete();
+        }
       }
     } catch (err) {
       console.error('Error completing lesson:', err);
@@ -264,6 +270,31 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
           </div>
         </CardHeader>
       </Card>
+
+      {/* Completion Celebration */}
+      {progress?.status === 'completed' && (
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="p-6 text-center">
+            <div className="space-y-4">
+              <div className="text-4xl">🎉</div>
+              <div>
+                <h3 className="text-xl font-bold text-green-800 mb-2">Lesson Completed!</h3>
+                <p className="text-green-700">
+                  Congratulations! You've successfully completed this lesson.
+                  All lessons are now unlocked for you to explore freely!
+                </p>
+              </div>
+              <Button
+                onClick={onClose}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Explore More Lessons
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Progress Card */}
       {user && (

@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,8 @@ import {
   CheckCircle, 
   Clock, 
   Bookmark, 
-  BookmarkCheck
+  BookmarkCheck,
+  Lock
 } from 'lucide-react';
 
 interface Subject {
@@ -30,6 +31,7 @@ interface Lesson {
     progress_percentage: number;
   };
   is_bookmarked: boolean;
+  is_locked: boolean;
 }
 
 interface LessonCardProps {
@@ -76,7 +78,7 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className={`transition-shadow ${lesson.is_locked ? 'opacity-60' : 'hover:shadow-lg'}`}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-2">
@@ -86,12 +88,19 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
             <Badge className={getDifficultyColor(lesson.difficulty_level)}>
               {lesson.difficulty_level}
             </Badge>
+            {lesson.is_locked && (
+              <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600">
+                <Lock className="h-3 w-3 mr-1" />
+                Locked
+              </Badge>
+            )}
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onToggleBookmark(lesson.id)}
             className="h-8 w-8 p-0"
+            disabled={lesson.is_locked}
           >
             {lesson.is_bookmarked ? (
               <BookmarkCheck className="h-4 w-4 text-blue-600" />
@@ -101,28 +110,34 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
           </Button>
         </div>
 
-        <h3 className="font-semibold text-gray-900 mb-2 text-lg">
+        <h3 className={`font-semibold mb-2 text-lg ${lesson.is_locked ? 'text-gray-500' : 'text-gray-900'}`}>
           {lesson.title}
         </h3>
 
-        <p className="text-gray-600 mb-4 text-sm leading-relaxed line-clamp-3">
+        <p className={`mb-4 text-sm leading-relaxed line-clamp-3 ${lesson.is_locked ? 'text-gray-400' : 'text-gray-600'}`}>
           {lesson.description}
         </p>
 
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-4 text-sm text-gray-500">
+          <div className={`flex items-center space-x-4 text-sm ${lesson.is_locked ? 'text-gray-400' : 'text-gray-500'}`}>
             <div className="flex items-center space-x-1">
               <Clock className="h-4 w-4" />
               <span>{lesson.duration_minutes} min</span>
             </div>
             <div className="flex items-center space-x-1">
-              {getStatusIcon(lesson.progress?.status || 'not_started')}
-              <span>{getStatusText(lesson.progress?.status || 'not_started')}</span>
+              {lesson.is_locked ? (
+                <Lock className="h-4 w-4" />
+              ) : (
+                getStatusIcon(lesson.progress?.status || 'not_started')
+              )}
+              <span>
+                {lesson.is_locked ? 'Locked' : getStatusText(lesson.progress?.status || 'not_started')}
+              </span>
             </div>
           </div>
         </div>
 
-        {lesson.progress?.status === 'in_progress' && (
+        {lesson.progress?.status === 'in_progress' && !lesson.is_locked && (
           <div className="mb-4">
             <div className="flex items-center justify-between text-sm mb-1">
               <span className="text-gray-600">Progress</span>
@@ -140,8 +155,13 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
         )}
 
         <div className="flex items-center space-x-2">
-          {lesson.progress?.status === 'completed' ? (
-            <Button variant="outline" className="flex-1">
+          {lesson.is_locked ? (
+            <Button variant="outline" className="flex-1" disabled>
+              <Lock className="mr-2 h-4 w-4" />
+              Complete Any Lesson First
+            </Button>
+          ) : lesson.progress?.status === 'completed' ? (
+            <Button variant="outline" className="flex-1" onClick={() => onStartLesson(lesson.id)}>
               <CheckCircle className="mr-2 h-4 w-4" />
               Review
             </Button>
@@ -156,7 +176,7 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
           )}
           
           <Badge className={getStatusColor(lesson.progress?.status || 'not_started')}>
-            {getStatusText(lesson.progress?.status || 'not_started')}
+            {lesson.is_locked ? 'Locked' : getStatusText(lesson.progress?.status || 'not_started')}
           </Badge>
         </div>
       </CardContent>
