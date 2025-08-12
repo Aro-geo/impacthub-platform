@@ -25,8 +25,7 @@ import {
   Star,
   Clock,
   Heart,
-  Sparkles,
-  Flame
+  Sparkles
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -52,7 +51,6 @@ const Dashboard = () => {
     { label: 'Lessons Completed', value: '0', icon: BookOpen, color: 'text-green-600' },
     { label: 'AI Interactions', value: aiStats?.totalInteractions?.toString() || '0', icon: Brain, color: 'text-purple-600' },
     { label: 'Quizzes Attempted', value: '0', icon: Target, color: 'text-green-600' },
-    { label: 'Day Streak', value: '0', icon: Flame, color: 'text-orange-600' },
     { label: 'Community Connections', value: '0', icon: Users, color: 'text-indigo-600' },
   ];
 
@@ -111,18 +109,16 @@ const Dashboard = () => {
           </div>
         </div>
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                    <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 ${stat.color}`}>
-                    <stat.icon className="h-7 w-7" />
-                  </div>
+              <CardContent className="p-6 flex flex-col items-center text-center h-full">
+                <div className={`p-4 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 ${stat.color} mb-4`}>
+                  <stat.icon className="h-8 w-8" />
+                </div>
+                <div className="mt-auto">
+                  <p className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</p>
+                  <p className="text-sm font-medium text-gray-600">{stat.label}</p>
                 </div>
               </CardContent>
             </Card>
@@ -135,12 +131,14 @@ const Dashboard = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {quickActions.map((action, index) => (
               <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border-0 shadow-md" onClick={action.action}>
-                <CardContent className="p-6 text-center">
+                <CardContent className="p-6 flex flex-col items-center text-center h-full min-h-[180px]">
                   <div className={`w-16 h-16 ${action.color} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
                     <action.icon className="h-8 w-8 text-white" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{action.title}</h3>
-                  <p className="text-sm text-gray-600">{action.description}</p>
+                  <div className="mt-auto">
+                    <h3 className="font-semibold text-gray-900 mb-2">{action.title}</h3>
+                    <p className="text-sm text-gray-600">{action.description}</p>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -277,34 +275,40 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow">
-                    <div className="text-4xl mb-3">🎓</div>
-                    <h3 className="font-semibold mb-2">AI Learning Tools</h3>
-                    <p className="text-sm text-gray-600 mb-3">Advanced AI-powered learning features</p>
-                    <Button size="sm" onClick={() => navigate('/ai-dashboard')}>
-                      <Brain className="mr-2 h-4 w-4" />
-                      Explore
-                    </Button>
+                  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
+                    <div className="text-4xl mb-4">🎓</div>
+                    <div className="mt-auto">
+                      <h3 className="font-semibold mb-2">AI Learning Tools</h3>
+                      <p className="text-sm text-gray-600 mb-3">Advanced AI-powered learning features</p>
+                      <Button size="sm" onClick={() => navigate('/ai-dashboard')}>
+                        <Brain className="mr-2 h-4 w-4" />
+                        Explore
+                      </Button>
+                    </div>
                   </div>
                   
-                  <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow">
-                    <div className="text-4xl mb-3">📚</div>
-                    <h3 className="font-semibold mb-2">Simple Lessons</h3>
-                    <p className="text-sm text-gray-600 mb-3">Visual, voice-guided learning</p>
-                    <Button size="sm" onClick={() => navigate('/simple-lessons')}>
-                      <Play className="mr-2 h-4 w-4" />
-                      Start
-                    </Button>
+                  <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
+                    <div className="text-4xl mb-4">📚</div>
+                    <div className="mt-auto">
+                      <h3 className="font-semibold mb-2">Simple Lessons</h3>
+                      <p className="text-sm text-gray-600 mb-3">Visual, voice-guided learning</p>
+                      <Button size="sm" onClick={() => navigate('/simple-lessons')}>
+                        <Play className="mr-2 h-4 w-4" />
+                        Start
+                      </Button>
+                    </div>
                   </div>
                   
-                  <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow">
-                    <div className="text-4xl mb-3">🎤</div>
-                    <h3 className="font-semibold mb-2">Voice Practice</h3>
-                    <p className="text-sm text-gray-600 mb-3">Speaking practice with AI feedback</p>
-                    <Button size="sm">
-                      <Mic className="mr-2 h-4 w-4" />
-                      Practice
-                    </Button>
+                  <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
+                    <div className="text-4xl mb-4">🎤</div>
+                    <div className="mt-auto">
+                      <h3 className="font-semibold mb-2">Voice Practice</h3>
+                      <p className="text-sm text-gray-600 mb-3">Speaking practice with AI feedback</p>
+                      <Button size="sm">
+                        <Mic className="mr-2 h-4 w-4" />
+                        Practice
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

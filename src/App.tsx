@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import MobileNavigation from "@/components/MobileNavigation";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import { useOffline } from "@/hooks/useOffline";
 
 // Lazy load all page components for code splitting
@@ -25,6 +26,7 @@ const SimpleLessonDashboard = lazy(() => import("./pages/SimpleLessonDashboard")
 const Community = lazy(() => import("./pages/Community"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
+const IncidentAnalysis = lazy(() => import("./pages/IncidentAnalysis"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -148,6 +150,16 @@ const AppContent = () => {
               </Suspense>
             } 
           />
+          <Route 
+            path="/incident-analysis" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading Incident Analysis..." />}>
+                <ProtectedRoute>
+                  <IncidentAnalysis />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
           
           {/* Catch-all route */}
           <Route 
@@ -168,24 +180,28 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true
-            }}
-          >
-            <AppContent />
-          </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <ErrorBoundary showDetails={process.env.NODE_ENV === 'development'}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true
+              }}
+            >
+              <ErrorBoundary>
+                <AppContent />
+              </ErrorBoundary>
+            </BrowserRouter>
+          </AuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

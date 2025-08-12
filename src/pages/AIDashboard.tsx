@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAI } from '@/hooks/useAI';
 import { aiTrackingService } from '@/services/aiTrackingService';
-import { toast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
 import {
   Brain,
@@ -25,13 +24,13 @@ import SustainabilityCalculator from '@/components/ai/SustainabilityCalculator';
 import MentorshipMatcher from '@/components/ai/MentorshipMatcher';
 import OptimizedUnifiedCommunityForum from '@/components/shared/OptimizedUnifiedCommunityForum';
 import AccessibilityTools from '@/components/ai/AccessibilityTools';
+import AIPerformanceMonitor from '@/components/ai/AIPerformanceMonitor';
 
 const AIDashboard = () => {
   const { user, signOut } = useAuth();
   const { getUserStats } = useAI();
   const [activeTab, setActiveTab] = useState('overview');
   const [aiStats, setAiStats] = useState<any>(null);
-  const [trackingInteraction, setTrackingInteraction] = useState(false);
 
   useEffect(() => {
     const fetchAIStats = async () => {
@@ -44,69 +43,57 @@ const AIDashboard = () => {
     fetchAIStats();
   }, [user, getUserStats]);
 
-  // Function to handle AI tool interactions
+  // Function to handle AI tool interactions (simplified - no popup notifications)
   const handleToolInteraction = async (toolId: string, toolName: string) => {
-    if (!user) {
-      setActiveTab(toolId);
-      return;
-    }
-
-    try {
-      setTrackingInteraction(true);
-
-      // Map tool IDs to interaction types
-      const interactionTypeMap: Record<string, string> = {
-        'learning-path': 'learning_path_generation',
-        'quiz-creator': 'quiz_creation',
-        'homework-helper': 'homework_help',
-        'accessibility': 'alt_text_generation',
-        'sustainability': 'sustainability_impact',
-        'mentorship': 'mentorship_matching',
-        'forum': 'sentiment_analysis'
-      };
-
-      const interactionType = interactionTypeMap[toolId];
-      if (interactionType) {
-        // Record the tool access interaction
-        const interactionId = await aiTrackingService.startInteraction(
-          user.id,
-          interactionType as any,
-          {
-            tool_accessed: toolName,
-            access_method: 'dashboard_card',
-            timestamp: new Date().toISOString()
-          }
-        );
-
-        // Mark as completed immediately for tool access
-        await aiTrackingService.completeInteraction(
-          interactionId,
-          { tool_opened: toolName },
-          50, // Small processing time for tool access
-          0 // No tokens used for tool access
-        );
-
-        // Refresh stats to show updated interaction count
-        const updatedStats = await getUserStats();
-        setAiStats(updatedStats);
-
-        // Show success toast (only in development)
-        if (process.env.NODE_ENV === 'development') {
-          toast({
-            title: "Tool Access Recorded",
-            description: `Your interaction with ${toolName} has been tracked.`,
-            duration: 2000,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error tracking tool interaction:', error);
-    } finally {
-      setTrackingInteraction(false);
-    }
-
-    // Switch to the tool tab
+    // Switch to the tool tab immediately for better performance
     setActiveTab(toolId);
+
+    // Track interaction in background without blocking UI
+    if (user) {
+      // Run tracking asynchronously without awaiting to avoid blocking
+      setTimeout(async () => {
+        try {
+          // Map tool IDs to interaction types
+          const interactionTypeMap: Record<string, string> = {
+            'learning-path': 'learning_path_generation',
+            'quiz-creator': 'quiz_creation',
+            'homework-helper': 'homework_help',
+            'accessibility': 'alt_text_generation',
+            'sustainability': 'sustainability_impact',
+            'mentorship': 'mentorship_matching',
+            'forum': 'sentiment_analysis'
+          };
+
+          const interactionType = interactionTypeMap[toolId];
+          if (interactionType) {
+            // Record the tool access interaction in background
+            const interactionId = await aiTrackingService.startInteraction(
+              user.id,
+              interactionType as any,
+              {
+                tool_accessed: toolName,
+                access_method: 'dashboard_card',
+                timestamp: new Date().toISOString()
+              }
+            );
+
+            // Mark as completed immediately for tool access
+            await aiTrackingService.completeInteraction(
+              interactionId,
+              { tool_opened: toolName },
+              50, // Small processing time for tool access
+              0 // No tokens used for tool access
+            );
+
+            // Refresh stats quietly in background
+            const updatedStats = await getUserStats();
+            setAiStats(updatedStats);
+          }
+        } catch (error) {
+          console.error('Error tracking tool interaction:', error);
+        }
+      }, 0);
+    }
   };
 
   const aiFeatures = [
@@ -192,7 +179,7 @@ const AIDashboard = () => {
         </div>
         <Tabs value={activeTab} onValueChange={(value) => {
           // Track interaction when switching tabs directly
-          if (value !== 'overview' && value !== activeTab) {
+          if (value !== 'overview' && value !== activeTab && value !== 'performance') {
             const feature = aiFeatures.find(f => f.id === value);
             if (feature) {
               handleToolInteraction(value, feature.title);
@@ -203,7 +190,7 @@ const AIDashboard = () => {
             setActiveTab(value);
           }
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="learning-path">Learning Path</TabsTrigger>
             <TabsTrigger value="quiz-creator">Quiz Creator</TabsTrigger>
@@ -212,6 +199,7 @@ const AIDashboard = () => {
             <TabsTrigger value="sustainability">Sustainability</TabsTrigger>
             <TabsTrigger value="mentorship">Mentorship</TabsTrigger>
             <TabsTrigger value="forum">Forum</TabsTrigger>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -324,6 +312,10 @@ const AIDashboard = () => {
               title="AI Community Forum"
               description="Discuss AI tools, get help, and share insights"
             />
+          </TabsContent>
+
+          <TabsContent value="performance">
+            <AIPerformanceMonitor />
           </TabsContent>
         </Tabs>
       </div>

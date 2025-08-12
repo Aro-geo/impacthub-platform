@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { incidentAnalysisService } from './incidentAnalysisService';
 
 export type LearningModule = Tables<'learning_modules'>;
 export type UserProgress = Tables<'user_progress'>;
@@ -10,14 +11,39 @@ export type QuizAttempt = Tables<'lesson_quiz_attempts'>;
 export const learningService = {
   // Get all learning modules
   async getLearningModules(language = 'en') {
-    const { data, error } = await supabase
-      .from('learning_modules')
-      .select('*')
-      .eq('language', language)
-      .order('created_at', { ascending: true });
+    const startTime = performance.now();
+    
+    try {
+      const { data, error } = await supabase
+        .from('learning_modules')
+        .select('*')
+        .eq('language', language)
+        .order('created_at', { ascending: true });
 
-    if (error) throw error;
-    return data;
+      const responseTime = performance.now() - startTime;
+      
+      // Log performance metric
+      incidentAnalysisService.logPerformance({
+        metric: 'api_response',
+        value: responseTime,
+        metadata: {
+          endpoint: 'getLearningModules',
+          language,
+          record_count: data?.length || 0
+        }
+      });
+
+      if (error) {
+        await incidentAnalysisService.logApiError('getLearningModules', error, responseTime);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      const responseTime = performance.now() - startTime;
+      await incidentAnalysisService.logApiError('getLearningModules', error, responseTime);
+      throw error;
+    }
   },
 
   // Get learning module by ID
