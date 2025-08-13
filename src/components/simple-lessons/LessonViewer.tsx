@@ -181,10 +181,10 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
 
   const getDifficultyColor = (level: string) => {
     switch (level) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'beginner': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+      case 'intermediate': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
+      case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -200,7 +200,7 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
         <CardContent className="flex items-center justify-center p-8">
           <div className="flex items-center space-x-2">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            <span>Loading lesson...</span>
+            <span className="text-foreground">Loading lesson...</span>
           </div>
         </CardContent>
       </Card>
@@ -211,7 +211,7 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
     return (
       <Card className="max-w-4xl mx-auto">
         <CardContent className="p-8 text-center">
-          <div className="text-red-600 mb-4">
+          <div className="text-red-600 dark:text-red-400 mb-4">
             {error || 'Lesson not found'}
           </div>
           <Button onClick={onClose} variant="outline">
@@ -273,20 +273,20 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
 
       {/* Completion Celebration */}
       {progress?.status === 'completed' && (
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
           <CardContent className="p-6 text-center">
             <div className="space-y-4">
               <div className="text-4xl">🎉</div>
               <div>
-                <h3 className="text-xl font-bold text-green-800 mb-2">Lesson Completed!</h3>
-                <p className="text-green-700">
+                <h3 className="text-xl font-bold text-green-800 dark:text-green-300 mb-2">Lesson Completed!</h3>
+                <p className="text-green-700 dark:text-green-200">
                   Congratulations! You've successfully completed this lesson.
                   All lessons are now unlocked for you to explore freely!
                 </p>
               </div>
               <Button
                 onClick={onClose}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
               >
                 <BookOpen className="w-4 h-4 mr-2" />
                 Explore More Lessons
@@ -304,7 +304,7 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
               <h3 className="font-semibold">Your Progress</h3>
               <div className="flex items-center space-x-2">
                 {progress?.status === 'completed' && (
-                  <Badge className="bg-green-100 text-green-800">
+                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
                     <CheckCircle className="w-3 h-3 mr-1" />
                     Completed
                   </Badge>

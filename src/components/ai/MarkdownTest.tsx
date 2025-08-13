@@ -50,8 +50,8 @@ const MarkdownTest: React.FC = () => {
             </div>
             
             <div>
-              <h3 className="text-lg font-semibold mb-2">Rendered Output:</h3>
-              <div className="border p-4 rounded bg-blue-50">
+              <h3 className="text-lg font-semibold text-foreground mb-2">Rendered Output:</h3>
+              <div className="border border-border p-4 rounded bg-blue-50 dark:bg-blue-900/20">
                 <MarkdownRenderer 
                   content={sampleMarkdown} 
                   className="text-blue-800"

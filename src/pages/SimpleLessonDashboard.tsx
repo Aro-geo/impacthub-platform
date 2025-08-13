@@ -94,25 +94,25 @@ const SimpleLessonDashboard = () => {
       value: 'overview',
       label: 'Overview',
       icon: BarChart3,
-      color: 'text-blue-600'
+      color: 'text-blue-600 dark:text-blue-400'
     },
     {
       value: 'lessons',
       label: 'Lessons',
       icon: BookOpen,
-      color: 'text-green-600'
+      color: 'text-green-600 dark:text-green-400'
     },
     {
       value: 'practice',
       label: 'Practice',
       icon: Target,
-      color: 'text-purple-600'
+      color: 'text-purple-600 dark:text-purple-400'
     },
     {
       value: 'community',
       label: 'Community',
       icon: Users,
-      color: 'text-orange-600'
+      color: 'text-orange-600 dark:text-orange-400'
     }
   ];
 
@@ -123,7 +123,7 @@ const SimpleLessonDashboard = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your dashboard...</p>
+            <p className="text-muted-foreground">Loading your dashboard...</p>
           </div>
         </div>
       </div>
@@ -136,7 +136,7 @@ const SimpleLessonDashboard = () => {
         <Navigation />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <p className="text-gray-600">Please sign in to access Simple Lessons.</p>
+            <p className="text-muted-foreground">Please sign in to access Simple Lessons.</p>
           </div>
         </div>
       </div>
@@ -150,8 +150,8 @@ const SimpleLessonDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Simple Lessons</h1>
-          <p className="text-gray-600 mt-2">Continue your learning journey</p>
+          <h1 className="text-3xl font-bold text-foreground">Simple Lessons</h1>
+          <p className="text-muted-foreground mt-2">Continue your learning journey</p>
         </div>
 
         
@@ -162,7 +162,7 @@ const SimpleLessonDashboard = () => {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex items-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                className="flex items-center space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
               >
                 <tab.icon className={`h-4 w-4 ${tab.color}`} />
                 <span className="hidden sm:inline">{tab.label}</span>

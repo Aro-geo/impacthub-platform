@@ -321,10 +321,10 @@ const AccessibilityTools = () => {
         )}
 
         {/* Accessibility Tips */}
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
           <CardContent className="pt-6">
-            <h4 className="font-semibold text-blue-900 mb-3">Accessibility Best Practices:</h4>
-            <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-800">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">Accessibility Best Practices:</h4>
+            <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-800 dark:text-blue-200">
               <div>
                 <h5 className="font-medium mb-2">For Content Creators:</h5>
                 <ul className="space-y-1">

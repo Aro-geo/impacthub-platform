@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import MobileNavigation from "@/components/MobileNavigation";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -35,7 +35,7 @@ const AppContent = () => {
   const { isOnline, syncStatus } = useOffline();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <Suspense fallback={<LoadingSpinner size="lg" text="Loading application..." />}>
         <Routes>
           <Route 
@@ -182,24 +182,22 @@ const AppContent = () => {
 const App = () => (
   <ErrorBoundary showDetails={process.env.NODE_ENV === 'development'}>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AuthProvider>
-            <BrowserRouter
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true
-              }}
-            >
-              <ErrorBoundary>
-                <AppContent />
-              </ErrorBoundary>
-            </BrowserRouter>
-          </AuthProvider>
-        </TooltipProvider>
-      </ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true
+            }}
+          >
+            <ErrorBoundary>
+              <AppContent />
+            </ErrorBoundary>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );

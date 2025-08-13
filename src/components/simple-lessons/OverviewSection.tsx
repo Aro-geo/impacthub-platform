@@ -164,10 +164,10 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'beginner': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+      case 'intermediate': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
+      case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -224,18 +224,18 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold mb-2">Your Learning Progress</h2>
-              <p className="text-blue-100">{getMotivationalMessage()}</p>
+              <p className="text-blue-100 dark:text-blue-200">{getMotivationalMessage()}</p>
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold">{userStats.completionPercentage}%</div>
-              <div className="text-blue-100 text-sm">Complete</div>
+              <div className="text-blue-100 dark:text-blue-200 text-sm">Complete</div>
             </div>
           </div>
           <Progress
             value={userStats.completionPercentage}
             className="h-3 bg-blue-500"
           />
-          <div className="mt-2 text-blue-100 text-sm">
+          <div className="mt-2 text-blue-100 dark:text-blue-200 text-sm">
             {userStats.totalLessonsCompleted} of {userStats.totalLessons} lessons completed
           </div>
         </CardContent>
@@ -249,7 +249,7 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Play className="h-5 w-5 text-blue-600" />
+              <Play className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               <span>Continue Learning</span>
             </CardTitle>
             <CardDescription>
@@ -260,26 +260,26 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
             {continueLesson ? (
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">
+                  <h3 className="font-semibold text-foreground mb-1">
                     {continueLesson.title}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <p className="text-sm text-muted-foreground mb-3">
                     {continueLesson.subject_name}
                   </p>
                   <Progress value={continueLesson.progress_percentage} className="h-2 mb-2" />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {continueLesson.progress_percentage}% complete
                   </p>
                 </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600">
                   <Play className="mr-2 h-4 w-4" />
                   Continue Lesson
                 </Button>
               </div>
             ) : (
               <div className="text-center py-6">
-                <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 mb-4">No lessons in progress</p>
+                <BookOpen className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-muted-foreground mb-4">No lessons in progress</p>
                 <Button variant="outline" className="w-full">
                   Browse Lessons
                 </Button>
@@ -292,7 +292,7 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
+              <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
               <span>Suggested for You</span>
             </CardTitle>
             <CardDescription>
@@ -303,20 +303,20 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
             {suggestedLessons.length > 0 ? (
               <div className="space-y-3">
                 {suggestedLessons.map((lesson) => (
-                  <div key={lesson.id} className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div key={lesson.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-gray-900 text-sm">
+                      <h4 className="font-medium text-foreground text-sm">
                         {lesson.title}
                       </h4>
                       <Badge className={getDifficultyColor(lesson.difficulty_level)}>
                         {getDifficultyStars(lesson.difficulty_level)}
                       </Badge>
                     </div>
-                    <p className="text-xs text-gray-600 mb-2">
+                    <p className="text-xs text-muted-foreground mb-2">
                       {lesson.subject_name}
                     </p>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-muted-foreground">
                         <Clock className="h-3 w-3 mr-1" />
                         {lesson.duration_minutes} min
                       </div>
@@ -330,8 +330,8 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
               </div>
             ) : (
               <div className="text-center py-6">
-                <Star className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No suggestions available</p>
+                <Star className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-muted-foreground">No suggestions available</p>
               </div>
             )}
           </CardContent>

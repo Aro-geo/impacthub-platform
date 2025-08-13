@@ -228,9 +228,9 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
   };
 
   const getScoreColor = (percentage: number) => {
-    if (percentage >= 80) return 'text-green-600';
-    if (percentage >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (percentage >= 80) return 'text-green-600 dark:text-green-400';
+    if (percentage >= 60) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
   if (loading) {
@@ -239,7 +239,7 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
         <CardContent className="flex items-center justify-center p-8">
           <div className="flex items-center space-x-2">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            <span className="dark:text-gray-100">Loading quiz...</span>
+            <span className="text-foreground">Loading quiz...</span>
           </div>
         </CardContent>
       </Card>
@@ -250,9 +250,9 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
     return (
       <Card className="max-w-4xl mx-auto">
         <CardContent className="p-8 text-center">
-          <Target className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No quizzes available</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <Target className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-foreground mb-2">No quizzes available</h3>
+          <p className="text-muted-foreground mb-6">
             There are no quizzes available for the selected subject.
           </p>
           <Button onClick={onClose} variant="outline">
@@ -271,7 +271,7 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
     return (
       <Card className="max-w-4xl mx-auto">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl mb-4 dark:text-gray-100">Quiz Session Complete!</CardTitle>
+          <CardTitle className="text-2xl mb-4 text-foreground">Quiz Session Complete!</CardTitle>
           <div className="space-y-4">
             <div className="text-6xl mb-4">
               {percentage >= 80 ? '🎉' : percentage >= 60 ? '👍' : '📚'}
@@ -288,17 +288,17 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalAnswered}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Questions Answered</div>
+              <div className="text-sm text-muted-foreground">Questions Answered</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">{score}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Correct Answers</div>
+              <div className="text-sm text-muted-foreground">Correct Answers</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {practiceMode === 'timed' ? formatTime((10 * 60) - (timeLeft || 0)) : 'N/A'}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Time Taken</div>
+              <div className="text-sm text-muted-foreground">Time Taken</div>
             </div>
           </div>
 
@@ -361,8 +361,8 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
       {/* Question */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg dark:text-gray-100">{currentQuiz.question}</CardTitle>
-          <p className="text-sm text-gray-600 dark:text-gray-400">From: {currentQuiz.lesson.title}</p>
+          <CardTitle className="text-lg text-foreground">{currentQuiz.question}</CardTitle>
+          <p className="text-sm text-muted-foreground">From: {currentQuiz.lesson.title}</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
@@ -381,15 +381,15 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
                       : 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
                     : showResult && index === currentQuiz.correct_answer
                     ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-400'
-                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600 dark:bg-gray-800/50'
+                    : 'border-border hover:border-input bg-card'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400 min-w-[20px]">
+                    <span className="text-sm font-medium text-muted-foreground min-w-[20px]">
                       {String.fromCharCode(65 + index)}.
                     </span>
-                    <span className="dark:text-gray-100">{option}</span>
+                    <span className="text-foreground">{option}</span>
                   </div>
                   {showResult && (
                     <div className="flex items-center space-x-2">

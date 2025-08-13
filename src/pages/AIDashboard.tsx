@@ -104,8 +104,8 @@ const AIDashboard = () => {
       description: 'Get personalized learning recommendations based on your skills and interests',
       icon: Brain,
       category: 'Education',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20'
     },
     {
       id: 'quiz-creator',
@@ -113,8 +113,8 @@ const AIDashboard = () => {
       description: 'Generate interactive quizzes from any text content',
       icon: FileQuestion,
       category: 'Education',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/20'
     },
     {
       id: 'homework-helper',
@@ -122,8 +122,8 @@ const AIDashboard = () => {
       description: 'Get step-by-step explanations for your questions',
       icon: GraduationCap,
       category: 'Education',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-50 dark:bg-green-900/20'
     },
     {
       id: 'accessibility',
@@ -131,8 +131,8 @@ const AIDashboard = () => {
       description: 'Text-to-speech, translation, and alt text generation',
       icon: Accessibility,
       category: 'Accessibility',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/20'
     },
     {
       id: 'sustainability',
@@ -140,8 +140,8 @@ const AIDashboard = () => {
       description: 'Track your environmental impact and CO₂ savings',
       icon: Leaf,
       category: 'Sustainability',
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50'
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bgColor: 'bg-emerald-50 dark:bg-emerald-900/20'
     },
     {
       id: 'mentorship',
@@ -149,8 +149,8 @@ const AIDashboard = () => {
       description: 'Find perfect mentor-mentee matches using AI',
       icon: Users,
       category: 'Community',
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50'
+      color: 'text-orange-600 dark:text-orange-400',
+      bgColor: 'bg-orange-50 dark:bg-orange-900/20'
     },
     {
       id: 'forum',
@@ -158,8 +158,8 @@ const AIDashboard = () => {
       description: 'AI-powered discussions with sentiment analysis',
       icon: MessageSquare,
       category: 'Community',
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50'
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bgColor: 'bg-indigo-50 dark:bg-indigo-900/20'
     }
   ];
 
@@ -209,10 +209,10 @@ const AIDashboard = () => {
             {/* AI Features Grid */}
             <div className="space-y-6">
               <div className="text-center">
-                <h2 className="text-2xl font-heading font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl font-heading font-bold text-foreground mb-2">
                   AI-Powered Impact Tools
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   Explore our suite of AI tools designed to amplify your social impact
                 </p>
               </div>
@@ -228,13 +228,13 @@ const AIDashboard = () => {
                       <div className={`w-12 h-12 rounded-lg ${feature.bgColor} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                         <feature.icon className={`h-6 w-6 ${feature.color}`} />
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{feature.description}</p>
+                      <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-3">{feature.description}</p>
                       <div className="flex items-center justify-between">
                         <span className={`text-xs px-2 py-1 rounded-full ${feature.bgColor} ${feature.color} font-medium`}>
                           {feature.category}
                         </span>
-                        <Button variant="ghost" size="sm" className="group-hover:bg-gray-100">
+                        <Button variant="ghost" size="sm" className="group-hover:bg-muted/30">
                           Try Now →
                         </Button>
                       </div>

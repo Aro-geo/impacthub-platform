@@ -43,21 +43,21 @@ interface LessonCardProps {
 const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCardProps) => {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'beginner': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+      case 'intermediate': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
+      case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case 'in_progress':
-        return <Play className="h-4 w-4 text-blue-600" />;
+        return <Play className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
       default:
-        return <BookOpen className="h-4 w-4 text-gray-400" />;
+        return <BookOpen className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -71,9 +71,9 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -89,7 +89,7 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
               {lesson.difficulty_level}
             </Badge>
             {lesson.is_locked && (
-              <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600">
+              <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
                 <Lock className="h-3 w-3 mr-1" />
                 Locked
               </Badge>
@@ -103,23 +103,23 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
             disabled={lesson.is_locked}
           >
             {lesson.is_bookmarked ? (
-              <BookmarkCheck className="h-4 w-4 text-blue-600" />
+              <BookmarkCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             ) : (
-              <Bookmark className="h-4 w-4 text-gray-400" />
+              <Bookmark className="h-4 w-4 text-muted-foreground" />
             )}
           </Button>
         </div>
 
-        <h3 className={`font-semibold mb-2 text-lg ${lesson.is_locked ? 'text-gray-500' : 'text-gray-900'}`}>
+        <h3 className={`font-semibold mb-2 text-lg ${lesson.is_locked ? 'text-muted-foreground' : 'text-foreground'}`}>
           {lesson.title}
         </h3>
 
-        <p className={`mb-4 text-sm leading-relaxed line-clamp-3 ${lesson.is_locked ? 'text-gray-400' : 'text-gray-600'}`}>
+        <p className={`mb-4 text-sm leading-relaxed line-clamp-3 ${lesson.is_locked ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
           {lesson.description}
         </p>
 
         <div className="flex items-center justify-between mb-4">
-          <div className={`flex items-center space-x-4 text-sm ${lesson.is_locked ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div className={`flex items-center space-x-4 text-sm ${lesson.is_locked ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
             <div className="flex items-center space-x-1">
               <Clock className="h-4 w-4" />
               <span>{lesson.duration_minutes} min</span>
@@ -140,14 +140,14 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
         {lesson.progress?.status === 'in_progress' && !lesson.is_locked && (
           <div className="mb-4">
             <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-gray-600">Progress</span>
-              <span className="text-gray-900 font-medium">
+              <span className="text-muted-foreground">Progress</span>
+              <span className="text-foreground font-medium">
                 {lesson.progress.progress_percentage}%
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2">
               <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${lesson.progress.progress_percentage}%` }}
               />
             </div>

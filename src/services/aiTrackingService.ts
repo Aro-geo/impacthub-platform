@@ -29,27 +29,11 @@ interface AIInteractionData {
 }
 
 class AITrackingService {
-  // Start tracking an AI interaction
+  // Start tracking an AI interaction - only when processing begins
   async startInteraction(userId: string, type: AIInteractionType, inputData?: any): Promise<string> {
-    try {
-      const { data, error } = await supabase
-        .from('ai_interactions')
-        .insert({
-          user_id: userId,
-          interaction_type: type,
-          status: 'initiated',
-          input_data: inputData,
-        })
-        .select('id')
-        .single();
-
-      if (error) throw error;
-      return data.id;
-    } catch (error) {
-      console.error('Failed to start AI interaction tracking:', error);
-      // Return a dummy ID so the app doesn't break
-      return 'tracking-failed';
-    }
+    // Don't create database record yet, just return a temporary ID
+    // We'll only create the record when there's actual output
+    return `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   // Update interaction status to processing
@@ -68,26 +52,57 @@ class AITrackingService {
     }
   }
 
-  // Complete an AI interaction with success
+  // Complete an AI interaction with success - only record if there's output
   async completeInteraction(
     interactionId: string, 
     outputData?: any, 
     processingTimeMs?: number, 
-    tokensUsed?: number
+    tokensUsed?: number,
+    userId?: string,
+    interactionType?: AIInteractionType,
+    inputData?: any
   ): Promise<void> {
     if (interactionId === 'tracking-failed') return;
 
+    // Only record interaction if there's actual output generated
+    if (!outputData || (typeof outputData === 'string' && outputData.trim().length === 0)) {
+      console.log('No output generated, skipping interaction recording');
+      return;
+    }
+
     try {
-      await supabase
-        .from('ai_interactions')
-        .update({
-          status: 'completed',
-          output_data: outputData,
-          processing_time_ms: processingTimeMs,
-          tokens_used: tokensUsed,
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', interactionId);
+      // If this is a temporary ID, create a new record
+      if (interactionId.startsWith('temp-')) {
+        if (!userId || !interactionType) {
+          console.warn('Cannot record interaction: missing userId or interactionType');
+          return;
+        }
+
+        await supabase
+          .from('ai_interactions')
+          .insert({
+            user_id: userId,
+            interaction_type: interactionType,
+            status: 'completed',
+            input_data: inputData,
+            output_data: outputData,
+            processing_time_ms: processingTimeMs,
+            tokens_used: tokensUsed,
+            completed_at: new Date().toISOString(),
+          });
+      } else {
+        // Update existing record
+        await supabase
+          .from('ai_interactions')
+          .update({
+            status: 'completed',
+            output_data: outputData,
+            processing_time_ms: processingTimeMs,
+            tokens_used: tokensUsed,
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', interactionId);
+      }
     } catch (error) {
       console.error('Failed to complete AI interaction tracking:', error);
     }

@@ -19,25 +19,33 @@ export const useAI = () => {
     setLoading(true);
     setError(null);
     
-    let interactionId: string | null = null;
     const startTime = Date.now();
     
     try {
-      // Start tracking the interaction
-      if (user) {
-        interactionId = await aiTrackingService.startInteraction(user.id, interactionType, inputData);
-        await aiTrackingService.markProcessing(interactionId);
-      }
-      
+      // Execute the AI task first
       const result = await task();
       const processingTime = Date.now() - startTime;
       
-      // Complete the interaction tracking
-      if (user && interactionId) {
-        await aiTrackingService.completeInteraction(interactionId, result, processingTime);
+      // Only record interaction if there's actual output and user is logged in
+      if (user && result && (typeof result !== 'string' || result.trim().length > 0)) {
+        try {
+          // Record the completed interaction directly (no pre-tracking)
+          await aiTrackingService.completeInteraction(
+            `temp-${Date.now()}`, 
+            result, 
+            processingTime, 
+            0, // tokens - would need to be calculated by AI service
+            user.id,
+            interactionType,
+            inputData
+          );
+        } catch (trackingError) {
+          console.warn('Failed to track AI interaction:', trackingError);
+          // Don't fail the main task if tracking fails
+        }
       }
       
-      if (successMessage) {
+      if (successMessage && result) {
         toast({
           title: "Success",
           description: successMessage,
@@ -46,11 +54,6 @@ export const useAI = () => {
       return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      
-      // Mark interaction as failed
-      if (user && interactionId) {
-        await aiTrackingService.failInteraction(interactionId, errorMessage);
-      }
       
       setError(errorMessage);
       toast({

@@ -249,15 +249,15 @@ const PracticeSection = () => {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 80) return 'text-green-600 dark:text-green-400';
+    if (score >= 60) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
   const getScoreBadgeColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100 text-green-800';
-    if (score >= 60) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-red-100 text-red-800';
+    if (score >= 80) return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
+    return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
   };
 
   if (loading) {
@@ -267,8 +267,8 @@ const PracticeSection = () => {
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-muted rounded w-1/2"></div>
               </CardContent>
             </Card>
           ))}
@@ -297,8 +297,8 @@ const PracticeSection = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Practice & Quizzes</h2>
-          <p className="text-gray-600">Test your knowledge and improve your skills</p>
+          <h2 className="text-2xl font-bold text-foreground">Practice & Quizzes</h2>
+          <p className="text-muted-foreground">Test your knowledge and improve your skills</p>
         </div>
       </div>
 
@@ -306,49 +306,49 @@ const PracticeSection = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Target className="h-6 w-6 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Target className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-2xl font-bold text-foreground mb-1">
               {quizStats.totalAttempts}
             </div>
-            <div className="text-sm text-gray-600">Total Attempts</div>
+            <div className="text-sm text-muted-foreground">Total Attempts</div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-2xl font-bold text-foreground mb-1">
               {quizStats.correctAnswers}
             </div>
-            <div className="text-sm text-gray-600">Correct Answers</div>
+            <div className="text-sm text-muted-foreground">Correct Answers</div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <TrendingUp className="h-6 w-6 text-purple-600" />
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div className={`text-2xl font-bold mb-1 ${getScoreColor(quizStats.averageScore)}`}>
               {quizStats.averageScore}%
             </div>
-            <div className="text-sm text-gray-600">Average Score</div>
+            <div className="text-sm text-muted-foreground">Average Score</div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Zap className="h-6 w-6 text-orange-600" />
+            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Zap className="h-6 w-6 text-orange-600 dark:text-orange-400" />
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
+            <div className="text-2xl font-bold text-foreground mb-1">
               {quizStats.bestStreak}
             </div>
-            <div className="text-sm text-gray-600">Best Streak</div>
+            <div className="text-sm text-muted-foreground">Best Streak</div>
           </CardContent>
         </Card>
       </div>
@@ -359,7 +359,7 @@ const PracticeSection = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Play className="h-5 w-5 text-green-600" />
+              <Play className="h-5 w-5 text-green-600 dark:text-green-400" />
               <span>Start Practice Session</span>
             </CardTitle>
             <CardDescription>
@@ -368,7 +368,7 @@ const PracticeSection = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label className="text-sm font-medium text-foreground mb-2 block">
                 Practice Mode
               </label>
               <Select value={practiceMode} onValueChange={(value: any) => setPracticeMode(value)}>
@@ -379,19 +379,19 @@ const PracticeSection = () => {
                   <SelectItem value="review">
                     <div className="flex flex-col">
                       <span>Review Mode</span>
-                      <span className="text-xs text-gray-500">Take your time, see explanations</span>
+                      <span className="text-xs text-muted-foreground">Take your time, see explanations</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="timed">
                     <div className="flex flex-col">
                       <span>Timed Practice</span>
-                      <span className="text-xs text-gray-500">10 questions in 10 minutes</span>
+                      <span className="text-xs text-muted-foreground">10 questions in 10 minutes</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="random">
                     <div className="flex flex-col">
                       <span>Random Questions</span>
-                      <span className="text-xs text-gray-500">Mixed questions from all topics</span>
+                      <span className="text-xs text-muted-foreground">Mixed questions from all topics</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -399,7 +399,7 @@ const PracticeSection = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label className="text-sm font-medium text-foreground mb-2 block">
                 Subject
               </label>
               <Select value={selectedSubject} onValueChange={setSelectedSubject}>
@@ -426,13 +426,13 @@ const PracticeSection = () => {
               Start Practice Session
             </Button>
 
-            <div className="text-sm text-gray-600 text-center">
+            <div className="text-sm text-muted-foreground text-center">
               {quizzes.length > 0 ? (
-                <span className="text-green-600 font-medium">
+                <span className="text-green-600 dark:text-green-400 font-medium">
                   {quizzes.length} questions available
                 </span>
               ) : (
-                <span className="text-gray-400">
+                <span className="text-muted-foreground">
                   No questions available for selected subject
                 </span>
               )}
@@ -444,7 +444,7 @@ const PracticeSection = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-blue-600" />
+              <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               <span>Recent Attempts</span>
             </CardTitle>
             <CardDescription>
@@ -457,25 +457,25 @@ const PracticeSection = () => {
                 {recentAttempts.map((attempt) => (
                   <div key={attempt.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 text-sm mb-1">
+                      <h4 className="font-medium text-foreground text-sm mb-1">
                         {attempt.quiz.lesson.title}
                       </h4>
-                      <p className="text-xs text-gray-600 mb-2">
+                      <p className="text-xs text-muted-foreground mb-2">
                         {attempt.quiz.lesson.subject.name}
                       </p>
                       <div className="flex items-center space-x-2">
                         {attempt.is_correct ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                         ) : (
-                          <XCircle className="h-4 w-4 text-red-600" />
+                          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                         )}
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           {new Date(attempt.attempted_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge className={attempt.is_correct ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                      <Badge className={attempt.is_correct ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300'}>
                         {attempt.is_correct ? 'Correct' : 'Incorrect'}
                       </Badge>
                       <Button
@@ -492,9 +492,9 @@ const PracticeSection = () => {
               </div>
             ) : (
               <div className="text-center py-6">
-                <Target className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">No quiz attempts yet</p>
-                <p className="text-gray-400 text-xs">Start practicing to see your progress</p>
+                <Target className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">No quiz attempts yet</p>
+                <p className="text-muted-foreground/70 text-xs">Start practicing to see your progress</p>
               </div>
             )}
           </CardContent>

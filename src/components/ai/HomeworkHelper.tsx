@@ -89,7 +89,7 @@ const HomeworkHelper = () => {
             rows={6}
             className="resize-none"
           />
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             Tip: Include any relevant formulas, context, or specific parts you're struggling with
           </div>
         </div>
@@ -134,10 +134,10 @@ const HomeworkHelper = () => {
         )}
 
         {/* Tips Section */}
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
           <CardContent className="pt-6">
-            <h4 className="font-semibold text-blue-900 mb-3">Tips for Better Help:</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">Tips for Better Help:</h4>
+            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
               <li>• Be specific about what part you don't understand</li>
               <li>• Include any work you've already done</li>
               <li>• Mention if you need help with concepts or just calculations</li>

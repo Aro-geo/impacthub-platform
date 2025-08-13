@@ -62,32 +62,16 @@
     --impact-stat-4: 25 95% 53%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217 91% 60%;
-  }
+
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    color-scheme: light dark;
   }
 
   body {
@@ -96,6 +80,31 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
+  }
+
+  /* Automatically apply dark mode based on system preference */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 222.2 84% 4.9%;
+      --foreground: 210 40% 98%;
+      --card: 222.2 84% 4.9%;
+      --card-foreground: 210 40% 98%;
+      --popover: 222.2 84% 4.9%;
+      --popover-foreground: 210 40% 98%;
+      --primary: 217 91% 60%;
+      --primary-foreground: 222.2 47.4% 11.2%;
+      --secondary: 217.2 32.6% 17.5%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 217.2 32.6% 17.5%;
+      --muted-foreground: 215 20.2% 65.1%;
+      --accent: 217.2 32.6% 17.5%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 217.2 32.6% 17.5%;
+      --input: 217.2 32.6% 17.5%;
+      --ring: 217 91% 60%;
+    }
   }
 }
 
@@ -384,34 +393,38 @@
   }
 }
 
-/* Enhanced dark mode gradients */
-.dark .bg-hero-gradient {
-  background: linear-gradient(135deg, hsl(217 91% 45%) 0%, hsl(262 83% 45%) 100%);
+/* Enhanced dark mode gradients - automatically applied with system preference */
+@media (prefers-color-scheme: dark) {
+  .bg-hero-gradient {
+    background: linear-gradient(135deg, hsl(217 91% 45%) 0%, hsl(262 83% 45%) 100%);
+  }
+
+  .bg-education-gradient {
+    background: linear-gradient(135deg, hsl(217 91% 45%) 0%, hsl(190 81% 50%) 100%);
+  }
+
+  .bg-accessibility-gradient {
+    background: linear-gradient(135deg, hsl(262 83% 45%) 0%, hsl(285 85% 55%) 100%);
+  }
+
+  .bg-sustainability-gradient {
+    background: linear-gradient(135deg, hsl(142 71% 35%) 0%, hsl(120 60% 40%) 100%);
+  }
+
+  .bg-community-gradient {
+    background: linear-gradient(135deg, hsl(25 95% 45%) 0%, hsl(45 93% 50%) 100%);
+  }
 }
 
-.dark .bg-education-gradient {
-  background: linear-gradient(135deg, hsl(217 91% 45%) 0%, hsl(190 81% 50%) 100%);
-}
+/* Dark mode mobile card optimizations - automatically applied with system preference */
+@media (prefers-color-scheme: dark) {
+  .mobile-card {
+    @apply bg-card border-border;
+  }
 
-.dark .bg-accessibility-gradient {
-  background: linear-gradient(135deg, hsl(262 83% 45%) 0%, hsl(285 85% 55%) 100%);
-}
-
-.dark .bg-sustainability-gradient {
-  background: linear-gradient(135deg, hsl(142 71% 35%) 0%, hsl(120 60% 40%) 100%);
-}
-
-.dark .bg-community-gradient {
-  background: linear-gradient(135deg, hsl(25 95% 45%) 0%, hsl(45 93% 50%) 100%);
-}
-
-/* Dark mode mobile card optimizations */
-.dark .mobile-card {
-  @apply bg-card border-border;
-}
-
-.dark .mobile-card:active {
-  box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+  .mobile-card:active {
+    box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+  }
 }/* 
 Ensure proper theme transitions */
 * {
@@ -420,54 +433,332 @@ Ensure proper theme transitions */
 
 /* Fix any remaining hardcoded colors for better theme consistency */
 .text-gray-900 {
-  @apply text-foreground;
+  @apply text-foreground !important;
 }
 
 .text-gray-600 {
-  @apply text-muted-foreground;
+  @apply text-muted-foreground !important;
 }
 
 .text-gray-700 {
-  @apply text-card-foreground;
+  @apply text-card-foreground !important;
 }
 
 .text-gray-800 {
-  @apply text-foreground;
+  @apply text-foreground !important;
+}
+
+.text-gray-500 {
+  @apply text-muted-foreground !important;
+}
+
+.text-gray-400 {
+  @apply text-muted-foreground/70 !important;
+}
+
+.text-gray-300 {
+  @apply text-muted-foreground/50 !important;
 }
 
 .bg-white {
-  @apply bg-background;
+  @apply bg-background !important;
 }
 
 .bg-gray-50 {
-  @apply bg-muted/30;
+  @apply bg-muted/30 !important;
 }
 
 .bg-gray-100 {
-  @apply bg-muted;
+  @apply bg-muted !important;
+}
+
+.bg-gray-200 {
+  @apply bg-muted !important;
+}
+
+.bg-gray-300 {
+  @apply bg-muted !important;
 }
 
 .border-gray-200 {
-  @apply border-border;
+  @apply border-border !important;
 }
 
 .border-gray-300 {
-  @apply border-input;
+  @apply border-input !important;
 }
 
-/* Ensure dropdowns and modals work well in both themes */
-.dark .bg-white\/95 {
-  @apply bg-background/95;
+/* Ensure proper dark mode for specific components */
+@media (prefers-color-scheme: dark) {
+  /* Fix any remaining hardcoded backgrounds */
+  .bg-white {
+    background-color: hsl(var(--background)) !important;
+  }
+  
+  .bg-gray-50 {
+    background-color: hsl(var(--muted) / 0.3) !important;
+  }
+  
+  .bg-gray-100 {
+    background-color: hsl(var(--muted)) !important;
+  }
+  
+  .bg-gray-200 {
+    background-color: hsl(var(--muted)) !important;
+  }
+  
+  /* Fix text colors */
+  .text-gray-900 {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .text-gray-800 {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .text-gray-700 {
+    color: hsl(var(--card-foreground)) !important;
+  }
+  
+  .text-gray-600 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
+  .text-gray-500 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
+  .text-gray-400 {
+    color: hsl(var(--muted-foreground) / 0.7) !important;
+  }
+  
+  .text-gray-300 {
+    color: hsl(var(--muted-foreground) / 0.5) !important;
+  }
+  
+  /* Fix borders */
+  .border-gray-200 {
+    border-color: hsl(var(--border)) !important;
+  }
+  
+  .border-gray-300 {
+    border-color: hsl(var(--input)) !important;
+  }
+  
+  /* Fix specific component backgrounds */
+  .prose {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .prose p {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
+  .prose strong {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .prose code {
+    background-color: hsl(var(--muted)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .prose pre {
+    background-color: hsl(var(--muted)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .prose blockquote {
+    border-left-color: hsl(var(--border)) !important;
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
+  .prose ul li::marker {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
+  .prose ol li::marker {
+    color: hsl(var(--muted-foreground)) !important;
+  }
 }
 
-.dark .shadow-sm {
-  box-shadow: 0 1px 2px 0 rgba(255, 255, 255, 0.05);
+/* Additional dark mode improvements - automatically applied with system preference */
+@media (prefers-color-scheme: dark) {
+  .bg-white\/80 {
+    @apply bg-background/80 !important;
+  }
+
+  .bg-white\/20 {
+    @apply bg-background/20 !important;
+  }
+
+  .bg-white\/10 {
+    @apply bg-background/10 !important;
+  }
+
+  /* Ensure cards and surfaces work well in dark mode */
+  .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .shadow-xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* Fix gradient backgrounds for dark mode */
+  .from-blue-50 {
+    @apply from-slate-900 !important;
+  }
+
+  .via-green-50 {
+    @apply via-slate-800 !important;
+  }
+
+  .to-yellow-50 {
+    @apply to-slate-900 !important;
+  }
+
+  .from-purple-50 {
+    @apply from-slate-900 !important;
+  }
+
+  .to-blue-50 {
+    @apply to-slate-800 !important;
+  }
+
+  /* Ensure dropdowns and modals work well in dark mode */
+  .bg-white\/95 {
+    @apply bg-background/95;
+  }
+}
+/* Add
+itional dark mode fixes for form elements and interactive components */
+@media (prefers-color-scheme: dark) {
+  /* Ensure input fields work properly */
+  input[type="text"], input[type="email"], input[type="password"], textarea, select {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+  
+  input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
+    border-color: hsl(var(--ring)) !important;
+    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2) !important;
+  }
+  
+  /* Fix dropdown menus */
+  [role="menu"], [role="listbox"] {
+    background-color: hsl(var(--popover)) !important;
+    color: hsl(var(--popover-foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+  
+  /* Fix tooltips */
+  [role="tooltip"] {
+    background-color: hsl(var(--popover)) !important;
+    color: hsl(var(--popover-foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+  
+  /* Fix modal backgrounds */
+  [role="dialog"] {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  /* Fix any remaining white backgrounds */
+  .bg-white\/95 {
+    background-color: hsl(var(--background) / 0.95) !important;
+  }
+  
+  .bg-white\/90 {
+    background-color: hsl(var(--background) / 0.9) !important;
+  }
+  
+  .bg-white\/80 {
+    background-color: hsl(var(--background) / 0.8) !important;
+  }
+  
+  /* Fix search input specifically */
+  .search-input {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  /* Fix any remaining hardcoded colors in components */
+  .text-black {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .bg-slate-50 {
+    background-color: hsl(var(--muted) / 0.3) !important;
+  }
+  
+  .bg-slate-100 {
+    background-color: hsl(var(--muted)) !important;
+  }
+  
+  .bg-slate-200 {
+    background-color: hsl(var(--muted)) !important;
+  }
+  
+  /* Fix any card hover states */
+  .hover\:bg-gray-50:hover {
+    background-color: hsl(var(--muted) / 0.3) !important;
+  }
+  
+  .hover\:bg-gray-100:hover {
+    background-color: hsl(var(--muted)) !important;
+  }
+  
+  /* Fix loading spinners */
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .5;
+    }
+  }
 }
 
-.dark .shadow-lg {
-  box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.05);
-}
-
-.dark .shadow-xl {
-  box-shadow: 0 20px 25px -5px rgba(255, 255, 255, 0.1), 0 10px 10px -5px rgba(255, 255, 255, 0.04);
+/* Ensure proper contrast for all text elements */
+@media (prefers-color-scheme: dark) {
+  /* High contrast text for better readability */
+  h1, h2, h3, h4, h5, h6 {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  p, span, div {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  /* Muted text should still be readable */
+  .text-muted {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
+  /* Ensure buttons have proper contrast */
+  button {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  /* Fix any remaining issues with specific components */
+  .card {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--card-foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
 }

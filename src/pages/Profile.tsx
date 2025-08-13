@@ -159,7 +159,7 @@ const Profile = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading profile...</p>
+            <p className="text-muted-foreground">Loading profile...</p>
           </div>
         </div>
       </div>
@@ -167,7 +167,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -194,17 +194,17 @@ const Profile = () => {
                   </div>
                   
                   <div className="mt-4 space-y-2">
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-2xl font-bold text-foreground">
                       {userProfile?.name || 'User'}
                     </h2>
                     
-                    <div className="flex items-center justify-center text-gray-600">
+                    <div className="flex items-center justify-center text-muted-foreground">
                       <Mail className="h-4 w-4 mr-2" />
                       <span className="text-sm">{user?.email}</span>
                     </div>
                     
                     {userProfile?.location && (
-                      <div className="flex items-center justify-center text-gray-600">
+                      <div className="flex items-center justify-center text-muted-foreground">
                         <MapPin className="h-4 w-4 mr-2" />
                         <span className="text-sm">{userProfile.location}</span>
                       </div>
@@ -212,14 +212,14 @@ const Profile = () => {
                     
                     {userProfile?.grade && (
                       <div className="flex items-center justify-center">
-                        <Badge className="bg-blue-100 text-blue-800">
+                        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
                           <GraduationCap className="h-3 w-3 mr-1" />
                           Grade {userProfile.grade}
                         </Badge>
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-center text-gray-500">
+                    <div className="flex items-center justify-center text-muted-foreground">
                       <Calendar className="h-4 w-4 mr-2" />
                       <span className="text-sm">
                         Joined {formatDate(userProfile?.created_at || user?.created_at || '')}
@@ -228,7 +228,7 @@ const Profile = () => {
                   </div>
                   
                   {userProfile?.bio && (
-                    <p className="mt-4 text-gray-600 text-sm text-center">
+                    <p className="mt-4 text-muted-foreground text-sm text-center">
                       {userProfile.bio}
                     </p>
                   )}
@@ -236,7 +236,7 @@ const Profile = () => {
                   {/* Skills */}
                   {userProfile?.skills && userProfile.skills.length > 0 && (
                     <div className="mt-4 w-full">
-                      <h4 className="text-sm font-medium text-gray-900 mb-2">Skills</h4>
+                      <h4 className="text-sm font-medium text-foreground mb-2">Skills</h4>
                       <div className="flex flex-wrap gap-2">
                         {userProfile.skills.map((skill: string) => (
                           <Badge key={skill} variant="secondary" className="text-xs">
@@ -258,10 +258,10 @@ const Profile = () => {
                     </Button>
                     
                     {/* Quick Grade Update */}
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-sm font-medium text-blue-900">Current Grade</h4>
-                        <Badge className="bg-blue-100 text-blue-800">
+                        <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300">Current Grade</h4>
+                        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
                           Grade {userProfile?.grade || 'Not set'}
                         </Badge>
                       </div>
@@ -296,7 +296,7 @@ const Profile = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      <p className="text-xs text-blue-700 mt-2">
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
                         This helps personalize your learning experience
                       </p>
                     </div>
@@ -314,7 +314,7 @@ const Profile = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <Brain className="h-5 w-5 text-purple-600 mr-2" />
+                      <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-2" />
                       <span className="text-sm">AI Interactions</span>
                     </div>
                     <span className="font-semibold">{aiStats?.totalInteractions || 0}</span>
@@ -322,7 +322,7 @@ const Profile = () => {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <BookOpen className="h-5 w-5 text-green-600 mr-2" />
+                      <BookOpen className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
                       <span className="text-sm">Learning Paths</span>
                     </div>
                     <span className="font-semibold">{learningPaths.length}</span>
@@ -330,7 +330,7 @@ const Profile = () => {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <Target className="h-5 w-5 text-blue-600 mr-2" />
+                      <Target className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
                       <span className="text-sm">Quizzes Created</span>
                     </div>
                     <span className="font-semibold">{quizzes.length}</span>
@@ -338,7 +338,7 @@ const Profile = () => {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <Trophy className="h-5 w-5 text-orange-600 mr-2" />
+                      <Trophy className="h-5 w-5 text-orange-600 dark:text-orange-400 mr-2" />
                       <span className="text-sm">Impact Points</span>
                     </div>
                     <span className="font-semibold">{userProfile?.impact_points || 0}</span>
@@ -369,10 +369,10 @@ const Profile = () => {
                         {aiStats.mostUsedTypes.map((item: any, index: number) => (
                           <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div>
-                              <h4 className="font-medium capitalize">
+                              <h4 className="font-medium text-foreground capitalize">
                                 {item.type.replace('_', ' ')}
                               </h4>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-muted-foreground">
                                 Used {item.count} times
                               </p>
                             </div>
@@ -382,9 +382,9 @@ const Profile = () => {
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <Brain className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">No AI interactions yet</p>
-                        <p className="text-sm text-gray-400">Start using AI tools to see your activity here</p>
+                        <Brain className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                        <p className="text-muted-foreground">No AI interactions yet</p>
+                        <p className="text-sm text-muted-foreground/70">Start using AI tools to see your activity here</p>
                       </div>
                     )}
                   </CardContent>
@@ -404,14 +404,14 @@ const Profile = () => {
                           <div key={path.id} className="p-4 border rounded-lg">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <h4 className="font-medium">Learning Path</h4>
-                                <p className="text-sm text-gray-600 mt-1">
+                                <h4 className="font-medium text-foreground">Learning Path</h4>
+                                <p className="text-sm text-muted-foreground mt-1">
                                   Skills: {path.skills?.join(', ')}
                                 </p>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-muted-foreground">
                                   Interests: {path.interests?.join(', ')}
                                 </p>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-muted-foreground">
                                   Level: {path.level}
                                 </p>
                               </div>
@@ -424,9 +424,9 @@ const Profile = () => {
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">No learning paths yet</p>
-                        <p className="text-sm text-gray-400">Generate your first learning path with AI</p>
+                        <BookOpen className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                        <p className="text-muted-foreground">No learning paths yet</p>
+                        <p className="text-sm text-muted-foreground/70">Generate your first learning path with AI</p>
                       </div>
                     )}
                   </CardContent>
@@ -444,8 +444,8 @@ const Profile = () => {
                           <div key={session.id} className="p-4 border rounded-lg">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <h4 className="font-medium">{session.subject}</h4>
-                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                <h4 className="font-medium text-foreground">{session.subject}</h4>
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                   {session.question}
                                 </p>
                               </div>
@@ -458,9 +458,9 @@ const Profile = () => {
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <GraduationCap className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">No homework sessions yet</p>
-                        <p className="text-sm text-gray-400">Get help with your homework using AI</p>
+                        <GraduationCap className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                        <p className="text-muted-foreground">No homework sessions yet</p>
+                        <p className="text-sm text-muted-foreground/70">Get help with your homework using AI</p>
                       </div>
                     )}
                   </CardContent>
@@ -475,9 +475,9 @@ const Profile = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-8">
-                      <Award className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500">No achievements yet</p>
-                      <p className="text-sm text-gray-400">Keep learning to unlock badges and achievements</p>
+                      <Award className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                      <p className="text-muted-foreground">No achievements yet</p>
+                      <p className="text-sm text-muted-foreground/70">Keep learning to unlock badges and achievements</p>
                     </div>
                   </CardContent>
                 </Card>

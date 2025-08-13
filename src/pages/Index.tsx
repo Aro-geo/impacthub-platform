@@ -24,7 +24,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Logo } from '@/components/ui/logo';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+
 import Navigation from '@/components/Navigation';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 

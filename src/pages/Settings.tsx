@@ -152,7 +152,7 @@ const Settings = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading settings...</p>
+            <p className="text-muted-foreground">Loading settings...</p>
           </div>
         </div>
       </div>
@@ -160,16 +160,16 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navigation />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+          <h1 className="text-3xl font-bold text-foreground flex items-center">
             <SettingsIcon className="h-8 w-8 mr-3" />
             Settings
           </h1>
-          <p className="text-gray-600 mt-2">Manage your account preferences and privacy settings</p>
+          <p className="text-muted-foreground mt-2">Manage your account preferences and privacy settings</p>
         </div>
 
         <Tabs defaultValue="account" className="space-y-6">
@@ -210,7 +210,7 @@ const Settings = () => {
                   <div className="space-y-2">
                     <Label>Email Address</Label>
                     <Input value={user?.email || ''} disabled />
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Contact support to change your email address
                     </p>
                   </div>
@@ -218,7 +218,7 @@ const Settings = () => {
                   <div className="space-y-2">
                     <Label>Full Name</Label>
                     <Input value={userProfile?.name || ''} disabled />
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Edit your name in the Profile page
                     </p>
                   </div>
@@ -228,13 +228,13 @@ const Settings = () => {
                   <Label>Account Status</Label>
                   <div className="flex items-center space-x-2">
                     <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-green-600">Active</span>
+                    <span className="text-sm text-green-600 dark:text-green-400">Active</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Member Since</Label>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {new Date(userProfile?.created_at || user?.created_at || '').toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -256,7 +256,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h4 className="font-medium">Export Data</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Download a copy of all your data
                     </p>
                   </div>
@@ -266,10 +266,10 @@ const Settings = () => {
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
+                <div className="flex items-center justify-between p-4 border border-red-200 dark:border-red-800 rounded-lg bg-red-50 dark:bg-red-900/20">
                   <div>
-                    <h4 className="font-medium text-red-900">Delete Account</h4>
-                    <p className="text-sm text-red-600">
+                    <h4 className="font-medium text-red-900 dark:text-red-300">Delete Account</h4>
+                    <p className="text-sm text-red-600 dark:text-red-400">
                       Permanently delete your account and all data
                     </p>
                   </div>
@@ -403,13 +403,13 @@ const Settings = () => {
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h4 className="font-medium">SMS Authentication</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Receive verification codes via SMS
                     </p>
                   </div>
                   <Switch disabled />
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   Two-factor authentication is coming soon
                 </p>
               </CardContent>
@@ -429,7 +429,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">AI Updates</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       New AI features and improvements
                     </p>
                   </div>
@@ -444,7 +444,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Learning Reminders</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Reminders to continue your learning journey
                     </p>
                   </div>
@@ -459,7 +459,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Community Activity</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Replies to your posts and mentions
                     </p>
                   </div>
@@ -474,7 +474,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Weekly Digest</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Summary of your weekly learning progress
                     </p>
                   </div>
@@ -519,7 +519,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Show Email Address</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Display your email on your public profile
                     </p>
                   </div>
@@ -534,7 +534,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Show Location</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Display your location on your profile
                     </p>
                   </div>
@@ -549,7 +549,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Show Learning Progress</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Display your learning statistics publicly
                     </p>
                   </div>
@@ -564,7 +564,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Allow Mentorship Requests</h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Let others send you mentorship requests
                     </p>
                   </div>
@@ -627,9 +627,9 @@ const Settings = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
-                  <Palette className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Learning preferences coming soon</p>
-                  <p className="text-sm text-gray-400">We're working on personalized learning settings</p>
+                  <Palette className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                  <p className="text-muted-foreground">Learning preferences coming soon</p>
+                  <p className="text-sm text-muted-foreground/70">We're working on personalized learning settings</p>
                 </div>
               </CardContent>
             </Card>

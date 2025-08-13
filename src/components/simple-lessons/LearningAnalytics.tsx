@@ -245,11 +245,11 @@ const LearningAnalytics: React.FC<LearningAnalyticsProps> = ({ className = '' })
   };
 
   const getStreakBadgeColor = (streak: number) => {
-    if (streak >= 30) return 'bg-purple-100 text-purple-800';
-    if (streak >= 14) return 'bg-blue-100 text-blue-800';
-    if (streak >= 7) return 'bg-green-100 text-green-800';
-    if (streak >= 3) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-gray-100 text-gray-800';
+    if (streak >= 30) return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
+    if (streak >= 14) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
+    if (streak >= 7) return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+    if (streak >= 3) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
+    return 'bg-muted text-muted-foreground';
   };
 
   if (!user) {
@@ -279,7 +279,7 @@ const LearningAnalytics: React.FC<LearningAnalyticsProps> = ({ className = '' })
     return (
       <Card className={className}>
         <CardContent className="p-6 text-center">
-          <p className="text-red-600">{error || 'Failed to load analytics'}</p>
+          <p className="text-red-600 dark:text-red-400">{error || 'Failed to load analytics'}</p>
         </CardContent>
       </Card>
     );
@@ -292,7 +292,7 @@ const LearningAnalytics: React.FC<LearningAnalyticsProps> = ({ className = '' })
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Target className="h-5 w-5 text-blue-600" />
+              <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               <div>
                 <p className="text-sm font-medium">Completion Rate</p>
                 <p className="text-2xl font-bold">{stats.completionPercentage}%</p>
@@ -304,7 +304,7 @@ const LearningAnalytics: React.FC<LearningAnalyticsProps> = ({ className = '' })
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
               <div>
                 <p className="text-sm font-medium">Completed</p>
                 <p className="text-2xl font-bold">{stats.completedLessons}</p>
@@ -368,15 +368,15 @@ const LearningAnalytics: React.FC<LearningAnalyticsProps> = ({ className = '' })
             
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-green-600">{stats.completedLessons}</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completedLessons}</p>
                 <p className="text-sm text-muted-foreground">Completed</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-600">{stats.inProgressLessons}</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.inProgressLessons}</p>
                 <p className="text-sm text-muted-foreground">In Progress</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-600">
+                <p className="text-2xl font-bold text-muted-foreground">
                   {stats.totalLessons - stats.completedLessons - stats.inProgressLessons}
                 </p>
                 <p className="text-sm text-muted-foreground">Not Started</p>
@@ -429,9 +429,9 @@ const LearningAnalytics: React.FC<LearningAnalyticsProps> = ({ className = '' })
                   <div key={subject.subject} className="flex justify-between items-center">
                     <span className="text-sm">{subject.subject}</span>
                     <div className="flex items-center space-x-2">
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
+                      <div className="w-16 bg-muted rounded-full h-2">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full" 
+                          className="bg-primary h-2 rounded-full" 
                           style={{ 
                             width: `${(subject.count / stats.favoriteSubjects[0].count) * 100}%` 
                           }}

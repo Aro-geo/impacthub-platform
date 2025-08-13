@@ -324,14 +324,14 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
   // Optimized loading skeleton
   const LoadingSkeleton = useMemo(() => (
     <div className="space-y-6">
-      <div className="h-8 bg-gray-200 rounded w-1/4 animate-pulse"></div>
+      <div className="h-8 bg-muted rounded w-1/4 animate-pulse"></div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.from({ length: 6 }, (_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-6">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-full mb-4"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-muted rounded w-full mb-4"></div>
+              <div className="h-8 bg-muted rounded w-1/2"></div>
             </CardContent>
           </Card>
         ))}
@@ -366,8 +366,8 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Browse Lessons</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">Browse Lessons</h2>
+          <p className="text-muted-foreground">
             {user && filteredLessons.some(l => !l.is_locked) && filteredLessons.some(l => l.is_locked)
               ? "Complete any lesson to unlock all others"
               : user && filteredLessons.every(l => !l.is_locked) && filteredLessons.length > 0
@@ -403,9 +403,9 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       {user && filteredLessons.length > 0 && (
         <>
           {filteredLessons.every(l => !l.is_locked) && filteredLessons.some(l => l.progress?.status === 'completed') && (
-            <Card className="bg-green-50 border-green-200">
+            <Card className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
               <CardContent className="p-4">
-                <div className="flex items-center space-x-2 text-green-800">
+                <div className="flex items-center space-x-2 text-green-800 dark:text-green-300">
                   <CheckCircle className="h-5 w-5" />
                   <span className="font-medium">🎉 Great job! All lessons are now unlocked. Choose any lesson to continue your learning journey!</span>
                 </div>
@@ -413,9 +413,9 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
             </Card>
           )}
           {filteredLessons.some(l => l.is_locked) && (
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
               <CardContent className="p-4">
-                <div className="flex items-center space-x-2 text-blue-800">
+                <div className="flex items-center space-x-2 text-blue-800 dark:text-blue-300">
                   <BookOpen className="h-5 w-5" />
                   <span className="font-medium">Start with the first lesson to unlock all others and explore freely!</span>
                 </div>
@@ -432,7 +432,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search lessons..."
                   value={searchTerm}
@@ -483,8 +483,8 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       </Card>
       )}
 
-      {/* Lessons Grid/List */}
-      {filteredLessons.length > 0 ? (
+      {/* Lessons Grid/List - Only show when subject is selected */}
+      {selectedSubject !== 'all' && filteredLessons.length > 0 ? (
         <div className={viewMode === 'grid' 
           ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           : "space-y-4"
@@ -498,27 +498,49 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
             />
           ))}
         </div>
-      ) : (
+      ) : selectedSubject === 'all' ? (
         <Card>
           <CardContent className="p-12 text-center">
-            <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No lessons found</h3>
-            <p className="text-gray-600 mb-6">
-              Try adjusting your search or filter criteria
+            <BookOpen className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">Select a Subject to View Lessons</h3>
+            <p className="text-muted-foreground mb-6">
+              Choose a subject from the dropdown above to explore available lessons
+            </p>
+            <div className="grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+              {subjects.slice(0, 3).map((subject) => (
+                <button
+                  key={subject.id}
+                  onClick={() => setSelectedSubject(subject.id)}
+                  className="p-4 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors"
+                >
+                  <div className="text-2xl mb-2">📚</div>
+                  <h4 className="font-medium text-foreground mb-1">{subject.name}</h4>
+                  <p className="text-sm text-muted-foreground">Explore lessons</p>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : selectedSubject !== 'all' ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <BookOpen className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">No lessons found</h3>
+            <p className="text-muted-foreground mb-6">
+              No lessons available for the selected subject and filters
             </p>
             <Button 
               variant="outline" 
               onClick={() => {
                 setSearchTerm('');
-                setSelectedSubject('all');
                 setSelectedDifficulty('all');
               }}
             >
-              Clear Filters
+              Clear Search & Difficulty Filters
             </Button>
           </CardContent>
         </Card>
-      )}
+      ) : null}
     </div>
   );
 };

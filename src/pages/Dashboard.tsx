@@ -9,13 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
-import { 
-  TrendingUp, 
-  Users, 
-  Globe, 
-  Award, 
-  Target, 
-  Calendar, 
+import {
+  TrendingUp,
+  Users,
+  Globe,
+  Award,
+  Target,
+  Calendar,
   MessageSquare,
   Brain,
   BookOpen,
@@ -42,16 +42,16 @@ const Dashboard = () => {
         setAiStats(stats);
       }
     };
-    
+
     fetchAIStats();
   }, [user, getUserStats]);
 
   const stats = [
-    { label: 'Impact Points', value: '0', icon: Award, color: 'text-blue-600' },
-    { label: 'Lessons Completed', value: '0', icon: BookOpen, color: 'text-green-600' },
-    { label: 'AI Interactions', value: aiStats?.totalInteractions?.toString() || '0', icon: Brain, color: 'text-purple-600' },
-    { label: 'Quizzes Attempted', value: '0', icon: Target, color: 'text-green-600' },
-    { label: 'Community Connections', value: '0', icon: Users, color: 'text-indigo-600' },
+    { label: 'Impact Points', value: '0', icon: Award, color: 'text-blue-600 dark:text-blue-400' },
+    { label: 'Lessons Completed', value: '0', icon: BookOpen, color: 'text-green-600 dark:text-green-400' },
+    { label: 'AI Interactions', value: aiStats?.totalInteractions?.toString() || '0', icon: Brain, color: 'text-purple-600 dark:text-purple-400' },
+    { label: 'Quizzes Attempted', value: '0', icon: Target, color: 'text-green-600 dark:text-green-400' },
+    { label: 'Community Connections', value: '0', icon: Users, color: 'text-indigo-600 dark:text-indigo-400' },
   ];
 
   const quickActions = [
@@ -90,7 +90,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
@@ -113,12 +113,12 @@ const Dashboard = () => {
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md">
               <CardContent className="p-6 flex flex-col items-center text-center h-full">
-                <div className={`p-4 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 ${stat.color} mb-4`}>
+                <div className={`p-4 rounded-xl bg-muted ${stat.color} mb-4`}>
                   <stat.icon className="h-8 w-8" />
                 </div>
                 <div className="mt-auto">
-                  <p className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</p>
-                  <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                  <p className="text-3xl font-bold text-foreground mb-2">{stat.value}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
                 </div>
               </CardContent>
             </Card>
@@ -127,7 +127,7 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="mb-8">
-          <h2 className="text-2xl font-heading font-bold text-gray-900 mb-6">Quick Actions</h2>
+          <h2 className="text-2xl font-heading font-bold text-foreground mb-6">Quick Actions</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {quickActions.map((action, index) => (
               <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border-0 shadow-md" onClick={action.action}>
@@ -136,8 +136,8 @@ const Dashboard = () => {
                     <action.icon className="h-8 w-8 text-white" />
                   </div>
                   <div className="mt-auto">
-                    <h3 className="font-semibold text-gray-900 mb-2">{action.title}</h3>
-                    <p className="text-sm text-gray-600">{action.description}</p>
+                    <h3 className="font-semibold text-foreground mb-2">{action.title}</h3>
+                    <p className="text-sm text-muted-foreground">{action.description}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -171,8 +171,8 @@ const Dashboard = () => {
                     <div className="space-y-4">
                       <div className="text-center py-12">
                         <div className="text-6xl mb-4">🚀</div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">Start Your Learning Journey</h3>
-                        <p className="text-gray-600 mb-6">Begin exploring our AI-powered tools and track your progress</p>
+                        <h3 className="text-xl font-semibold text-foreground mb-2">Start Your Learning Journey</h3>
+                        <p className="text-muted-foreground mb-6">Begin exploring our AI-powered tools and track your progress</p>
                         <div className="grid md:grid-cols-2 gap-4">
                           <Button onClick={() => navigate('/ai-dashboard')} className="bg-blue-600 hover:bg-blue-700">
                             <Brain className="mr-2 h-4 w-4" />
@@ -201,22 +201,22 @@ const Dashboard = () => {
                     <div className="space-y-3">
                       {recentLessons.length > 0 ? (
                         recentLessons.map((lesson, index) => (
-                          <div key={index} className="p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                          <div key={index} className="p-3 hover:bg-muted/30 rounded-lg transition-colors">
                             <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-medium text-gray-900 text-sm">{lesson.title}</h4>
+                              <h4 className="font-medium text-foreground text-sm">{lesson.title}</h4>
                               <Badge variant="outline" className="text-xs">{lesson.type}</Badge>
                             </div>
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Clock className="h-3 w-3" />
                                 {lesson.duration}
                               </div>
-                              <div className="text-xs font-medium text-green-600">
+                              <div className="text-xs font-medium text-green-600 dark:text-green-400">
                                 {lesson.progress}%
                               </div>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                              <div 
+                            <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                              <div
                                 className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full"
                                 style={{ width: `${lesson.progress}%` }}
                               ></div>
@@ -225,9 +225,9 @@ const Dashboard = () => {
                         ))
                       ) : (
                         <div className="text-center py-8">
-                          <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                          <p className="text-gray-500 text-sm">No lessons completed yet</p>
-                          <p className="text-gray-400 text-xs">Start learning to see your progress here</p>
+                          <BookOpen className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                          <p className="text-muted-foreground text-sm">No lessons completed yet</p>
+                          <p className="text-muted-foreground/70 text-xs">Start learning to see your progress here</p>
                         </div>
                       )}
                     </div>
@@ -243,22 +243,22 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg">
+                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                          <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
                             <Award className="h-5 w-5 text-yellow-600" />
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">Badges Earned</p>
-                            <p className="text-sm text-gray-600">Learning milestones</p>
+                            <p className="font-medium text-foreground">Badges Earned</p>
+                            <p className="text-sm text-muted-foreground">Learning milestones</p>
                           </div>
                         </div>
-                        <div className="text-2xl font-bold text-yellow-600">0</div>
+                        <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">0</div>
                       </div>
                       <div className="text-center py-4">
-                        <Award className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500 text-sm">No badges yet</p>
-                        <p className="text-gray-400 text-xs">Complete lessons to earn your first badge</p>
+                        <Award className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+                        <p className="text-muted-foreground text-sm">No badges yet</p>
+                        <p className="text-muted-foreground/70 text-xs">Complete lessons to earn your first badge</p>
                       </div>
                     </div>
                   </CardContent>
@@ -279,31 +279,31 @@ const Dashboard = () => {
                     <div className="text-4xl mb-4">🎓</div>
                     <div className="mt-auto">
                       <h3 className="font-semibold mb-2">AI Learning Tools</h3>
-                      <p className="text-sm text-gray-600 mb-3">Advanced AI-powered learning features</p>
+                      <p className="text-sm text-muted-foreground mb-3">Advanced AI-powered learning features</p>
                       <Button size="sm" onClick={() => navigate('/ai-dashboard')}>
                         <Brain className="mr-2 h-4 w-4" />
                         Explore
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
                     <div className="text-4xl mb-4">📚</div>
                     <div className="mt-auto">
                       <h3 className="font-semibold mb-2">Simple Lessons</h3>
-                      <p className="text-sm text-gray-600 mb-3">Visual, voice-guided learning</p>
+                      <p className="text-sm text-muted-foreground mb-3">Visual, voice-guided learning</p>
                       <Button size="sm" onClick={() => navigate('/simple-lessons')}>
                         <Play className="mr-2 h-4 w-4" />
                         Start
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
                     <div className="text-4xl mb-4">🎤</div>
                     <div className="mt-auto">
                       <h3 className="font-semibold mb-2">Voice Practice</h3>
-                      <p className="text-sm text-gray-600 mb-3">Speaking practice with AI feedback</p>
+                      <p className="text-sm text-muted-foreground mb-3">Speaking practice with AI feedback</p>
                       <Button size="sm">
                         <Mic className="mr-2 h-4 w-4" />
                         Practice
@@ -325,7 +325,7 @@ const Dashboard = () => {
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">🎯</div>
                   <h3 className="text-xl font-semibold mb-2">Practice Features Coming Soon</h3>
-                  <p className="text-gray-600 mb-6">Interactive practice sessions, quizzes, and speaking exercises</p>
+                  <p className="text-muted-foreground mb-6">Interactive practice sessions, quizzes, and speaking exercises</p>
                   <Button onClick={() => navigate('/ai-dashboard')}>
                     <Zap className="mr-2 h-4 w-4" />
                     Try AI Tools Instead
@@ -345,7 +345,7 @@ const Dashboard = () => {
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">🌍</div>
                   <h3 className="text-xl font-semibold mb-2">Community Features Coming Soon</h3>
-                  <p className="text-gray-600 mb-6">Mentorship matching, learning groups, and global connections</p>
+                  <p className="text-muted-foreground mb-6">Mentorship matching, learning groups, and global connections</p>
                   <Button onClick={() => navigate('/ai-dashboard')}>
                     <Users className="mr-2 h-4 w-4" />
                     Explore AI Community Tools

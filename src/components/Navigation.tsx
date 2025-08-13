@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/ui/logo';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -209,7 +209,16 @@ const Navigation = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <ThemeToggle />
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setAuthMode('signin');
+                    setShowAuthModal(true);
+                  }}
+                >
+                  Sign In
+                </Button>
                 <Button 
                   size="lg" 
                   className="bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 hover:from-blue-700 hover:via-purple-700 hover:to-green-700 text-white px-6 py-3 text-base rounded-xl shadow-lg"

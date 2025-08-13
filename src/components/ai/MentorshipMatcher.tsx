@@ -225,22 +225,22 @@ const MentorshipMatcher = () => {
 
         {/* Profile Status */}
         <div className="grid md:grid-cols-2 gap-4">
-          <Card className={`p-4 ${isProfileComplete(mentorProfile) ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
+          <Card className={`p-4 ${isProfileComplete(mentorProfile) ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-muted'}`}>
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${isProfileComplete(mentorProfile) ? 'bg-green-500' : 'bg-gray-400'}`} />
+              <div className={`w-3 h-3 rounded-full ${isProfileComplete(mentorProfile) ? 'bg-green-500' : 'bg-muted-foreground'}`} />
               <span className="font-medium">Mentor Profile</span>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {isProfileComplete(mentorProfile) ? 'Complete ✓' : 'Incomplete - fill required fields'}
             </p>
           </Card>
 
-          <Card className={`p-4 ${isProfileComplete(menteeProfile) ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
+          <Card className={`p-4 ${isProfileComplete(menteeProfile) ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-muted'}`}>
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${isProfileComplete(menteeProfile) ? 'bg-green-500' : 'bg-gray-400'}`} />
+              <div className={`w-3 h-3 rounded-full ${isProfileComplete(menteeProfile) ? 'bg-green-500' : 'bg-muted-foreground'}`} />
               <span className="font-medium">Mentee Profile</span>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {isProfileComplete(menteeProfile) ? 'Complete ✓' : 'Incomplete - fill required fields'}
             </p>
           </Card>
@@ -283,10 +283,10 @@ const MentorshipMatcher = () => {
         )}
 
         {/* Tips */}
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
           <CardContent className="pt-6">
-            <h4 className="font-semibold text-blue-900 mb-3">Tips for Better Matches:</h4>
-            <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-800">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">Tips for Better Matches:</h4>
+            <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-800 dark:text-blue-200">
               <div>
                 <h5 className="font-medium mb-2">For Mentors:</h5>
                 <ul className="space-y-1">
