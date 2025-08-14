@@ -5,6 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import AdvancedAnalytics from './AdvancedAnalytics';
+import UserManagement from './UserManagement';
+import ContentModeration from './ContentModeration';
+import SystemMonitoring from './SystemMonitoring';
+import IncidentDashboard from './IncidentDashboard';
+import AdminSettings from './AdminSettings';
 import {
   BarChart3,
   Users,
@@ -20,7 +26,10 @@ import {
   Brain,
   BookOpen,
   Zap,
-  Star
+  Star,
+  Monitor,
+  Flag,
+  LineChart
 } from 'lucide-react';
 
 interface PlatformStats {
@@ -212,12 +221,15 @@ const AdminDashboard = ({ onClose }: AdminDashboardProps) => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="ai-tools">AI Tools</TabsTrigger>
+          <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+          <TabsTrigger value="incidents">Incidents</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -349,72 +361,28 @@ const AdminDashboard = ({ onClose }: AdminDashboardProps) => {
           </div>
         </TabsContent>
 
+        <TabsContent value="analytics" className="space-y-6">
+          <AdvancedAnalytics />
+        </TabsContent>
+
         <TabsContent value="users" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>Manage platform users and permissions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium text-foreground">User Registration</p>
-                    <p className="text-sm text-muted-foreground">Allow new user registrations</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Configure
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium text-foreground">User Roles</p>
-                    <p className="text-sm text-muted-foreground">Manage user permissions and roles</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Manage
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <UserManagement />
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Content Management</CardTitle>
-              <CardDescription>Manage community posts, comments, and content moderation</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium text-foreground">Content Moderation</p>
-                    <p className="text-sm text-muted-foreground">Review and moderate community content</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Review
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium text-foreground">Featured Posts</p>
-                    <p className="text-sm text-muted-foreground">Manage featured community posts</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Star className="h-4 w-4 mr-2" />
-                    Manage
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ContentModeration />
+        </TabsContent>
+
+        <TabsContent value="monitoring" className="space-y-6">
+          <SystemMonitoring />
+        </TabsContent>
+
+        <TabsContent value="incidents" className="space-y-6">
+          <IncidentDashboard />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <AdminSettings />
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">
