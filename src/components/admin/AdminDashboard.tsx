@@ -10,10 +10,11 @@ import UserManagement from './UserManagement';
 import ContentModeration from './ContentModeration';
 import SystemMonitoring from './SystemMonitoring';
 import IncidentDashboard from './IncidentDashboard';
-import AdminSettings from './AdminSettings';
+import AdminSettingsSimple from './AdminSettingsSimple';
 import AdminComponentWrapper from './AdminComponentWrapper';
 import DatabaseStatus from './DatabaseStatus';
 import AIConnectionTest from './AIConnectionTest';
+import AdminStatusDashboard from './AdminStatusDashboard';
 import {
   BarChart3,
   Users,
@@ -236,6 +237,11 @@ const AdminDashboard = ({ onClose }: AdminDashboardProps) => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {/* Admin Status Dashboard */}
+          <AdminComponentWrapper componentName="Admin Status">
+            <AdminStatusDashboard />
+          </AdminComponentWrapper>
+
           {/* System Health */}
           <Card>
             <CardHeader>
@@ -396,7 +402,7 @@ const AdminDashboard = ({ onClose }: AdminDashboardProps) => {
 
         <TabsContent value="settings" className="space-y-6">
           <AdminComponentWrapper componentName="Admin Settings">
-            <AdminSettings />
+            <AdminSettingsSimple />
           </AdminComponentWrapper>
         </TabsContent>
 

@@ -22,7 +22,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Upload,
-  Download
+  Download,
+  Zap
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
