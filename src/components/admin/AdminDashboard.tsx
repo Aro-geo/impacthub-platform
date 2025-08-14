@@ -11,6 +11,9 @@ import ContentModeration from './ContentModeration';
 import SystemMonitoring from './SystemMonitoring';
 import IncidentDashboard from './IncidentDashboard';
 import AdminSettings from './AdminSettings';
+import AdminComponentWrapper from './AdminComponentWrapper';
+import DatabaseStatus from './DatabaseStatus';
+import AIConnectionTest from './AIConnectionTest';
 import {
   BarChart3,
   Users,
@@ -362,30 +365,52 @@ const AdminDashboard = ({ onClose }: AdminDashboardProps) => {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          <AdvancedAnalytics />
+          <AdminComponentWrapper componentName="Advanced Analytics">
+            <AdvancedAnalytics />
+          </AdminComponentWrapper>
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
-          <UserManagement />
+          <AdminComponentWrapper componentName="User Management">
+            <UserManagement />
+          </AdminComponentWrapper>
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">
-          <ContentModeration />
+          <AdminComponentWrapper componentName="Content Moderation">
+            <ContentModeration />
+          </AdminComponentWrapper>
         </TabsContent>
 
         <TabsContent value="monitoring" className="space-y-6">
-          <SystemMonitoring />
+          <AdminComponentWrapper componentName="System Monitoring">
+            <SystemMonitoring />
+          </AdminComponentWrapper>
         </TabsContent>
 
         <TabsContent value="incidents" className="space-y-6">
-          <IncidentDashboard />
+          <AdminComponentWrapper componentName="Incident Dashboard">
+            <IncidentDashboard />
+          </AdminComponentWrapper>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
-          <AdminSettings />
+          <AdminComponentWrapper componentName="Admin Settings">
+            <AdminSettings />
+          </AdminComponentWrapper>
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AdminComponentWrapper componentName="Database Status">
+              <DatabaseStatus />
+            </AdminComponentWrapper>
+            
+            <AdminComponentWrapper componentName="AI Connection Test">
+              <AIConnectionTest />
+            </AdminComponentWrapper>
+          </div>
+          
           <Card>
             <CardHeader>
               <CardTitle>System Administration</CardTitle>

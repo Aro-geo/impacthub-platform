@@ -89,40 +89,30 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({ className }) => {
         .gte('created_at', startDate.toISOString())
         .order('created_at');
 
-      // Fetch learning activities
-      const { data: activities } = await supabase
-        .from('learning_activities')
-        .select('*')
-        .gte('created_at', startDate.toISOString());
+      // Fetch data with error handling
+      const [activitiesResult, aiInteractionsResult, postsResult, lessonProgressResult] = await Promise.allSettled([
+        supabase.from('learning_activities').select('*').gte('created_at', startDate.toISOString()),
+        supabase.from('ai_interactions').select('*').gte('created_at', startDate.toISOString()),
+        supabase.from('community_posts').select('*').gte('created_at', startDate.toISOString()),
+        supabase.from('lesson_progress').select('*').gte('started_at', startDate.toISOString())
+      ]);
 
-      // Fetch AI interactions
-      const { data: aiInteractions } = await supabase
-        .from('ai_interactions')
-        .select('*')
-        .gte('created_at', startDate.toISOString());
-
-      // Fetch community posts
-      const { data: posts } = await supabase
-        .from('community_posts')
-        .select('*')
-        .gte('created_at', startDate.toISOString());
-
-      // Fetch lesson progress
-      const { data: lessonProgress } = await supabase
-        .from('lesson_progress')
-        .select('*')
-        .gte('started_at', startDate.toISOString());
+      // Extract data with fallbacks
+      const activities = activitiesResult.status === 'fulfilled' ? activitiesResult.value.data || [] : [];
+      const aiInteractions = aiInteractionsResult.status === 'fulfilled' ? aiInteractionsResult.value.data || [] : [];
+      const posts = postsResult.status === 'fulfilled' ? postsResult.value.data || [] : [];
+      const lessonProgress = lessonProgressResult.status === 'fulfilled' ? lessonProgressResult.value.data || [] : [];
 
       // Process data for charts
       setAnalyticsData({
         userGrowth: processUserGrowthData(profiles || []),
-        learningActivity: processLearningActivityData(activities || []),
-        contentEngagement: processContentEngagementData(posts || []),
-        aiUsage: processAIUsageData(aiInteractions || []),
-        performanceMetrics: processPerformanceData(lessonProgress || []),
+        learningActivity: processLearningActivityData(activities),
+        contentEngagement: processContentEngagementData(posts),
+        aiUsage: processAIUsageData(aiInteractions),
+        performanceMetrics: processPerformanceData(lessonProgress),
         geographicData: processGeographicData(profiles || []),
-        subjectPopularity: processSubjectData(activities || []),
-        userRetention: processRetentionData(profiles || [], activities || [])
+        subjectPopularity: processSubjectData(activities),
+        userRetention: processRetentionData(profiles || [], activities)
       });
 
     } catch (error) {

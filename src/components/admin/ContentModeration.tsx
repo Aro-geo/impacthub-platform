@@ -90,35 +90,59 @@ const ContentModeration: React.FC<ContentModerationProps> = ({ className }) => {
   const fetchContent = async () => {
     setLoading(true);
     try {
-      // Fetch posts with user information
+      // Fetch posts with basic information (avoid complex joins that might fail)
       const { data: postsData, error: postsError } = await supabase
         .from('community_posts')
-        .select(`
-          *,
-          profiles:user_id (name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (postsError) throw postsError;
+      if (postsError) {
+        console.error('Posts fetch error:', postsError);
+        // Continue with empty data instead of throwing
+      }
 
-      // Fetch comments with user information
+      // Fetch comments with basic information
       const { data: commentsData, error: commentsError } = await supabase
         .from('post_comments')
-        .select(`
-          *,
-          profiles:user_id (name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (commentsError) throw commentsError;
+      if (commentsError) {
+        console.error('Comments fetch error:', commentsError);
+        // Continue with empty data instead of throwing
+      }
+
+      // Fetch user profiles separately to avoid join issues
+      const userIds = [
+        ...(postsData || []).map(post => post.user_id),
+        ...(commentsData || []).map(comment => comment.user_id)
+      ].filter(Boolean);
+
+      const uniqueUserIds = [...new Set(userIds)];
+      
+      let userProfiles: { [key: string]: string } = {};
+      
+      if (uniqueUserIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', uniqueUserIds);
+        
+        if (profilesData) {
+          userProfiles = profilesData.reduce((acc, profile) => {
+            acc[profile.id] = profile.name || 'Unknown User';
+            return acc;
+          }, {} as { [key: string]: string });
+        }
+      }
 
       // Transform posts data
       const transformedPosts: Post[] = (postsData || []).map(post => ({
         id: post.id,
-        title: post.title,
-        content: post.content,
+        title: post.title || 'Untitled Post',
+        content: post.content || '',
         user_id: post.user_id,
-        user_name: post.profiles?.name || 'Unknown User',
+        user_name: userProfiles[post.user_id] || 'Unknown User',
         created_at: post.created_at,
         updated_at: post.updated_at,
         upvotes: post.upvotes || 0,
@@ -134,9 +158,9 @@ const ContentModeration: React.FC<ContentModerationProps> = ({ className }) => {
       // Transform comments data
       const transformedComments: Comment[] = (commentsData || []).map(comment => ({
         id: comment.id,
-        content: comment.content,
+        content: comment.content || '',
         user_id: comment.user_id,
-        user_name: comment.profiles?.name || 'Unknown User',
+        user_name: userProfiles[comment.user_id] || 'Unknown User',
         post_id: comment.post_id,
         created_at: comment.created_at,
         upvotes: 0, // Would need upvotes tracking for comments

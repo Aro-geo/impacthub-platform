@@ -80,7 +80,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ className }) => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Failed to fetch profiles:', error);
+        // Continue with empty array instead of throwing
+      }
 
       // Transform profiles to match User interface
       const transformedUsers: User[] = (profiles || []).map(profile => ({

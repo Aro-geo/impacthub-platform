@@ -30,6 +30,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const IncidentAnalysis = lazy(() => import("./pages/IncidentAnalysis"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminDashboardTest = lazy(() => import("./pages/AdminDashboardTest"));
+const AdminTest = lazy(() => import("./pages/AdminTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -184,6 +185,16 @@ const AppContent = () => {
               <Suspense fallback={<LoadingSpinner text="Loading Admin Dashboard..." />}>
                 <ProtectedRoute>
                   <AdminDashboardTest />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/admin-test" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading Admin Test..." />}>
+                <ProtectedRoute>
+                  <AdminTest />
                 </ProtectedRoute>
               </Suspense>
             } 

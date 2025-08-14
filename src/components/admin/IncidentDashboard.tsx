@@ -1,15 +1,13 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, TrendingUp, Clock, Users, Server, Zap } from 'lucide-react';
-import LoadingSpinner from '@/components/ui/loading-spinner';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle, TrendingUp, Clock, Users, Server, Zap, Info, CheckCircle } from 'lucide-react';
 import { incidentAnalysisService } from '@/services/incidentAnalysisService';
-
-// Lazy load the entire charts module
-const Charts = lazy(() => import('./IncidentCharts'));
 
 interface IncidentDashboardProps {
   className?: string;
@@ -51,15 +49,32 @@ const IncidentDashboard: React.FC<IncidentDashboardProps> = ({ className }) => {
       setRefreshing(true);
       const range = getTimeRange(timeRange);
       
-      const [patterns, insights] = await Promise.all([
+      // Use Promise.allSettled to handle potential failures gracefully
+      const [patternsResult, insightsResult] = await Promise.allSettled([
         incidentAnalysisService.getErrorPatterns(range),
         incidentAnalysisService.getPerformanceInsights(range)
       ]);
       
+      // Handle results with fallbacks
+      const patterns = patternsResult.status === 'fulfilled' ? patternsResult.value : null;
+      const insights = insightsResult.status === 'fulfilled' ? insightsResult.value : null;
+      
       setErrorPatterns(patterns);
       setPerformanceInsights(insights);
+      
+      // Log any failures for debugging
+      if (patternsResult.status === 'rejected') {
+        console.warn('Failed to fetch error patterns:', patternsResult.reason);
+      }
+      if (insightsResult.status === 'rejected') {
+        console.warn('Failed to fetch performance insights:', insightsResult.reason);
+      }
+      
     } catch (error) {
       console.error('Failed to fetch incident data:', error);
+      // Set fallback data to prevent UI crashes
+      setErrorPatterns(null);
+      setPerformanceInsights(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -187,35 +202,72 @@ const IncidentDashboard: React.FC<IncidentDashboardProps> = ({ className }) => {
         </TabsList>
 
         <TabsContent value="errors" className="space-y-4">
+          {!errorPatterns && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Incident Analysis Unavailable</AlertTitle>
+              <AlertDescription>
+                The incident analysis system requires database setup to function properly. 
+                Using fallback data for demonstration.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Error Timeline */}
+            {/* Error Timeline - Simplified */}
             <Card>
               <CardHeader>
                 <CardTitle>Error Timeline</CardTitle>
-                <CardDescription>Errors over time</CardDescription>
+                <CardDescription>Errors over time (last 24 hours)</CardDescription>
               </CardHeader>
               <CardContent>
-                {errorPatterns?.timeline && (
-                  <Suspense fallback={<div className="h-[200px] flex items-center justify-center"><LoadingSpinner text="Loading chart..." /></div>}>
-                    <Charts.ErrorTimelineChart data={errorPatterns.timeline} />
-                  </Suspense>
+                {errorPatterns?.timeline ? (
+                  <div className="space-y-2">
+                    {errorPatterns.timeline.slice(0, 5).map((item: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-2 border rounded">
+                        <span className="text-sm">{new Date(item.hour).toLocaleTimeString()}</span>
+                        <div className="flex items-center space-x-2">
+                          <Progress value={(item.count / 10) * 100} className="w-20" />
+                          <span className="text-sm font-medium">{item.count}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+                    <p>No error timeline data available</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Errors by Component */}
+            {/* Errors by Component - Simplified */}
             <Card>
               <CardHeader>
                 <CardTitle>Errors by Component</CardTitle>
                 <CardDescription>Component failure distribution</CardDescription>
               </CardHeader>
               <CardContent>
-                {errorPatterns?.byComponent && (
-                  <Suspense fallback={<div className="h-[200px] flex items-center justify-center"><LoadingSpinner text="Loading chart..." /></div>}>
-                    <Charts.ComponentErrorChart 
-                      data={Object.entries(errorPatterns.byComponent).map(([name, value]) => ({ name, value }))} 
-                    />
-                  </Suspense>
+                {errorPatterns?.byComponent ? (
+                  <div className="space-y-3">
+                    {Object.entries(errorPatterns.byComponent).map(([component, count], index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{component}</span>
+                        <div className="flex items-center space-x-2">
+                          <Progress value={((count as number) / 10) * 100} className="w-20" />
+                          <Badge variant={getSeverityColor(count as number)}>
+                            {count}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle className="h-8 w-8 mx-auto mb-2" />
+                    <p>No component errors detected</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -250,49 +302,71 @@ const IncidentDashboard: React.FC<IncidentDashboardProps> = ({ className }) => {
             {/* Page Load Performance */}
             <Card>
               <CardHeader>
-                <CardTitle>Page Load Distribution</CardTitle>
-                <CardDescription>Load time percentiles</CardDescription>
+                <CardTitle>Page Load Performance</CardTitle>
+                <CardDescription>Load time metrics</CardDescription>
               </CardHeader>
               <CardContent>
-                {performanceInsights?.pageLoadTimes && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Average:</span>
-                      <span>{Math.round(performanceInsights.summary.avgPageLoad)}ms</span>
+                {performanceInsights?.summary ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span>Average Load Time:</span>
+                      <Badge variant="outline">{Math.round(performanceInsights.summary.avgPageLoad)}ms</Badge>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span>95th Percentile:</span>
-                      <span>{Math.round(performanceInsights.summary.p95PageLoad)}ms</span>
+                      <Badge variant="outline">{Math.round(performanceInsights.summary.p95PageLoad)}ms</Badge>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ 
-                          width: `${Math.min(100, (performanceInsights.summary.avgPageLoad / 3000) * 100)}%` 
-                        }}
-                      ></div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Performance Score</span>
+                        <span>{Math.round((3000 - performanceInsights.summary.avgPageLoad) / 30)}%</span>
+                      </div>
+                      <Progress 
+                        value={Math.max(0, Math.min(100, (3000 - performanceInsights.summary.avgPageLoad) / 30))} 
+                        className="h-2"
+                      />
                     </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="h-8 w-8 mx-auto mb-2" />
+                    <p>No performance data available</p>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Memory Usage Trend */}
+            {/* Memory Usage */}
             <Card>
               <CardHeader>
                 <CardTitle>Memory Usage</CardTitle>
-                <CardDescription>Heap memory consumption</CardDescription>
+                <CardDescription>Current memory consumption</CardDescription>
               </CardHeader>
               <CardContent>
-                {performanceInsights?.memoryUsage && (
-                  <Suspense fallback={<div className="h-[200px] flex items-center justify-center"><LoadingSpinner text="Loading chart..." /></div>}>
-                    <Charts.MemoryUsageChart 
-                      data={performanceInsights.memoryUsage.map((value: number, index: number) => ({ 
-                        index, 
-                        memory: Math.round(value / 1024 / 1024) 
-                      }))} 
-                    />
-                  </Suspense>
+                {performanceInsights?.summary ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span>Average Memory:</span>
+                      <Badge variant="outline">
+                        {Math.round(performanceInsights.summary.avgMemoryUsage / 1024 / 1024)}MB
+                      </Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Memory Usage</span>
+                        <span>{Math.round((performanceInsights.summary.avgMemoryUsage / 1024 / 1024 / 100) * 100)}%</span>
+                      </div>
+                      <Progress 
+                        value={Math.min(100, (performanceInsights.summary.avgMemoryUsage / 1024 / 1024 / 100) * 100)} 
+                        className="h-2"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Server className="h-8 w-8 mx-auto mb-2" />
+                    <p>No memory data available</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -333,12 +407,25 @@ const IncidentDashboard: React.FC<IncidentDashboardProps> = ({ className }) => {
                 <CardDescription>Browser-specific error patterns</CardDescription>
               </CardHeader>
               <CardContent>
-                {errorPatterns?.byUserAgent && (
-                  <Suspense fallback={<div className="h-[200px] flex items-center justify-center"><LoadingSpinner text="Loading chart..." /></div>}>
-                    <Charts.BrowserErrorChart 
-                      data={Object.entries(errorPatterns.byUserAgent).map(([name, value]) => ({ name, value }))} 
-                    />
-                  </Suspense>
+                {errorPatterns?.byUserAgent ? (
+                  <div className="space-y-3">
+                    {Object.entries(errorPatterns.byUserAgent).map(([browser, count], index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{browser}</span>
+                        <div className="flex items-center space-x-2">
+                          <Progress value={((count as number) / 5) * 100} className="w-20" />
+                          <Badge variant={getSeverityColor(count as number)}>
+                            {count}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle className="h-8 w-8 mx-auto mb-2" />
+                    <p>No browser-specific errors detected</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -351,19 +438,25 @@ const IncidentDashboard: React.FC<IncidentDashboardProps> = ({ className }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {errorPatterns?.byUrl && Object.entries(errorPatterns.byUrl)
-                    .sort(([,a], [,b]) => (b as number) - (a as number))
-                    .slice(0, 10)
-                    .map(([url, count], index) => (
-                      <div key={index} className="flex items-center justify-between p-2 border rounded">
-                        <div className="flex-1 truncate">
-                          <div className="text-sm font-medium truncate">{url}</div>
+                  {errorPatterns?.byUrl ? (
+                    Object.entries(errorPatterns.byUrl)
+                      .sort(([,a], [,b]) => (b as number) - (a as number))
+                      .slice(0, 10)
+                      .map(([url, count], index) => (
+                        <div key={index} className="flex items-center justify-between p-2 border rounded">
+                          <div className="flex-1 truncate">
+                            <div className="text-sm font-medium truncate">{url}</div>
+                          </div>
+                          <Badge variant={getSeverityColor(count as number)}>
+                            {count}
+                          </Badge>
                         </div>
-                        <Badge variant={getSeverityColor(count as number)}>
-                          {count}
-                        </Badge>
-                      </div>
-                    )) || <p className="text-muted-foreground">No URL data available</p>}
+                      ))
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <p>No URL-specific errors detected</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

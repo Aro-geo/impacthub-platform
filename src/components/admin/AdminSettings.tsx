@@ -74,7 +74,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ className }) => {
     enableNotifications: true,
     enableAnalytics: true,
     enableAI: true,
-    aiProvider: 'openai',
+    aiProvider: 'deepseek',
     aiApiKey: '',
     smtpHost: '',
     smtpPort: 587,
@@ -134,6 +134,79 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ className }) => {
       toast.success('Email settings test successful');
     } catch (error) {
       toast.error('Email settings test failed');
+    }
+  };
+
+  const testAIConnection = async () => {
+    if (!settings.aiApiKey) {
+      toast.error('Please enter an API key first');
+      return;
+    }
+
+    try {
+      toast.info('Testing AI connection...');
+      
+      // Test based on provider
+      let testEndpoint = '';
+      let testHeaders: Record<string, string> = {};
+      let testBody: any = {};
+
+      switch (settings.aiProvider) {
+        case 'openai':
+          testEndpoint = 'https://api.openai.com/v1/models';
+          testHeaders = {
+            'Authorization': `Bearer ${settings.aiApiKey}`,
+            'Content-Type': 'application/json'
+          };
+          break;
+        
+        case 'deepseek':
+          testEndpoint = 'https://api.deepseek.com/v1/models';
+          testHeaders = {
+            'Authorization': `Bearer ${settings.aiApiKey}`,
+            'Content-Type': 'application/json'
+          };
+          break;
+        
+        case 'anthropic':
+          testEndpoint = 'https://api.anthropic.com/v1/messages';
+          testHeaders = {
+            'x-api-key': settings.aiApiKey,
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01'
+          };
+          testBody = {
+            model: 'claude-3-haiku-20240307',
+            max_tokens: 10,
+            messages: [{ role: 'user', content: 'Test' }]
+          };
+          break;
+        
+        case 'google':
+          testEndpoint = `https://generativelanguage.googleapis.com/v1/models?key=${settings.aiApiKey}`;
+          break;
+        
+        default:
+          toast.error('AI provider testing not implemented for this provider');
+          return;
+      }
+
+      const response = await fetch(testEndpoint, {
+        method: settings.aiProvider === 'anthropic' ? 'POST' : 'GET',
+        headers: testHeaders,
+        body: settings.aiProvider === 'anthropic' ? JSON.stringify(testBody) : undefined
+      });
+
+      if (response.ok) {
+        toast.success(`${settings.aiProvider.toUpperCase()} connection test successful!`);
+      } else {
+        const errorData = await response.text();
+        console.error('AI API Error:', errorData);
+        toast.error(`AI connection test failed: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('AI connection test error:', error);
+      toast.error('AI connection test failed: Network error');
     }
   };
 
@@ -519,6 +592,8 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ className }) => {
                         <SelectItem value="openai">OpenAI</SelectItem>
                         <SelectItem value="anthropic">Anthropic</SelectItem>
                         <SelectItem value="google">Google AI</SelectItem>
+                        <SelectItem value="deepseek">DeepSeek</SelectItem>
+                        <SelectItem value="custom">Custom Provider</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -533,6 +608,11 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ className }) => {
                       placeholder="Enter your AI provider API key"
                     />
                   </div>
+                  
+                  <Button onClick={testAIConnection} variant="outline" disabled={!settings.aiApiKey}>
+                    <Zap className="h-4 w-4 mr-2" />
+                    Test AI Connection
+                  </Button>
                 </>
               )}
             </CardContent>
