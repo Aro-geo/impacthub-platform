@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAI } from '@/hooks/useAI';
 import { supabase } from '@/integrations/supabase/client';
 import { lessonProgressService } from '@/services/lessonProgressService';
 import {
@@ -55,6 +56,7 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
   onLessonComplete
 }) => {
   const { user } = useAuth();
+  const { trackLessonComplete, trackLessonView } = useAI();
   const [lesson, setLesson] = useState<LessonContent | null>(null);
   const [progress, setProgress] = useState<LessonProgress | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,6 +118,25 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
         setProgress(progressData);
         setIsStarted(true);
         setReadingTime(0);
+
+        // Track lesson view with AI learning observer
+        try {
+          const { data: lessonWithSubject } = await supabase
+            .from('simple_lessons')
+            .select(`
+              subjects (name)
+            `)
+            .eq('id', lesson.id)
+            .single();
+
+          const subject = lessonWithSubject?.subjects?.name || 'Unknown';
+          const topic = lesson.title;
+          
+          // Track the lesson view (will be updated with actual time when lesson is completed)
+          await trackLessonView(subject, topic, 0);
+        } catch (aiError) {
+          console.error('Error tracking lesson view with AI:', aiError);
+        }
       }
     } catch (err) {
       console.error('Error starting lesson:', err);
@@ -151,6 +172,31 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
       if (progressData) {
         setProgress(progressData);
         setIsStarted(false);
+
+        // Track lesson completion with AI learning observer
+        try {
+          // Get subject information from lesson
+          const { data: lessonWithSubject } = await supabase
+            .from('simple_lessons')
+            .select(`
+              subjects (name)
+            `)
+            .eq('id', lesson.id)
+            .single();
+
+          const subject = lessonWithSubject?.subjects?.name || 'Unknown';
+          const topic = lesson.title;
+          const timeSpent = Math.max(readingTime / 60, 1); // Convert to minutes, minimum 1 minute
+          
+          // Determine difficulty based on lesson difficulty level
+          let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
+          if (lesson.difficulty_level === 'beginner') difficulty = 'easy';
+          else if (lesson.difficulty_level === 'advanced') difficulty = 'hard';
+
+          await trackLessonComplete(subject, topic, timeSpent, difficulty);
+        } catch (aiError) {
+          console.error('Error tracking lesson completion with AI:', aiError);
+        }
 
         // Notify parent component that lesson is completed to refresh lessons list
         if (onLessonComplete) {

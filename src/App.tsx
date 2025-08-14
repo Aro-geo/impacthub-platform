@@ -12,6 +12,7 @@ import MobileNavigation from "@/components/MobileNavigation";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import { useOffline } from "@/hooks/useOffline";
+import { aiLearningObserver } from "@/services/aiLearningObserver";
 
 // Lazy load all page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -27,12 +28,18 @@ const Community = lazy(() => import("./pages/Community"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const IncidentAnalysis = lazy(() => import("./pages/IncidentAnalysis"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { isOnline, syncStatus } = useOffline();
+
+  // Initialize AI learning observer when app starts
+  React.useEffect(() => {
+    aiLearningObserver.initializeAutoConnection();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -156,6 +163,16 @@ const AppContent = () => {
               <Suspense fallback={<LoadingSpinner text="Loading Incident Analysis..." />}>
                 <ProtectedRoute>
                   <IncidentAnalysis />
+                </ProtectedRoute>
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/admin" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading Admin Panel..." />}>
+                <ProtectedRoute>
+                  <AdminPanel />
                 </ProtectedRoute>
               </Suspense>
             } 

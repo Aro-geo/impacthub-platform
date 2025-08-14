@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Play, GraduationCap } from 'lucide-react';
+import { User, Settings, LogOut, Play, GraduationCap, Shield } from 'lucide-react';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 
 const Navigation = () => {
@@ -59,6 +59,9 @@ const Navigation = () => {
     }
     return 'U';
   };
+
+  // Check if user is admin
+  const isAdmin = user?.email === 'geokullo@gmail.com';
 
   return (
     <nav className="bg-background/95 backdrop-blur-sm border-b border-border sticky top-0 z-50">
@@ -185,6 +188,16 @@ const Navigation = () => {
                         <Settings className="mr-3 h-4 w-4" />
                         <span>Settings</span>
                       </DropdownMenuItem>
+
+                      {isAdmin && (
+                        <DropdownMenuItem 
+                          className="cursor-pointer p-3 rounded-lg bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300"
+                          onClick={() => navigate('/admin')}
+                        >
+                          <Shield className="mr-3 h-4 w-4" />
+                          <span>Admin Panel</span>
+                        </DropdownMenuItem>
+                      )}
                       
                       <DropdownMenuSeparator className="my-2" />
 

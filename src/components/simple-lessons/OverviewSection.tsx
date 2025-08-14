@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAI } from '@/hooks/useAI';
 import { supabase } from '@/integrations/supabase/client';
 import {
   BookOpen,
@@ -11,7 +12,10 @@ import {
   ArrowRight,
   TrendingUp,
   Clock,
-  Star
+  Star,
+  Brain,
+  Target,
+  Lightbulb
 } from 'lucide-react';
 import GradeInfo from './GradeInfo';
 
@@ -43,6 +47,152 @@ interface ContinueLesson {
   subject_name: string;
   progress_percentage: number;
 }
+
+// AI Recommendations Section Component
+const AIRecommendationsSection = () => {
+  const { user } = useAuth();
+  const { getLearningRecommendations, getLearnerProfile } = useAI();
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [learnerProfile, setLearnerProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadAIRecommendations();
+    }
+  }, [user]);
+
+  const loadAIRecommendations = async () => {
+    try {
+      setLoading(true);
+      const [recs, profile] = await Promise.all([
+        getLearningRecommendations(),
+        getLearnerProfile()
+      ]);
+      
+      setRecommendations(recs || []);
+      setLearnerProfile(profile);
+    } catch (error) {
+      console.error('Error loading AI recommendations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRecommendationIcon = (type: string) => {
+    switch (type) {
+      case 'lesson': return BookOpen;
+      case 'skill': return Target;
+      case 'topic': return Lightbulb;
+      case 'practice': return TrendingUp;
+      default: return Brain;
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
+      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="p-3 border rounded-lg animate-pulse">
+            <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-muted rounded w-full mb-2"></div>
+            <div className="h-6 bg-muted rounded w-1/4"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (recommendations.length === 0) {
+    return (
+      <div className="text-center py-6">
+        <Brain className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+        <p className="text-muted-foreground mb-2">AI Learning Assistant</p>
+        <p className="text-sm text-muted-foreground">
+          Complete some lessons and quizzes to get personalized recommendations!
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Show learner insights if available */}
+      {learnerProfile && (learnerProfile.interests.length > 0 || learnerProfile.strengths.length > 0) && (
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center space-x-2 mb-2">
+            <Brain className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-800 dark:text-blue-300">AI Insights</span>
+          </div>
+          <div className="text-xs text-blue-700 dark:text-blue-400">
+            {learnerProfile.interests.length > 0 && (
+              <span>Interested in: {learnerProfile.interests.slice(0, 2).join(', ')}</span>
+            )}
+            {learnerProfile.strengths.length > 0 && learnerProfile.interests.length > 0 && ' • '}
+            {learnerProfile.strengths.length > 0 && (
+              <span>Strong in: {learnerProfile.strengths.slice(0, 2).join(', ')}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Recommendations */}
+      {recommendations.slice(0, 3).map((rec, index) => {
+        const IconComponent = getRecommendationIcon(rec.type);
+        return (
+          <div key={index} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <IconComponent className="h-4 w-4 text-blue-600" />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="font-medium text-foreground text-sm truncate">
+                    {rec.title}
+                  </h4>
+                  <Badge className={getPriorityColor(rec.priority)} size="sm">
+                    {rec.priority}
+                  </Badge>
+                </div>
+                
+                <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                  {rec.description}
+                </p>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {rec.estimatedTime}min
+                  </div>
+                  <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">
+                    Start
+                    <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      
+      {recommendations.length > 3 && (
+        <Button variant="outline" size="sm" className="w-full mt-2">
+          View All Recommendations
+        </Button>
+      )}
+    </div>
+  );
+};
 
 const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
   const { user } = useAuth();
@@ -288,7 +438,7 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
           </CardContent>
         </Card>
 
-        {/* Suggested Lessons */}
+        {/* AI-Powered Suggestions */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -296,44 +446,11 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
               <span>Suggested for You</span>
             </CardTitle>
             <CardDescription>
-              Recommended based on your progress
+              AI-powered recommendations based on your learning patterns
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {suggestedLessons.length > 0 ? (
-              <div className="space-y-3">
-                {suggestedLessons.map((lesson) => (
-                  <div key={lesson.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-foreground text-sm">
-                        {lesson.title}
-                      </h4>
-                      <Badge className={getDifficultyColor(lesson.difficulty_level)}>
-                        {getDifficultyStars(lesson.difficulty_level)}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {lesson.subject_name}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {lesson.duration_minutes} min
-                      </div>
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">
-                        Start
-                        <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <Star className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                <p className="text-muted-foreground">No suggestions available</p>
-              </div>
-            )}
+            <AIRecommendationsSection />
           </CardContent>
         </Card>
       </div>

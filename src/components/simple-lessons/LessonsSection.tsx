@@ -502,22 +502,44 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
         <Card>
           <CardContent className="p-12 text-center">
             <BookOpen className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">Select a Subject to View Lessons</h3>
+            <h3 className="text-xl font-semibold text-foreground mb-2">Choose Your Learning Path</h3>
             <p className="text-muted-foreground mb-6">
-              Choose a subject from the dropdown above to explore available lessons
+              Master the fundamentals of Science, Technology, and Mathematics
             </p>
             <div className="grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-              {subjects.slice(0, 3).map((subject) => (
-                <button
-                  key={subject.id}
-                  onClick={() => setSelectedSubject(subject.id)}
-                  className="p-4 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors"
-                >
-                  <div className="text-2xl mb-2">📚</div>
-                  <h4 className="font-medium text-foreground mb-1">{subject.name}</h4>
-                  <p className="text-sm text-muted-foreground">Explore lessons</p>
-                </button>
-              ))}
+              <button
+                onClick={() => {
+                  const scienceSubject = subjects.find(s => s.name.toLowerCase().includes('science'));
+                  if (scienceSubject) setSelectedSubject(scienceSubject.id);
+                }}
+                className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 rounded-lg transition-colors border border-green-200 dark:border-green-800"
+              >
+                <div className="text-3xl mb-3">🔬</div>
+                <h4 className="font-semibold text-foreground mb-2">Science</h4>
+                <p className="text-sm text-muted-foreground">Explore the natural world through experiments and discovery</p>
+              </button>
+              <button
+                onClick={() => {
+                  const techSubject = subjects.find(s => s.name.toLowerCase().includes('technology') || s.name.toLowerCase().includes('computer'));
+                  if (techSubject) setSelectedSubject(techSubject.id);
+                }}
+                className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 rounded-lg transition-colors border border-blue-200 dark:border-blue-800"
+              >
+                <div className="text-3xl mb-3">💻</div>
+                <h4 className="font-semibold text-foreground mb-2">Technology</h4>
+                <p className="text-sm text-muted-foreground">Learn coding, digital skills, and modern technology</p>
+              </button>
+              <button
+                onClick={() => {
+                  const mathSubject = subjects.find(s => s.name.toLowerCase().includes('math'));
+                  if (mathSubject) setSelectedSubject(mathSubject.id);
+                }}
+                className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30 rounded-lg transition-colors border border-purple-200 dark:border-purple-800"
+              >
+                <div className="text-3xl mb-3">📊</div>
+                <h4 className="font-semibold text-foreground mb-2">Mathematics</h4>
+                <p className="text-sm text-muted-foreground">Build problem-solving skills with numbers and logic</p>
+              </button>
             </div>
           </CardContent>
         </Card>

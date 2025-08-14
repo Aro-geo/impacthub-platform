@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAI } from '@/hooks/useAI';
 import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowLeft,
@@ -45,6 +46,7 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
   onClose
 }) => {
   const { user } = useAuth();
+  const { trackQuizAttempt } = useAI();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -181,13 +183,43 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
     setShowResult(true);
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (currentQuizIndex < quizzes.length - 1) {
       setCurrentQuizIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setShowResult(false);
     } else {
+      // Quiz session completed - track with AI
       setSessionComplete(true);
+      
+      // Track the quiz session completion with AI learning observer
+      if (user && quizzes.length > 0) {
+        const totalAnswered = Object.keys(answers).length + (selectedAnswer !== null ? 1 : 0);
+        const finalScore = score + (selectedAnswer === quizzes[currentQuizIndex]?.correct_answer ? 1 : 0);
+        const scorePercentage = totalAnswered > 0 ? Math.round((finalScore / totalAnswered) * 100) : 0;
+        
+        // Get subject and topic from the first quiz
+        const firstQuiz = quizzes[0];
+        const subject = firstQuiz?.lesson?.subject?.name || 'Unknown';
+        const topic = firstQuiz?.lesson?.title || 'Quiz Practice';
+        
+        // Determine difficulty based on practice mode and score
+        let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
+        if (practiceMode === 'timed') difficulty = 'hard';
+        else if (scorePercentage >= 80) difficulty = 'easy';
+        else if (scorePercentage < 60) difficulty = 'hard';
+        
+        // Estimate time spent (for timed mode, use actual time, otherwise estimate)
+        const timeSpent = practiceMode === 'timed' && timeLeft !== null 
+          ? (10 * 60 - timeLeft) / 60  // Convert to minutes
+          : Math.max(totalAnswered * 2, 5); // Estimate 2 minutes per question, minimum 5 minutes
+        
+        try {
+          await trackQuizAttempt(subject, topic, scorePercentage, difficulty, timeSpent);
+        } catch (error) {
+          console.error('Error tracking quiz attempt with AI:', error);
+        }
+      }
     }
   };
 

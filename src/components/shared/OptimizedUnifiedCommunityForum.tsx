@@ -7,14 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  MessageSquare, 
-  Users, 
-  Plus, 
-  ThumbsUp, 
-  MessageCircle, 
+import EmojiCommentSystem from './EmojiCommentSystem';
+import {
+  MessageSquare,
+  Users,
+  Plus,
+  ThumbsUp,
+  MessageCircle,
   Star,
   HelpCircle,
   BookOpen,
@@ -23,7 +26,15 @@ import {
   Search,
   TrendingUp,
   Brain,
-  Leaf
+  Leaf,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Reply,
+  Send,
+  Shield,
+  BarChart3,
+  Settings
 } from 'lucide-react';
 
 interface Subject {
@@ -53,9 +64,25 @@ interface CommunityPost {
   profiles?: {
     name: string;
     avatar_url?: string;
+    email?: string;
   };
   replies_count?: number;
   user_has_upvoted?: boolean;
+  comments?: Comment[];
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  post_id: string;
+  profiles?: {
+    name: string;
+    avatar_url?: string;
+    email?: string;
+  };
 }
 
 interface UnifiedCommunityForumProps {
@@ -64,7 +91,7 @@ interface UnifiedCommunityForumProps {
   description?: string;
 }
 
-const OptimizedUnifiedCommunityForum = ({ 
+const OptimizedUnifiedCommunityForum = ({
   context = 'general',
   title = "Community Forum",
   description = "Connect, discuss, and learn together"
@@ -78,6 +105,11 @@ const OptimizedUnifiedCommunityForum = ({
   const [selectedType, setSelectedType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
   const [showNewPostDialog, setShowNewPostDialog] = useState(false);
+  const [expandedPost, setExpandedPost] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<string | null>(null);
+  const [editingComment, setEditingComment] = useState<string | null>(null);
+  const [showComments, setShowComments] = useState<{ [key: string]: boolean }>({});
+  const [newComment, setNewComment] = useState<{ [key: string]: string }>({});
   const [newPost, setNewPost] = useState({
     title: '',
     content: '',
@@ -85,6 +117,17 @@ const OptimizedUnifiedCommunityForum = ({
     subject_id: 'none',
     category: ''
   });
+  const [editPost, setEditPost] = useState({
+    id: '',
+    title: '',
+    content: '',
+    post_type: 'discussion' as const
+  });
+
+  // Check if user is admin
+  const isAdmin = user?.email === 'geokullo@gmail.com';
+  const isPostOwner = (postUserId: string) => user?.id === postUserId;
+  const isCommentOwner = (commentUserId: string) => user?.id === commentUserId;
 
   // Memoize post types to avoid recalculation
   const postTypes = useMemo(() => {
@@ -132,7 +175,7 @@ const OptimizedUnifiedCommunityForum = ({
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Check if community_posts table exists first
       const { data, error } = await supabase
         .from('community_posts')
@@ -222,6 +265,194 @@ const OptimizedUnifiedCommunityForum = ({
     }
   }, [user, newPost, fetchPosts]);
 
+  const updatePost = useCallback(async () => {
+    if (!user || !editPost.title.trim() || !editPost.content.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('community_posts')
+        .update({
+          title: editPost.title,
+          content: editPost.content,
+          post_type: editPost.post_type,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editPost.id);
+
+      if (error) throw error;
+
+      setEditingPost(null);
+      setEditPost({ id: '', title: '', content: '', post_type: 'discussion' });
+      fetchPosts();
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
+  }, [user, editPost, fetchPosts]);
+
+  const deletePost = useCallback(async (postId: string) => {
+    if (!user) return;
+
+    try {
+      // Delete comments first
+      await supabase
+        .from('post_comments')
+        .delete()
+        .eq('post_id', postId);
+
+      // Delete upvotes
+      await supabase
+        .from('post_upvotes')
+        .delete()
+        .eq('post_id', postId);
+
+      // Delete the post
+      const { error } = await supabase
+        .from('community_posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      fetchPosts();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  }, [user, fetchPosts]);
+
+  const fetchComments = useCallback(async (postId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('post_comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          updated_at,
+          user_id,
+          post_id,
+          profiles:user_id (
+            name,
+            avatar_url,
+            email
+          )
+        `)
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.warn('Comments table not available:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      return [];
+    }
+  }, []);
+
+  const addComment = useCallback(async (postId: string) => {
+    if (!user || !newComment[postId]?.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('post_comments')
+        .insert({
+          content: newComment[postId],
+          post_id: postId,
+          user_id: user.id
+        });
+
+      if (error) throw error;
+
+      // Update comment count
+      const post = posts.find(p => p.id === postId);
+      if (post) {
+        await supabase
+          .from('community_posts')
+          .update({ replies_count: (post.replies_count || 0) + 1 })
+          .eq('id', postId);
+      }
+
+      setNewComment(prev => ({ ...prev, [postId]: '' }));
+
+      // Refresh comments for this post
+      const comments = await fetchComments(postId);
+      setPosts(prev => prev.map(p =>
+        p.id === postId ? { ...p, comments, replies_count: (p.replies_count || 0) + 1 } : p
+      ));
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+  }, [user, newComment, posts, fetchComments]);
+
+  const updateComment = useCallback(async (commentId: string, content: string, postId: string) => {
+    if (!user || !content.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('post_comments')
+        .update({
+          content,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      setEditingComment(null);
+
+      // Refresh comments for this post
+      const comments = await fetchComments(postId);
+      setPosts(prev => prev.map(p =>
+        p.id === postId ? { ...p, comments } : p
+      ));
+    } catch (error) {
+      console.error('Error updating comment:', error);
+    }
+  }, [user, fetchComments]);
+
+  const deleteComment = useCallback(async (commentId: string, postId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('post_comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      // Update comment count
+      const post = posts.find(p => p.id === postId);
+      if (post) {
+        await supabase
+          .from('community_posts')
+          .update({ replies_count: Math.max(0, (post.replies_count || 0) - 1) })
+          .eq('id', postId);
+      }
+
+      // Refresh comments for this post
+      const comments = await fetchComments(postId);
+      setPosts(prev => prev.map(p =>
+        p.id === postId ? { ...p, comments, replies_count: Math.max(0, (p.replies_count || 0) - 1) } : p
+      ));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  }, [user, posts, fetchComments]);
+
+  const toggleComments = useCallback(async (postId: string) => {
+    setShowComments(prev => ({ ...prev, [postId]: !prev[postId] }));
+
+    if (!showComments[postId]) {
+      const comments = await fetchComments(postId);
+      setPosts(prev => prev.map(p =>
+        p.id === postId ? { ...p, comments } : p
+      ));
+    }
+  }, [showComments, fetchComments]);
+
   const toggleUpvote = useCallback(async (postId: string) => {
     if (!user) return;
 
@@ -230,13 +461,13 @@ const OptimizedUnifiedCommunityForum = ({
       if (!post) return;
 
       // Optimistic update
-      setPosts(prev => prev.map(p => 
-        p.id === postId 
-          ? { 
-              ...p, 
-              upvotes: p.user_has_upvoted ? p.upvotes - 1 : p.upvotes + 1,
-              user_has_upvoted: !p.user_has_upvoted
-            }
+      setPosts(prev => prev.map(p =>
+        p.id === postId
+          ? {
+            ...p,
+            upvotes: p.user_has_upvoted ? p.upvotes - 1 : p.upvotes + 1,
+            user_has_upvoted: !p.user_has_upvoted
+          }
           : p
       ));
 
@@ -304,7 +535,7 @@ const OptimizedUnifiedCommunityForum = ({
   // Memoize filtered posts to avoid recalculation
   const filteredPosts = useMemo(() => {
     if (!searchTerm) return posts;
-    
+
     const lowerSearchTerm = searchTerm.toLowerCase();
     return posts.filter(post =>
       post.title.toLowerCase().includes(lowerSearchTerm) ||
@@ -422,6 +653,22 @@ const OptimizedUnifiedCommunityForum = ({
         <div>
           <h2 className="text-2xl font-bold text-foreground">{title}</h2>
           <p className="text-muted-foreground">{description}</p>
+          {isAdmin && (
+            <div className="mt-2 flex items-center space-x-2">
+              <Badge className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
+                <Shield className="h-3 w-3 mr-1" />
+                Admin Access
+              </Badge>
+              <Button variant="outline" size="sm" className="text-xs">
+                <BarChart3 className="h-3 w-3 mr-1" />
+                Platform Analytics
+              </Button>
+              <Button variant="outline" size="sm" className="text-xs">
+                <Settings className="h-3 w-3 mr-1" />
+                Admin Settings
+              </Button>
+            </div>
+          )}
           {posts.length > 0 && posts[0]?.id?.startsWith('sample-') && (
             <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -430,106 +677,177 @@ const OptimizedUnifiedCommunityForum = ({
             </div>
           )}
         </div>
-        <Dialog open={showNewPostDialog} onOpenChange={setShowNewPostDialog}>
-          <DialogTrigger asChild>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700"
-              disabled={posts.length > 0 && posts[0]?.id?.startsWith('sample-')}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Post
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px]">
-            <DialogHeader>
-              <DialogTitle>Create New Post</DialogTitle>
-              <DialogDescription>
-                Share a question, discussion, or resource with the community
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Post Type
-                </label>
-                <Select 
-                  value={newPost.post_type} 
-                  onValueChange={(value: any) => setNewPost(prev => ({ ...prev, post_type: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {postTypes.map(type => (
-                      <SelectItem key={type.value} value={type.value}>
-                        <div className="flex items-center space-x-2">
-                          <type.icon className="h-4 w-4" />
-                          <span>{type.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {context !== 'ai-tools' && (
+        <div className="flex space-x-2">
+          <Dialog open={showNewPostDialog} onOpenChange={setShowNewPostDialog}>
+            <DialogTrigger asChild>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={posts.length > 0 && posts[0]?.id?.startsWith('sample-')}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Post
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[525px]">
+              <DialogHeader>
+                <DialogTitle>Create New Post</DialogTitle>
+                <DialogDescription>
+                  Share a question, discussion, or resource with the community
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Subject (Optional)
+                    Post Type
                   </label>
-                  <Select 
-                    value={newPost.subject_id} 
-                    onValueChange={(value) => setNewPost(prev => ({ ...prev, subject_id: value === "none" ? "" : value }))}
+                  <Select
+                    value={newPost.post_type}
+                    onValueChange={(value: any) => setNewPost(prev => ({ ...prev, post_type: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a subject" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No specific subject</SelectItem>
-                      {subjects.map(subject => (
-                        <SelectItem key={subject.id} value={subject.id}>
-                          {subject.name}
+                      {postTypes.map(type => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex items-center space-x-2">
+                            <type.icon className="h-4 w-4" />
+                            <span>{type.label}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Title
-                </label>
-                <Input
-                  placeholder="Enter post title..."
-                  value={newPost.title}
-                  onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))}
-                />
-              </div>
+                {context !== 'ai-tools' && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      Subject (Optional)
+                    </label>
+                    <Select
+                      value={newPost.subject_id}
+                      onValueChange={(value) => setNewPost(prev => ({ ...prev, subject_id: value === "none" ? "" : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No specific subject</SelectItem>
+                        {subjects.map(subject => (
+                          <SelectItem key={subject.id} value={subject.id}>
+                            {subject.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Content
-                </label>
-                <Textarea
-                  placeholder="Write your post content..."
-                  value={newPost.content}
-                  onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
-                  rows={4}
-                />
-              </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Title
+                  </label>
+                  <Input
+                    placeholder="Enter post title..."
+                    value={newPost.title}
+                    onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowNewPostDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createPost}>
-                  Create Post
-                </Button>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Content
+                  </label>
+                  <Textarea
+                    placeholder="Write your post content..."
+                    value={newPost.content}
+                    onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
+                    rows={4}
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setShowNewPostDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={createPost}>
+                    Create Post
+                  </Button>
+                </div>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Post Dialog */}
+          <Dialog open={editingPost !== null} onOpenChange={(open) => !open && setEditingPost(null)}>
+            <DialogContent className="sm:max-w-[525px]">
+              <DialogHeader>
+                <DialogTitle>Edit Post</DialogTitle>
+                <DialogDescription>
+                  Update your post content
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Post Type
+                  </label>
+                  <Select
+                    value={editPost.post_type}
+                    onValueChange={(value: any) => setEditPost(prev => ({ ...prev, post_type: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {postTypes.map(type => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex items-center space-x-2">
+                            <type.icon className="h-4 w-4" />
+                            <span>{type.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Title
+                  </label>
+                  <Input
+                    placeholder="Enter post title..."
+                    value={editPost.title}
+                    onChange={(e) => setEditPost(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Content
+                  </label>
+                  <Textarea
+                    placeholder="Write your post content..."
+                    value={editPost.content}
+                    onChange={(e) => setEditPost(prev => ({ ...prev, content: e.target.value }))}
+                    rows={4}
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setEditingPost(null)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={updatePost}>
+                    Update Post
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
@@ -547,7 +865,7 @@ const OptimizedUnifiedCommunityForum = ({
                 />
               </div>
             </div>
-            
+
             {context !== 'ai-tools' && (
               <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                 <SelectTrigger>
@@ -646,39 +964,103 @@ const OptimizedUnifiedCommunityForum = ({
                   </Avatar>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Badge className={getPostTypeColor(post.post_type)}>
-                        {getPostTypeIcon(post.post_type)}
-                        <span className="ml-1 capitalize">{post.post_type.replace('_', ' ')}</span>
-                      </Badge>
-                      
-                      {post.subject && (
-                        <Badge variant="secondary">
-                          {post.subject.name}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <Badge className={getPostTypeColor(post.post_type)}>
+                          {getPostTypeIcon(post.post_type)}
+                          <span className="ml-1 capitalize">{post.post_type.replace('_', ' ')}</span>
                         </Badge>
-                      )}
-                      
-                      {post.is_featured && (
-                        <Badge className="bg-yellow-100 text-yellow-800">
-                          <Star className="h-3 w-3 mr-1" />
-                          Featured
-                        </Badge>
+
+                        {post.subject && (
+                          <Badge variant="secondary">
+                            {post.subject.name}
+                          </Badge>
+                        )}
+
+                        {post.is_featured && (
+                          <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300">
+                            <Star className="h-3 w-3 mr-1" />
+                            Featured
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Post Actions Menu */}
+                      {(isPostOwner(post.user_id) || isAdmin) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {isPostOwner(post.user_id) && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditPost({
+                                    id: post.id,
+                                    title: post.title,
+                                    content: post.content,
+                                    post_type: post.post_type
+                                  });
+                                  setEditingPost(post.id);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Post
+                              </DropdownMenuItem>
+                            )}
+                            {(isPostOwner(post.user_id) || isAdmin) && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Post
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Post</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this post? This action cannot be undone and will also delete all comments.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deletePost(post.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </div>
 
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
                       {post.title}
                     </h3>
 
-                    <p className="text-gray-600 mb-4 line-clamp-3">
+                    <p className="text-muted-foreground mb-4 line-clamp-3">
                       {post.content}
                     </p>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <span>{post.profiles?.name || 'Anonymous'}</span>
                         <span>•</span>
                         <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                        {post.updated_at !== post.created_at && (
+                          <>
+                            <span>•</span>
+                            <span className="text-xs">edited</span>
+                          </>
+                        )}
                       </div>
 
                       <div className="flex items-center space-x-4">
@@ -686,15 +1068,21 @@ const OptimizedUnifiedCommunityForum = ({
                           variant="ghost"
                           size="sm"
                           onClick={() => toggleUpvote(post.id)}
-                          className={`flex items-center space-x-1 ${
-                            post.user_has_upvoted ? 'text-blue-600' : 'text-gray-500'
-                          }`}
+                          className={`flex items-center space-x-1 ${post.user_has_upvoted ? 'text-blue-600' : 'text-muted-foreground'
+                            }`}
+                          disabled={post.id.startsWith('sample-')}
                         >
                           <ThumbsUp className="h-4 w-4" />
                           <span>{post.upvotes}</span>
                         </Button>
 
-                        <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex items-center space-x-1"
+                          onClick={() => toggleComments(post.id)}
+                          disabled={post.id.startsWith('sample-')}
+                        >
                           <MessageCircle className="h-4 w-4" />
                           <span>{post.replies_count || 0}</span>
                         </Button>
@@ -704,6 +1092,55 @@ const OptimizedUnifiedCommunityForum = ({
                         </Button>
                       </div>
                     </div>
+
+                    {/* Comments Section */}
+                    {showComments[post.id] && (
+                      <div className="border-t pt-4">
+                        {!post.id.startsWith('sample-') ? (
+                          <EmojiCommentSystem 
+                            postId={post.id}
+                            onCommentAdded={() => {
+                              // Refresh post to update comment count
+                              fetchPosts();
+                            }}
+                          />
+                        ) : (
+                          /* Sample comments for demo */
+                          <div className="space-y-3 opacity-75">
+                            <div className="flex space-x-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback>S</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <div className="bg-muted rounded-lg p-3">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-sm font-medium text-foreground">Sample User</span>
+                                  </div>
+                                  <p className="text-sm text-foreground">This is a sample comment with emoji reactions! 👍❤️😂</p>
+                                </div>
+                                <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
+                                  <span>Today</span>
+                                </div>
+                                <div className="flex space-x-1 mt-2">
+                                  <span className="inline-flex items-center space-x-1 px-2 py-1 bg-muted/50 rounded-full text-xs">
+                                    <span>👍</span>
+                                    <span>5</span>
+                                  </span>
+                                  <span className="inline-flex items-center space-x-1 px-2 py-1 bg-muted/50 rounded-full text-xs">
+                                    <span>❤️</span>
+                                    <span>3</span>
+                                  </span>
+                                  <span className="inline-flex items-center space-x-1 px-2 py-1 bg-muted/50 rounded-full text-xs">
+                                    <span>😂</span>
+                                    <span>2</span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { aiService } from '@/services/aiService';
 import { aiRecommendationService } from '@/services/aiRecommendationService';
 import { aiTrackingService, type AIInteractionType } from '@/services/aiTrackingService';
+import { aiLearningObserver } from '@/services/aiLearningObserver';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
@@ -9,6 +10,11 @@ export const useAI = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+
+  // Initialize AI learning observer when hook is first used
+  useEffect(() => {
+    aiLearningObserver.initializeAutoConnection();
+  }, []);
 
   const executeAITask = async <T>(
     task: () => Promise<T>,
@@ -222,6 +228,55 @@ export const useAI = () => {
     getUserHomeworkSessions: async () => {
       if (!user) return [];
       return await aiTrackingService.getUserHomeworkSessions(user.id);
+    },
+
+    // Track learning activities for AI observer
+    trackQuizAttempt: async (subject: string, topic: string, score: number, difficulty: 'easy' | 'medium' | 'hard', timeSpent: number) => {
+      if (!user) return;
+      await aiLearningObserver.trackActivity({
+        userId: user.id,
+        activityType: 'quiz_attempt',
+        subject,
+        topic,
+        score,
+        timeSpent,
+        difficulty
+      });
+    },
+
+    trackLessonComplete: async (subject: string, topic: string, timeSpent: number, difficulty: 'easy' | 'medium' | 'hard') => {
+      if (!user) return;
+      await aiLearningObserver.trackActivity({
+        userId: user.id,
+        activityType: 'lesson_complete',
+        subject,
+        topic,
+        timeSpent,
+        difficulty
+      });
+    },
+
+    trackLessonView: async (subject: string, topic: string, timeSpent: number) => {
+      if (!user) return;
+      await aiLearningObserver.trackActivity({
+        userId: user.id,
+        activityType: 'lesson_view',
+        subject,
+        topic,
+        timeSpent
+      });
+    },
+
+    // Get AI learning recommendations
+    getLearningRecommendations: async () => {
+      if (!user) return [];
+      return await aiLearningObserver.generateRecommendations(user.id);
+    },
+
+    // Get learner profile
+    getLearnerProfile: async () => {
+      if (!user) return null;
+      return await aiLearningObserver.getLearnerProfile(user.id);
     },
   };
 };

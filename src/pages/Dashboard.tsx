@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
+import LearningRecommendations from '@/components/ai/LearningRecommendations';
 import {
   TrendingUp,
   Users,

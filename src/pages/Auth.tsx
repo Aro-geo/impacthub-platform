@@ -139,7 +139,7 @@ const Auth = () => {
                       <SelectValue placeholder="Choose your current grade" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((gradeNum) => (
+                      {Array.from({ length: 8 }, (_, i) => i + 5).map((gradeNum) => (
                         <SelectItem key={gradeNum} value={gradeNum.toString()}>
                           Grade {gradeNum}
                         </SelectItem>
