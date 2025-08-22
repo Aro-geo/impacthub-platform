@@ -95,30 +95,40 @@ const EmojiCommentSystem = ({ postId, onCommentAdded }: EmojiCommentSystemProps)
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Comments table not available:', error);
+        setComments([]);
+        setLoading(false);
+        return;
+      }
 
 
 
-      // Fetch comments with user profiles in a single query
-      const { data: commentsWithProfiles, error: profileError } = await supabase
-        .from('post_comments')
-        .select(`
-          id,
-          content,
-          created_at,
-          updated_at,
-          user_id,
-          post_id,
-          parent_comment_id,
-          is_edited,
-          profiles:user_id(name, avatar_url, email)
-        `)
-        .eq('post_id', postId)
-        .order('created_at', { ascending: true });
+      // Get profiles separately to avoid relationship issues
+      let userProfiles: Record<string, any> = {};
+      try {
+        // Get unique user IDs from comments
+        const userIds = [...new Set(commentsData?.map(c => c.user_id) || [])];
+        
+        if (userIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, name, avatar_url, email')
+            .in('id', userIds);
+          
+          // Create a lookup map of user_id to profile
+          userProfiles = (profilesData || []).reduce((acc, profile) => {
+            acc[profile.id] = profile;
+            return acc;
+          }, {} as Record<string, any>);
+        }
+      } catch (profileError) {
+        console.warn('Error fetching profiles:', profileError);
+      }
 
-      const commentsWithUserInfo = (commentsWithProfiles || commentsData || []).map(comment => ({
+      const commentsWithUserInfo = (commentsData || []).map(comment => ({
         ...comment,
-        profiles: comment.profiles || { name: 'Anonymous User', avatar_url: null, email: null },
+        profiles: userProfiles[comment.user_id] || { name: 'Anonymous User', avatar_url: null, email: null },
         reactions: {} // Will be populated if needed
       }));
 

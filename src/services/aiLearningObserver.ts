@@ -451,9 +451,12 @@ class AILearningObserver {
   // Initialize auto-connection when app starts
   async initializeAutoConnection(): Promise<void> {
     try {
-      // Prevent multiple initializations
-      if (this.isProcessing) return;
+      // Use a static flag to prevent multiple initializations
+      if ((AILearningObserver as any)._initialized) {
+        return;
+      }
       
+      (AILearningObserver as any)._initialized = true;
       console.log('AI Learning Observer initialized and auto-connected');
     } catch (error) {
       console.error('Error initializing AI Learning Observer:', error);

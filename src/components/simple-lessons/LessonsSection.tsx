@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { aiLearningObserver } from '@/services/aiLearningObserver';
 import { 
   Search, 
   BookOpen, 
@@ -73,6 +74,17 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
 
   useEffect(() => {
     fetchSubjects();
+    
+    // Setup event listener for lesson completion to refresh lessons list
+    const handleLessonCompleted = () => {
+      fetchLessons();
+    };
+    
+    window.addEventListener('lessonCompleted', handleLessonCompleted);
+    
+    return () => {
+      window.removeEventListener('lessonCompleted', handleLessonCompleted);
+    };
   }, []); // Only fetch subjects once
 
   useEffect(() => {
@@ -85,15 +97,30 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
 
   const fetchSubjects = useCallback(async () => {
     try {
+      console.log('Fetching all subjects');
       const { data, error } = await supabase
         .from('subjects')
         .select('id, name, color, icon') // Only select needed fields
         .order('name');
 
-      if (error) throw error;
-      setSubjects(data || []);
+      if (error) {
+        console.error('Error fetching subjects:', error);
+        throw error;
+      }
+      
+      console.log('Subjects fetched:', data);
+      
+      // Ensure required fields have fallbacks
+      const processedSubjects = (data || []).map(subject => ({
+        ...subject,
+        color: subject.color || '#3b82f6',
+        icon: subject.icon || 'BookOpen'
+      }));
+      
+      setSubjects(processedSubjects);
     } catch (error) {
-      console.error('Error fetching subjects:', error);
+      console.error('Error in fetchSubjects:', error);
+      setSubjects([]);
     }
   }, []);
 
@@ -112,7 +139,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
           duration_minutes,
           subject_id,
           order_index,
-          subjects!inner (
+          subjects!fk_subject (
             id,
             name,
             color,
@@ -152,6 +179,36 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       const { data: lessonsData, error: lessonsError } = await query;
       console.log('Lessons query result:', { lessonsData, lessonsError });
       
+      // Always fetch subjects directly to avoid relying on join
+      let subjectMap: Record<string, any> = {};
+      try {
+        // Get all subject IDs from lessons
+        const subjectIds = lessonsData ? [...new Set(lessonsData.filter(l => l.subject_id).map(l => l.subject_id))] : [];
+        console.log('Subject IDs from lessons:', subjectIds);
+        
+        if (subjectIds.length > 0) {
+          // Fetch subjects directly
+          const { data: subjectsData, error: subjectsError } = await supabase
+            .from('subjects')
+            .select('id, name, color, icon')
+            .in('id', subjectIds);
+            
+          if (subjectsError) {
+            console.warn('Error fetching subjects:', subjectsError);
+          } else {
+            console.log('Fetched subjects:', subjectsData);
+            
+            // Create a map for faster lookups
+            subjectMap = (subjectsData || []).reduce((acc, subject) => {
+              acc[subject.id] = subject;
+              return acc;
+            }, {} as Record<string, any>);
+          }
+        }
+      } catch (subjectError) {
+        console.error('Error in subject fetching process:', subjectError);
+      }
+      
       // Get progress and bookmarks separately (optional)
       let progressData = [];
       let bookmarksData = [];
@@ -188,10 +245,10 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
         .map((lesson, index, sortedLessons) => {
           const progress = progressMap.get(lesson.id);
           
-          // Determine if lesson is locked - only lock if no lessons have been completed yet
+          // Determine if lesson is locked - unlock all lessons if any lesson has been completed
           let isLocked = false;
           if (index > 0) {
-            // Check if ANY lesson has been completed (not just previous ones)
+            // Check if ANY lesson has been completed
             const hasAnyCompletedLesson = Array.from(progressMap.values()).some(
               p => p.status === 'completed'
             );
@@ -199,9 +256,14 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
             isLocked = !hasAnyCompletedLesson;
           }
           
+          // Get subject from our map or fallback
+          const subject = lesson.subject_id && subjectMap[lesson.subject_id] 
+            ? subjectMap[lesson.subject_id]
+            : (lesson.subjects || { id: 'unknown', name: 'Unknown', color: '#cccccc', icon: 'book' });
+            
           return {
             ...lesson,
-            subject: lesson.subjects,
+            subject: subject,
             progress: progress ? {
               status: progress.status,
               progress_percentage: progress.progress_percentage

@@ -1,5 +1,5 @@
 
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +13,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import { useOffline } from "@/hooks/useOffline";
 import { aiLearningObserver } from "@/services/aiLearningObserver";
+import runDatabaseChecks from "@/utils/subjectDebugger";
+import debugSimpleLessons from "@/utils/lessonDebugger";
 
 // Lazy load all page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -38,6 +40,16 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   const { isOnline, syncStatus } = useOffline();
   const { user } = useAuth();
+
+  // Run database checks when app starts in development
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Running database checks for debugging...');
+      runDatabaseChecks();
+      // Run specific lesson debugging
+      debugSimpleLessons();
+    }
+  }, []);
 
   // AI Learning Observer will be initialized when user opens lessons
 

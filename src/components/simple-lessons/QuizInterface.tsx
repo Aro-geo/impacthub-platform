@@ -37,12 +37,14 @@ interface Quiz {
 interface QuizInterfaceProps {
   practiceMode: 'review' | 'timed' | 'random';
   selectedSubject: string;
+  selectedLessonId?: string;
   onClose: () => void;
 }
 
 const QuizInterface: React.FC<QuizInterfaceProps> = ({
   practiceMode,
   selectedSubject,
+  selectedLessonId,
   onClose
 }) => {
   const { user } = useAuth();
@@ -94,7 +96,9 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
         `)
         .order('order_index');
 
-      if (selectedSubject !== 'all') {
+      if (selectedLessonId) {
+        query = query.eq('lesson_id', selectedLessonId);
+      } else if (selectedSubject !== 'all') {
         query = query.eq('simple_lessons.subject_id', selectedSubject);
       }
 

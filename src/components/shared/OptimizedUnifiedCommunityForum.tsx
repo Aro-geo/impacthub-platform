@@ -176,7 +176,7 @@ const OptimizedUnifiedCommunityForum = ({
     try {
       setLoading(true);
 
-      // Fetch posts with proper joins
+      // Fetch posts with proper joins - simplified query to avoid foreign key issues
       let query = supabase
         .from('community_posts')
         .select(`
@@ -190,9 +190,7 @@ const OptimizedUnifiedCommunityForum = ({
           updated_at,
           user_id,
           subject_id,
-          replies_count,
-          subjects:subject_id(id, name, color),
-          profiles!community_posts_user_id_fkey(name, avatar_url, email)
+          replies_count
         `)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -228,10 +226,9 @@ const OptimizedUnifiedCommunityForum = ({
         }
       }
 
-      // Process posts with real data
+      // Process posts with real data - fetch subject info separately if needed
       const postsWithUpvotes = (data || []).map(post => ({
         ...post,
-        subject: post.subjects,
         user_has_upvoted: userUpvotes.includes(post.id),
         replies_count: post.replies_count || 0
       }));

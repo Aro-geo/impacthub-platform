@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import QuizInterface from './QuizInterface';
+import { debugQuizzes } from '@/utils/quizDebugger';
 import { 
   Target, 
   Trophy, 
@@ -18,7 +19,8 @@ import {
   Star,
   TrendingUp,
   Award,
-  Zap
+  Zap,
+  Bug
 } from 'lucide-react';
 
 interface Subject {
@@ -27,17 +29,21 @@ interface Subject {
   color: string;
 }
 
-interface Quiz {
-  id: string;
-  question: string;
-  options: string[];
-  correct_answer: number;
-  explanation: string;
-  lesson: {
+interface LessonQuiz {
+  lessonId: string;
+  lessonTitle: string;
+  lessonOrder: number;
+  subject: Subject;
+  quizzes: {
     id: string;
-    title: string;
-    subject: Subject;
-  };
+    question: string;
+    options: string[];
+    correct_answer: number;
+    explanation: string;
+    order_index: number;
+  }[];
+  isCompleted?: boolean;
+  isUnlocked?: boolean;
 }
 
 interface QuizAttempt {
@@ -57,7 +63,8 @@ interface QuizStats {
 
 const PracticeSection = () => {
   const { user } = useAuth();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizzes, setQuizzes] = useState<LessonQuiz[]>([]);
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [quizStats, setQuizStats] = useState<QuizStats>({
@@ -105,50 +112,50 @@ const PracticeSection = () => {
 
   const fetchQuizzes = async () => {
     let query = supabase
-      .from('lesson_quizzes')
+      .from('simple_lessons')
       .select(`
         id,
-        question,
-        options,
-        correct_answer,
-        explanation,
-        simple_lessons (
+        title,
+        order_index,
+        subjects!inner (
           id,
-          title,
-          subjects (
-            id,
-            name,
-            color
-          )
+          name,
+          color
+        ),
+        lesson_quizzes (
+          id,
+          question,
+          options,
+          correct_answer,
+          explanation,
+          order_index
         )
       `)
+      .eq('is_published', true)
+      .not('lesson_quizzes', 'is', null)
       .order('order_index');
 
     if (selectedSubject !== 'all') {
-      query = query.eq('simple_lessons.subject_id', selectedSubject);
+      query = query.eq('subject_id', selectedSubject);
     }
 
     const { data, error } = await query;
     if (error) throw error;
 
-    const formattedQuizzes = data?.map(quiz => {
-      // Convert correct_answer to number for consistency
-      
-      return {
+    const lessonQuizzes = data?.map(lesson => ({
+      lessonId: lesson.id,
+      lessonTitle: lesson.title,
+      lessonOrder: lesson.order_index,
+      subject: lesson.subjects,
+      quizzes: lesson.lesson_quizzes?.map(quiz => ({
         ...quiz,
-        // Ensure correct_answer is a number for consistency
         correct_answer: typeof quiz.correct_answer === 'string' 
           ? parseInt(quiz.correct_answer, 10) 
-          : quiz.correct_answer,
-        lesson: quiz.simple_lessons ? {
-          id: quiz.simple_lessons.id,
-          title: quiz.simple_lessons.title,
-          subject: quiz.simple_lessons.subjects
-        } : null
-      };
-    }).filter(quiz => quiz.lesson !== null) || [];
+          : quiz.correct_answer
+      })) || []
+    })).filter(lesson => lesson.quizzes.length > 0) || [];
 
-    setQuizzes(formattedQuizzes);
+    setQuizzes(lessonQuizzes);
   };
 
   const fetchQuizStats = async () => {
@@ -156,7 +163,12 @@ const PracticeSection = () => {
 
     const { data: attempts, error } = await supabase
       .from('lesson_quiz_attempts')
-      .select('*')
+      .select(`
+        *,
+        lesson_quizzes (
+          lesson_id
+        )
+      `)
       .eq('user_id', user.id);
 
     if (error) throw error;
@@ -165,7 +177,17 @@ const PracticeSection = () => {
     const correctAnswers = attempts?.filter(a => a.is_correct).length || 0;
     const averageScore = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : 0;
 
-    // Calculate best streak
+    // Track completed lessons (lessons where user has attempted all quizzes)
+    const lessonAttempts = new Map<string, boolean>();
+    attempts?.forEach(attempt => {
+      const lessonId = attempt.lesson_quizzes?.lesson_id;
+      if (lessonId && attempt.is_correct) {
+        lessonAttempts.set(lessonId, true);
+      }
+    });
+    
+    setCompletedLessons(new Set(lessonAttempts.keys()));
+
     let currentStreak = 0;
     let bestStreak = 0;
     const sortedAttempts = attempts?.sort((a, b) => 
@@ -199,9 +221,7 @@ const PracticeSection = () => {
         lesson_quizzes (
           id,
           question,
-          options,
-          correct_answer,
-          explanation,
+          lesson_id,
           simple_lessons (
             id,
             title,
@@ -223,13 +243,13 @@ const PracticeSection = () => {
       ...attempt,
       quiz: {
         ...attempt.lesson_quizzes,
-        lesson: attempt.lesson_quizzes.simple_lessons ? {
+        lesson: attempt.lesson_quizzes?.simple_lessons ? {
           id: attempt.lesson_quizzes.simple_lessons.id,
           title: attempt.lesson_quizzes.simple_lessons.title,
           subject: attempt.lesson_quizzes.simple_lessons.subjects
         } : null
       }
-    })) || [];
+    })).filter(attempt => attempt.quiz.lesson) || [];
 
     setRecentAttempts(formattedAttempts);
   };
@@ -283,8 +303,10 @@ const PracticeSection = () => {
       <QuizInterface
         practiceMode={practiceMode}
         selectedSubject={selectedSubject}
+        selectedLessonId={(window as any).selectedLessonId}
         onClose={() => {
           setShowQuizInterface(false);
+          (window as any).selectedLessonId = undefined;
           // Refresh data when returning from quiz
           fetchData();
         }}
@@ -300,6 +322,15 @@ const PracticeSection = () => {
           <h2 className="text-2xl font-bold text-foreground">Practice & Quizzes</h2>
           <p className="text-muted-foreground">Test your knowledge and improve your skills</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => debugQuizzes()}
+          className="text-xs"
+        >
+          <Bug className="h-3 w-3 mr-1" />
+          Debug
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -404,7 +435,7 @@ const PracticeSection = () => {
               </label>
               <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Subjects" />
+                  <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Subjects</SelectItem>
@@ -417,9 +448,50 @@ const PracticeSection = () => {
               </Select>
             </div>
 
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Lesson Quiz
+              </label>
+              <Select value={(window as any).selectedLessonId || 'all-lessons'} onValueChange={(value) => {
+                (window as any).selectedLessonId = value === 'all-lessons' ? undefined : value;
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select specific lesson (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-lessons">All Lessons</SelectItem>
+                  {quizzes
+                    .filter(lessonQuiz => selectedSubject === 'all' || lessonQuiz.subject.id === selectedSubject)
+                    .map((lessonQuiz, index) => {
+                      const isCompleted = completedLessons.has(lessonQuiz.lessonId);
+                      const isUnlocked = index === 0 || completedLessons.has(quizzes[index - 1]?.lessonId);
+                      
+                      return (
+                        <SelectItem 
+                          key={lessonQuiz.lessonId} 
+                          value={lessonQuiz.lessonId}
+                          disabled={!isUnlocked}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span>{lessonQuiz.lessonTitle}</span>
+                            <div className="flex items-center space-x-1 ml-2">
+                              {isCompleted && <span className="text-green-600">✓</span>}
+                              {!isUnlocked && <span className="text-muted-foreground">🔒</span>}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button 
               className="w-full bg-green-600 hover:bg-green-700"
-              onClick={startPracticeSession}
+              onClick={() => {
+                setPracticeMode('review');
+                setShowQuizInterface(true);
+              }}
               disabled={quizzes.length === 0}
             >
               <Play className="mr-2 h-4 w-4" />
@@ -429,11 +501,11 @@ const PracticeSection = () => {
             <div className="text-sm text-muted-foreground text-center">
               {quizzes.length > 0 ? (
                 <span className="text-green-600 dark:text-green-400 font-medium">
-                  {quizzes.length} questions available
+                  {quizzes.length} lesson quizzes available
                 </span>
               ) : (
                 <span className="text-muted-foreground">
-                  No questions available for selected subject
+                  No lesson quizzes available
                 </span>
               )}
             </div>
@@ -500,6 +572,7 @@ const PracticeSection = () => {
           </CardContent>
         </Card>
       </div>
+
 
 
     </div>

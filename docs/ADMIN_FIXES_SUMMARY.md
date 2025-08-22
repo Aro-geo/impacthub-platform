@@ -42,6 +42,21 @@
   - Fallback data when services are unavailable
   - Better loading states and error boundaries
 
+### 5. ✅ **Database Schema Fixes**
+- **Issue**: Subjects and lessons weren't displaying in the UI
+- **Root Cause**: Duplicate foreign key constraints and RLS policy issues
+- **Fixes Applied**:
+  - Removed duplicate constraint between `simple_lessons` and `subjects` tables
+  - Fixed RLS policies for the `lesson_progress` table
+- **Components Updated**:
+  - Created SQL migration: `20250822000004_fix_duplicate_fk.sql`
+  - Created SQL migration: `20250822000005_fix_lesson_progress_rls.sql`
+  - Updated `apply-migrations.ps1` script
+- **Improvements**:
+  - Subjects and lessons now display correctly in the UI
+  - Lesson progress tracking works without 403 errors
+  - Better database relationship handling
+
 ## New Features Added
 
 ### 1. 🆕 **AI Connection Test Component**

@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Database (exclude migrations, dumps, and Supabase config)
+supabase/
+*.sql
+*.dump
+*.db
+
 # Environment variables
 .env
 .env.local
