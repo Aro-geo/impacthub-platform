@@ -112,33 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Fallback: If signup successful but trigger didn't work, manually create/update profile
-    if (!error && data.user && grade) {
-      setTimeout(async () => {
-        try {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: data.user.id,
-              name: name || 'New User',
-              email: email,
-              grade: grade,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'id'
-            });
-
-          if (profileError) {
-            console.error('Error creating/updating user profile:', profileError);
-          } else {
-            console.log('User profile created/updated successfully with grade:', grade);
-          }
-        } catch (profileError) {
-          console.error('Error in profile creation fallback:', profileError);
-        }
-      }, 2000); // Wait 2 seconds for trigger to complete first
-    }
+    // Profile creation will be handled by database trigger
 
     return { error };
   };

@@ -86,8 +86,10 @@ export default defineConfig({
       'react-dom',
       'react-router-dom',
       '@supabase/supabase-js',
-      '@tanstack/react-query',
-      'recharts'
+      '@tanstack/react-query'
+    ],
+    exclude: [
+      'recharts' // Exclude heavy chart library from pre-bundling
     ]
   }
 });

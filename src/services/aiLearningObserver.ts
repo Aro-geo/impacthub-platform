@@ -58,20 +58,24 @@ class AILearningObserver {
         }
       });
 
-      // Store activity in database
-      await supabase
-        .from('learning_activities')
-        .insert({
-          user_id: activity.userId,
-          activity_type: activity.activityType,
-          subject: activity.subject,
-          topic: activity.topic,
-          score: activity.score,
-          time_spent: activity.timeSpent,
-          difficulty: activity.difficulty,
-          metadata: activity.metadata,
-          created_at: new Date().toISOString()
-        });
+      // Store activity in database (with error handling)
+      try {
+        await supabase
+          .from('learning_activities')
+          .insert({
+            user_id: activity.userId,
+            activity_type: activity.activityType,
+            subject: activity.subject,
+            topic: activity.topic,
+            score: activity.score,
+            time_spent: activity.timeSpent,
+            difficulty: activity.difficulty,
+            metadata: activity.metadata,
+            created_at: new Date().toISOString()
+          });
+      } catch (dbError) {
+        console.warn('Learning activities table not available:', dbError);
+      }
 
       // Process activities if buffer is full or it's been a while
       if (this.activityBuffer.length >= 5 || !this.isProcessing) {
@@ -117,32 +121,50 @@ class AILearningObserver {
       let profile = this.learnerProfiles.get(userId);
       
       if (!profile) {
-        // Load existing profile from database
-        const { data } = await supabase
-          .from('learner_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
+        try {
+          // Load existing profile from database
+          const { data, error } = await supabase
+            .from('learner_profiles')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
 
-        profile = data ? {
-          userId: data.user_id,
-          interests: data.interests || [],
-          strengths: data.strengths || [],
-          weaknesses: data.weaknesses || [],
-          preferredDifficulty: data.preferred_difficulty || 'medium',
-          learningStyle: data.learning_style || 'mixed',
-          recommendedTopics: data.recommended_topics || [],
-          lastUpdated: data.updated_at
-        } : {
-          userId,
-          interests: [],
-          strengths: [],
-          weaknesses: [],
-          preferredDifficulty: 'medium',
-          learningStyle: 'mixed',
-          recommendedTopics: [],
-          lastUpdated: new Date().toISOString()
-        };
+          if (error && error.code !== 'PGRST116') {
+            console.warn('Learner profiles table not available:', error.message);
+          }
+
+          profile = data ? {
+            userId: data.user_id,
+            interests: data.interests || [],
+            strengths: data.strengths || [],
+            weaknesses: data.weaknesses || [],
+            preferredDifficulty: data.preferred_difficulty || 'medium',
+            learningStyle: data.learning_style || 'mixed',
+            recommendedTopics: data.recommended_topics || [],
+            lastUpdated: data.updated_at
+          } : {
+            userId,
+            interests: [],
+            strengths: [],
+            weaknesses: [],
+            preferredDifficulty: 'medium',
+            learningStyle: 'mixed',
+            recommendedTopics: [],
+            lastUpdated: new Date().toISOString()
+          };
+        } catch (error) {
+          console.warn('Error loading learner profile, using defaults:', error);
+          profile = {
+            userId,
+            interests: [],
+            strengths: [],
+            weaknesses: [],
+            preferredDifficulty: 'medium',
+            learningStyle: 'mixed',
+            recommendedTopics: [],
+            lastUpdated: new Date().toISOString()
+          };
+        }
       }
 
       // Analyze activities to update profile
@@ -429,13 +451,9 @@ class AILearningObserver {
   // Initialize auto-connection when app starts
   async initializeAutoConnection(): Promise<void> {
     try {
-      // Start background processing
-      setInterval(() => {
-        if (this.activityBuffer.length > 0) {
-          this.processActivities();
-        }
-      }, 30000); // Process every 30 seconds
-
+      // Prevent multiple initializations
+      if (this.isProcessing) return;
+      
       console.log('AI Learning Observer initialized and auto-connected');
     } catch (error) {
       console.error('Error initializing AI Learning Observer:', error);

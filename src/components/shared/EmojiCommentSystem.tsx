@@ -99,62 +99,28 @@ const EmojiCommentSystem = ({ postId, onCommentAdded }: EmojiCommentSystemProps)
 
 
 
-      // Fetch user information and reactions for all comments
-      const commentsWithUserInfo = await Promise.all(
-        (commentsData || []).map(async (comment) => {
-          try {
-            // Try to get user info from profiles table, fallback to generic info
-            let userInfo = { name: 'Anonymous User', avatar_url: null, email: null };
-            
-            try {
-              // Try profiles table first
-              const { data: profileData } = await supabase
-                .from('profiles')
-                .select('name, avatar_url, email')
-                .eq('id', comment.user_id)
-                .single();
-              
-              if (profileData) {
-                userInfo = {
-                  name: profileData.name || 'User',
-                  avatar_url: profileData.avatar_url,
-                  email: profileData.email
-                };
-              }
-            } catch (profileError) {
-              // Use a more descriptive fallback
-              userInfo = {
-                name: `User ${comment.user_id.slice(0, 8)}`,
-                avatar_url: null,
-                email: null
-              };
-            }
+      // Fetch comments with user profiles in a single query
+      const { data: commentsWithProfiles, error: profileError } = await supabase
+        .from('post_comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          updated_at,
+          user_id,
+          post_id,
+          parent_comment_id,
+          is_edited,
+          profiles:user_id(name, avatar_url, email)
+        `)
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
 
-            // Fetch reactions
-            let reactions = {};
-            try {
-              const { data: reactionsData } = await supabase
-                .rpc('get_comment_reactions', { p_comment_id: comment.id });
-              reactions = reactionsData || {};
-            } catch (error) {
-              console.error('Error fetching reactions for comment:', comment.id, error);
-            }
-            
-            return {
-              ...comment,
-              profiles: userInfo,
-              reactions
-            };
-          } catch (error) {
-            console.error('Error processing comment:', comment.id, error);
-            return {
-              ...comment,
-              profiles: { name: 'Anonymous', avatar_url: null, email: null },
-              reactions: {}
-            };
-          }
-        })
-      );
+      const commentsWithUserInfo = (commentsWithProfiles || commentsData || []).map(comment => ({
+        ...comment,
+        profiles: comment.profiles || { name: 'Anonymous User', avatar_url: null, email: null },
+        reactions: {} // Will be populated if needed
+      }));
 
       // Organize comments into threads (parent comments with replies)
       const parentComments = commentsWithUserInfo.filter(c => !c.parent_comment_id);

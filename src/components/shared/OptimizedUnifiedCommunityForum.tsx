@@ -176,8 +176,8 @@ const OptimizedUnifiedCommunityForum = ({
     try {
       setLoading(true);
 
-      // Check if community_posts table exists first
-      const { data, error } = await supabase
+      // Fetch posts with proper joins
+      let query = supabase
         .from('community_posts')
         .select(`
           id,
@@ -187,30 +187,56 @@ const OptimizedUnifiedCommunityForum = ({
           upvotes,
           is_featured,
           created_at,
+          updated_at,
           user_id,
-          subject_id
+          subject_id,
+          replies_count,
+          subjects:subject_id(id, name, color),
+          profiles!community_posts_user_id_fkey(name, avatar_url, email)
         `)
-        .limit(10)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      // Apply filters
+      if (selectedSubject !== 'all') {
+        query = query.eq('subject_id', selectedSubject);
+      }
+      if (selectedType !== 'all') {
+        query = query.eq('post_type', selectedType);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
-        console.warn('Community posts table not available:', error);
-        // Set empty posts array and show a message
+        console.warn('Error fetching posts:', error);
         setPosts([]);
-        setLoading(false);
         return;
       }
 
-      // Process posts with default values for missing data
-      const postsWithDefaults = (data || []).map(post => ({
+      // Get user upvotes if user is logged in
+      let userUpvotes = [];
+      if (user && data && data.length > 0) {
+        try {
+          const { data: upvoteData } = await supabase
+            .from('post_upvotes')
+            .select('post_id')
+            .eq('user_id', user.id)
+            .in('post_id', data.map(p => p.id));
+          userUpvotes = upvoteData?.map(u => u.post_id) || [];
+        } catch (upvoteError) {
+          console.warn('Could not fetch user upvotes:', upvoteError);
+        }
+      }
+
+      // Process posts with real data
+      const postsWithUpvotes = (data || []).map(post => ({
         ...post,
-        subject: null, // Will be handled by UI
-        replies_count: 0, // Default to 0 since we can't fetch replies
-        user_has_upvoted: false, // Default to false since we can't fetch upvotes
-        profiles: { name: 'Anonymous User', avatar_url: null } // Default profile
+        subject: post.subjects,
+        user_has_upvoted: userUpvotes.includes(post.id),
+        replies_count: post.replies_count || 0
       }));
 
-      setPosts(postsWithDefaults);
+      setPosts(postsWithUpvotes);
     } catch (error) {
       console.error('Error fetching posts:', error);
       setPosts([]);
@@ -589,62 +615,7 @@ const OptimizedUnifiedCommunityForum = ({
     );
   }
 
-  // Show fallback UI with sample content if no posts and not loading
-  if (!loading && posts.length === 0) {
-    // Create sample posts to show the UI structure
-    const samplePosts = [
-      {
-        id: 'sample-1',
-        title: 'Welcome to the ImpactHub Community!',
-        content: 'This is where learners from around the world connect, share knowledge, and support each other on their learning journey. The community forum is currently being set up with full database functionality.',
-        post_type: 'announcement',
-        upvotes: 12,
-        is_featured: true,
-        created_at: new Date().toISOString(),
-        user_id: 'system',
-        subject_id: null,
-        subject: null,
-        replies_count: 5,
-        user_has_upvoted: false,
-        profiles: { name: 'ImpactHub Team', avatar_url: null }
-      },
-      {
-        id: 'sample-2',
-        title: 'How to get the most out of AI Learning Tools?',
-        content: 'Share your tips and experiences using our AI-powered learning features. What has worked best for you?',
-        post_type: 'question',
-        upvotes: 8,
-        is_featured: false,
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        user_id: 'user-1',
-        subject_id: null,
-        subject: null,
-        replies_count: 3,
-        user_has_upvoted: false,
-        profiles: { name: 'Learning Enthusiast', avatar_url: null }
-      },
-      {
-        id: 'sample-3',
-        title: 'Great Resources for Sustainability Learning',
-        content: 'I found some amazing resources that complement our sustainability tools. Check out these links and share your own discoveries!',
-        post_type: 'resource',
-        upvotes: 15,
-        is_featured: false,
-        created_at: new Date(Date.now() - 172800000).toISOString(),
-        user_id: 'user-2',
-        subject_id: null,
-        subject: null,
-        replies_count: 7,
-        user_has_upvoted: false,
-        profiles: { name: 'Eco Warrior', avatar_url: null }
-      }
-    ];
 
-    // Set sample posts to show the UI
-    if (posts.length === 0) {
-      setPosts(samplePosts);
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -669,20 +640,13 @@ const OptimizedUnifiedCommunityForum = ({
               </Button>
             </div>
           )}
-          {posts.length > 0 && posts[0]?.id?.startsWith('sample-') && (
-            <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                📝 Preview: Community forum is being set up. Sample content shown below.
-              </p>
-            </div>
-          )}
+
         </div>
         <div className="flex space-x-2">
           <Dialog open={showNewPostDialog} onOpenChange={setShowNewPostDialog}>
             <DialogTrigger asChild>
               <Button
                 className="bg-blue-600 hover:bg-blue-700"
-                disabled={posts.length > 0 && posts[0]?.id?.startsWith('sample-')}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 New Post
@@ -1070,7 +1034,6 @@ const OptimizedUnifiedCommunityForum = ({
                           onClick={() => toggleUpvote(post.id)}
                           className={`flex items-center space-x-1 ${post.user_has_upvoted ? 'text-blue-600' : 'text-muted-foreground'
                             }`}
-                          disabled={post.id.startsWith('sample-')}
                         >
                           <ThumbsUp className="h-4 w-4" />
                           <span>{post.upvotes}</span>
@@ -1081,7 +1044,6 @@ const OptimizedUnifiedCommunityForum = ({
                           size="sm"
                           className="flex items-center space-x-1"
                           onClick={() => toggleComments(post.id)}
-                          disabled={post.id.startsWith('sample-')}
                         >
                           <MessageCircle className="h-4 w-4" />
                           <span>{post.replies_count || 0}</span>
@@ -1096,49 +1058,13 @@ const OptimizedUnifiedCommunityForum = ({
                     {/* Comments Section */}
                     {showComments[post.id] && (
                       <div className="border-t pt-4">
-                        {!post.id.startsWith('sample-') ? (
-                          <EmojiCommentSystem 
-                            postId={post.id}
-                            onCommentAdded={() => {
-                              // Refresh post to update comment count
-                              fetchPosts();
-                            }}
-                          />
-                        ) : (
-                          /* Sample comments for demo */
-                          <div className="space-y-3 opacity-75">
-                            <div className="flex space-x-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback>S</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="bg-muted rounded-lg p-3">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-sm font-medium text-foreground">Sample User</span>
-                                  </div>
-                                  <p className="text-sm text-foreground">This is a sample comment with emoji reactions! 👍❤️😂</p>
-                                </div>
-                                <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
-                                  <span>Today</span>
-                                </div>
-                                <div className="flex space-x-1 mt-2">
-                                  <span className="inline-flex items-center space-x-1 px-2 py-1 bg-muted/50 rounded-full text-xs">
-                                    <span>👍</span>
-                                    <span>5</span>
-                                  </span>
-                                  <span className="inline-flex items-center space-x-1 px-2 py-1 bg-muted/50 rounded-full text-xs">
-                                    <span>❤️</span>
-                                    <span>3</span>
-                                  </span>
-                                  <span className="inline-flex items-center space-x-1 px-2 py-1 bg-muted/50 rounded-full text-xs">
-                                    <span>😂</span>
-                                    <span>2</span>
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                        <EmojiCommentSystem 
+                          postId={post.id}
+                          onCommentAdded={() => {
+                            // Refresh post to update comment count
+                            fetchPosts();
+                          }}
+                        />
                       </div>
                     )}
                   </div>

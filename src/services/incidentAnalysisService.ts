@@ -135,9 +135,12 @@ class IncidentAnalysisService {
   }
 
   private startBufferFlush() {
-    this.flushInterval = setInterval(() => {
-      this.flushBuffers();
-    }, 10000); // Flush every 10 seconds
+    // Only start flushing if there are items in buffer
+    if (this.errorBuffer.length > 0 || this.performanceBuffer.length > 0) {
+      this.flushInterval = setInterval(() => {
+        this.flushBuffers();
+      }, 30000); // Flush every 30 seconds instead of 10
+    }
   }
 
   public logError(error: Partial<IncidentLog>) {
@@ -247,20 +250,7 @@ class IncidentAnalysisService {
 
   private async sendToSupabase(table: string, data: any[]) {
     try {
-      // First check if the table exists by trying a simple select
-      const { error: testError } = await supabase
-        .from(table)
-        .select('id')
-        .limit(1);
-
-      if (testError) {
-        // Table doesn't exist or we don't have access
-        console.warn(`Table ${table} is not accessible. Storing data locally as fallback.`);
-        this.storeLocalFallback(table, data);
-        return;
-      }
-
-      // Table exists, try to insert
+      // Try to insert directly - the RLS policies should allow it
       const { error } = await supabase
         .from(table)
         .insert(data);

@@ -77,7 +77,11 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
 
   useEffect(() => {
     fetchLessons();
-  }, [user, selectedSubject, selectedDifficulty, sortBy]); // Removed userProfile dependency
+    // Initialize AI Learning Observer when user opens lessons
+    if (user && selectedSubject !== 'all') {
+      aiLearningObserver.initializeAutoConnection();
+    }
+  }, [user, selectedSubject, selectedDifficulty, sortBy]);
 
   const fetchSubjects = useCallback(async () => {
     try {
@@ -117,7 +121,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
         `)
         .eq('is_published', true)
         .not('subject_id', 'is', null)
-        .limit(20); // Reduced limit for faster loading
+        .limit(10); // Further reduced limit for faster loading
 
       // Apply filters
       if (selectedSubject !== 'all') {
@@ -143,34 +147,27 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
           query = query.order('order_index', { ascending: true }); // Use indexed column
       }
 
-      // Batch queries with timeout protection
-      const queryPromises = [
-        query,
-        user ? supabase
-          .from('lesson_progress')
-          .select('lesson_id, status, progress_percentage')
-          .eq('user_id', user.id)
-          .limit(100) : Promise.resolve({ data: [] }),
-        user ? supabase
-          .from('user_bookmarks')
-          .select('lesson_id')
-          .eq('user_id', user.id)
-          .limit(100) : Promise.resolve({ data: [] })
-      ];
-
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), 10000)
-      );
-
-      const [
-        { data: lessonsData, error: lessonsError },
-        { data: progressData },
-        { data: bookmarksData }
-      ] = await Promise.race([
-        Promise.all(queryPromises),
-        timeoutPromise
-      ]) as any;
+      // Execute main query first
+      console.log('Fetching lessons for subject:', selectedSubject, 'difficulty:', selectedDifficulty);
+      const { data: lessonsData, error: lessonsError } = await query;
+      console.log('Lessons query result:', { lessonsData, lessonsError });
+      
+      // Get progress and bookmarks separately (optional)
+      let progressData = [];
+      let bookmarksData = [];
+      
+      if (user) {
+        try {
+          const [progressResult, bookmarksResult] = await Promise.all([
+            supabase.from('lesson_progress').select('lesson_id, status, progress_percentage').eq('user_id', user.id),
+            supabase.from('user_bookmarks').select('lesson_id').eq('user_id', user.id)
+          ]);
+          progressData = progressResult.data || [];
+          bookmarksData = bookmarksResult.data || [];
+        } catch (error) {
+          console.warn('Error fetching user data:', error);
+        }
+      }
 
       if (lessonsError) {
         console.error('Lessons query error:', lessonsError);
@@ -509,36 +506,36 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
             <div className="grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
               <button
                 onClick={() => {
-                  const scienceSubject = subjects.find(s => s.name.toLowerCase().includes('science'));
+                  const scienceSubject = subjects.find(s => s.name === 'Science');
                   if (scienceSubject) setSelectedSubject(scienceSubject.id);
                 }}
                 className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 rounded-lg transition-colors border border-green-200 dark:border-green-800"
               >
                 <div className="text-3xl mb-3">🔬</div>
                 <h4 className="font-semibold text-foreground mb-2">Science</h4>
-                <p className="text-sm text-muted-foreground">Explore the natural world through experiments and discovery</p>
+                <p className="text-sm text-muted-foreground">The systematic study of the natural world</p>
               </button>
               <button
                 onClick={() => {
-                  const techSubject = subjects.find(s => s.name.toLowerCase().includes('technology') || s.name.toLowerCase().includes('computer'));
+                  const techSubject = subjects.find(s => s.name === 'Technology');
                   if (techSubject) setSelectedSubject(techSubject.id);
                 }}
                 className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 rounded-lg transition-colors border border-blue-200 dark:border-blue-800"
               >
                 <div className="text-3xl mb-3">💻</div>
                 <h4 className="font-semibold text-foreground mb-2">Technology</h4>
-                <p className="text-sm text-muted-foreground">Learn coding, digital skills, and modern technology</p>
+                <p className="text-sm text-muted-foreground">Tools, systems, and processes to solve problems</p>
               </button>
               <button
                 onClick={() => {
-                  const mathSubject = subjects.find(s => s.name.toLowerCase().includes('math'));
+                  const mathSubject = subjects.find(s => s.name === 'Mathematics');
                   if (mathSubject) setSelectedSubject(mathSubject.id);
                 }}
                 className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30 rounded-lg transition-colors border border-purple-200 dark:border-purple-800"
               >
                 <div className="text-3xl mb-3">📊</div>
                 <h4 className="font-semibold text-foreground mb-2">Mathematics</h4>
-                <p className="text-sm text-muted-foreground">Build problem-solving skills with numbers and logic</p>
+                <p className="text-sm text-muted-foreground">Numbers, patterns, and algebraic reasoning</p>
               </button>
             </div>
           </CardContent>
