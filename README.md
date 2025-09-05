@@ -113,38 +113,79 @@ Visit `http://localhost:8080` to see the application.
 ```
 src/
 ├── components/
+│   ├── admin/              # Admin panel components
 │   ├── ai/                 # AI-powered components
 │   │   ├── LearningPathGenerator.tsx
 │   │   ├── QuizCreator.tsx
 │   │   ├── HomeworkHelper.tsx
 │   │   ├── AccessibilityTools.tsx
 │   │   ├── SustainabilityCalculator.tsx
-│   │   ├── MentorshipMatcher.tsx
-│   │   └── CommunityForum.tsx
-│   ├── ui/                 # Reusable UI components
-│   └── ...                 # Other components
+│   │   └── MentorshipMatcher.tsx
+│   ├── shared/             # Shared components across the app
+│   │   ├── AppOptimizer.tsx
+│   │   ├── DatabaseOptimizer.tsx
+│   │   └── ErrorBoundary.tsx
+│   ├── simple-lessons/     # Simplified learning experience
+│   │   ├── LessonCard.tsx
+│   │   ├── LessonViewer.tsx
+│   │   ├── PracticeSection.tsx
+│   │   └── OverviewSection.tsx
+│   └── ui/                 # Reusable UI components
 ├── pages/
 │   ├── Index.tsx           # Landing page
 │   ├── Dashboard.tsx       # User dashboard
 │   ├── AIDashboard.tsx     # AI tools dashboard
+│   ├── ImpactLearnDashboard.tsx  # Learning dashboard
+│   ├── SimpleLessonDashboard.tsx # Simple lessons dashboard
+│   ├── Community.tsx       # Community forum
+│   ├── IncidentAnalysis.tsx # Incident analysis dashboard
 │   └── Auth.tsx            # Authentication
 ├── services/
-│   └── aiService.ts        # AI API integration
+│   ├── aiService.ts        # Core AI service
+│   ├── aiTrackingService.ts # AI usage tracking
+│   ├── aiRecommendationService.ts # AI recommendations
+│   ├── aiLearningObserver.ts # Learning behavior observer
+│   ├── communityService.ts # Community features
+│   ├── incidentAnalysisService.ts # Error tracking
+│   └── lessonProgressService.ts # Lesson progress tracking
+├── utils/
+│   ├── dbOptimization.ts   # Database optimization utilities
+│   ├── performanceMetrics.ts # Performance monitoring
+│   ├── lessonDebugger.ts   # Lesson debugging tools
+│   └── subjectDebugger.ts  # Subject debugging tools
 ├── hooks/
-│   ├── useAI.ts           # AI functionality hooks
-│   └── use-toast.ts       # Toast notifications
+│   ├── useAI.ts            # AI functionality hook
+│   ├── useLearning.ts      # Learning functionality
+│   ├── useOffline.ts       # Offline support
+│   └── use-toast.ts        # Toast notifications
 ├── contexts/
-│   └── AuthContext.tsx    # Authentication context
+│   └── AuthContext.tsx     # Authentication context
 └── integrations/
-    └── supabase/          # Supabase client & types
+    └── supabase/           # Supabase client & types
 ```
 
-## 🎯 Core AI Features
+## 📑 Documentation
+
+The project includes comprehensive documentation in the `docs/` directory:
+
+```
+docs/
+├── ADMIN_PLATFORM_GUIDE.md       # Admin features guide
+├── AI_OPTIMIZATION_GUIDE.md      # AI performance optimization
+├── DATABASE_OPTIMIZATION_GUIDE.md # Database optimization strategies
+├── INCIDENT_ANALYSIS.md          # Error tracking and analysis
+├── PERFORMANCE_METRICS_FIX.md    # Performance monitoring fixes
+├── RECENT_FIXES.md               # Latest bug fixes and updates
+└── TROUBLESHOOTING_GUIDE.md      # Common issues and solutions
+```
+
+## 🚀 Core Features
 
 ### Education Tools
 - **Learning Path Generator**: Creates personalized curricula based on user profile
 - **Quiz Creator**: Transforms any content into interactive assessments
 - **Homework Helper**: Provides step-by-step explanations for academic questions
+- **Simple Lessons**: Visual, accessible learning for all literacy levels
 
 ### Accessibility Tools
 - **Text-to-Speech**: Browser-native speech synthesis with voice selection
@@ -162,6 +203,12 @@ src/
 - **Opportunity Engine**: Personalized job and volunteer recommendations
 - **Idea Evaluator**: AI feedback and scoring for community proposals
 - **Sentiment Analysis**: Promotes positive community interactions
+
+### Performance Optimization
+- **Database Optimization**: Query caching, batch processing, and minimal selects
+- **App Loading Optimization**: Critical resource prioritization and progressive loading
+- **Performance Monitoring**: Tracking and reporting key performance metrics
+- **Incident Analysis**: Comprehensive error tracking and debugging
 
 ## 🌐 Deployment
 
