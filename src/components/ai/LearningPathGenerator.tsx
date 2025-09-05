@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,9 @@ const LearningPathGenerator = () => {
     const [newSkill, setNewSkill] = useState('');
     const [newInterest, setNewInterest] = useState('');
     const [learningPath, setLearningPath] = useState('');
+    const [placeholderContent, setPlaceholderContent] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const resultRef = useRef<HTMLDivElement>(null);
 
     const { generateLearningPath, loading } = useAI();
 
@@ -41,21 +44,66 @@ const LearningPathGenerator = () => {
         setInterests(interests.filter(i => i !== interest));
     };
 
+    // Effect to show placeholder content while waiting for real content
+    useEffect(() => {
+        if (isGenerating) {
+            // Show progressive placeholder while generating
+            const placeholders = [
+                "## Your Personalized Learning Path\n\nAnalyzing your skills and interests...",
+                "## Your Personalized Learning Path\n\n### Current Assessment\n- Analyzing your skills in: " + skills.join(', ') + "\n\nProcessing...",
+                "## Your Personalized Learning Path\n\n### Current Assessment\n- Analysis complete\n\n### Recommended Learning Areas\n- Generating recommendations based on: " + interests.join(', ') + "\n\nCompiling results..."
+            ];
+            
+            let currentPlaceholder = 0;
+            
+            const placeholderInterval = setInterval(() => {
+                if (currentPlaceholder < placeholders.length) {
+                    setPlaceholderContent(placeholders[currentPlaceholder]);
+                    currentPlaceholder++;
+                } else {
+                    clearInterval(placeholderInterval);
+                }
+            }, 1000);
+            
+            return () => clearInterval(placeholderInterval);
+        } else {
+            setPlaceholderContent('');
+        }
+    }, [isGenerating, skills, interests]);
+
+    // Scroll to result when content is available
+    useEffect(() => {
+        if (learningPath && resultRef.current) {
+            resultRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [learningPath]);
+
     const handleGeneratePath = async () => {
         if (skills.length === 0 || interests.length === 0 || !currentLevel) {
             return;
         }
 
         try {
+            setIsGenerating(true);
+            setLearningPath(''); // Clear previous results
+            
+            // Start showing placeholder content while waiting for real content
             const result = await generateLearningPath(skills, interests, currentLevel);
+            
             if (result) {
-                setLearningPath(result);
+                // Small delay to ensure smooth transition from placeholder to real content
+                setTimeout(() => {
+                    setLearningPath(result);
+                    setIsGenerating(false);
+                }, 300);
             } else {
                 setLearningPath("Sorry, I couldn't generate a learning path right now. Please try again later.");
+                setIsGenerating(false);
             }
         } catch (error) {
             console.error('Learning path generation error:', error);
             setLearningPath("There was an error generating your learning path. Please check your internet connection and try again.");
+            setIsGenerating(false);
         }
     };
 
@@ -144,10 +192,10 @@ const LearningPathGenerator = () => {
                 {/* Generate Button */}
                 <Button
                     onClick={handleGeneratePath}
-                    disabled={loading || skills.length === 0 || interests.length === 0 || !currentLevel}
+                    disabled={loading || isGenerating || skills.length === 0 || interests.length === 0 || !currentLevel}
                     className="w-full"
                 >
-                    {loading ? (
+                    {(loading || isGenerating) ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Generating Learning Path...
@@ -158,11 +206,14 @@ const LearningPathGenerator = () => {
                 </Button>
 
                 {/* Results */}
-                {learningPath && (
-                    <div className="mt-6 p-6 bg-blue-50 rounded-lg border border-blue-200">
+                {(learningPath || placeholderContent) && (
+                    <div 
+                        ref={resultRef}
+                        className={`mt-6 p-6 bg-blue-50 dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-gray-700 transition-opacity duration-300 ${isGenerating ? 'opacity-80' : 'opacity-100'}`}
+                    >
                         <MarkdownRenderer 
-                            content={learningPath} 
-                            className="text-blue-800"
+                            content={learningPath || placeholderContent} 
+                            className="text-blue-800 dark:text-blue-300"
                         />
                     </div>
                 )}

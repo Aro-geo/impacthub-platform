@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { queryCache } from '@/utils/dbOptimization';
 
 export type AIInteractionType = 
   | 'learning_path_generation'
@@ -14,7 +15,8 @@ export type AIInteractionType =
   | 'idea_evaluation'
   | 'content_summarization'
   | 'grant_proposal_assistance'
-  | 'sentiment_analysis';
+  | 'sentiment_analysis'
+  | 'complex_problem_solving';
 
 export type AIInteractionStatus = 'initiated' | 'processing' | 'completed' | 'failed';
 
@@ -29,6 +31,24 @@ interface AIInteractionData {
 }
 
 class AITrackingService {
+  // Batch processing queue for interaction storage
+  private interactionQueue: {
+    userId: string;
+    interactionType: AIInteractionType;
+    outputData: any;
+    processingTimeMs?: number;
+    tokensUsed?: number;
+    inputData?: any;
+    timestamp: number;
+  }[] = [];
+  
+  // Flag to track if queue processing is scheduled
+  private isProcessingQueue = false;
+  
+  // Process validation cache to avoid repeated checks
+  private validatedUserIds = new Set<string>();
+  private invalidUserIds = new Set<string>();
+
   // Start tracking an AI interaction - only when processing begins
   async startInteraction(userId: string, type: AIInteractionType, inputData?: any): Promise<string> {
     // Don't create database record yet, just return a temporary ID
@@ -70,28 +90,29 @@ class AITrackingService {
       return;
     }
 
-    try {
-      // If this is a temporary ID, create a new record
-      if (interactionId.startsWith('temp-')) {
-        if (!userId || !interactionType) {
-          console.warn('Cannot record interaction: missing userId or interactionType');
-          return;
-        }
+    // If this is a temporary ID and we have userId and interactionType, add to batch queue
+    if (interactionId.startsWith('temp-') && userId && interactionType) {
+      // Add to queue instead of immediate database write
+      this.interactionQueue.push({
+        userId,
+        interactionType,
+        outputData,
+        processingTimeMs,
+        tokensUsed,
+        inputData,
+        timestamp: Date.now()
+      });
+      
+      // Process queue in background if not already scheduled
+      if (!this.isProcessingQueue) {
+        this.scheduleQueueProcessing();
+      }
+      return;
+    }
 
-        await supabase
-          .from('ai_interactions')
-          .insert({
-            user_id: userId,
-            interaction_type: interactionType,
-            status: 'completed',
-            input_data: inputData,
-            output_data: outputData,
-            processing_time_ms: processingTimeMs,
-            tokens_used: tokensUsed,
-            completed_at: new Date().toISOString(),
-          });
-      } else {
-        // Update existing record
+    // For existing interactions that need immediate update (less common case)
+    try {
+      if (!interactionId.startsWith('temp-')) {
         await supabase
           .from('ai_interactions')
           .update({
@@ -106,6 +127,107 @@ class AITrackingService {
     } catch (error) {
       console.error('Failed to complete AI interaction tracking:', error);
     }
+  }
+  
+  // Schedule background processing of the interaction queue
+  private scheduleQueueProcessing(): void {
+    this.isProcessingQueue = true;
+    
+    // Use setTimeout to process in the background
+    setTimeout(() => this.processInteractionQueue(), 2000);
+  }
+  
+  // Process the queued interactions in batch
+  private async processInteractionQueue(): Promise<void> {
+    if (this.interactionQueue.length === 0) {
+      this.isProcessingQueue = false;
+      return;
+    }
+    
+    // Take a batch of items to process (up to 10)
+    const batchSize = Math.min(10, this.interactionQueue.length);
+    const batch = this.interactionQueue.splice(0, batchSize);
+    
+    try {
+      // Filter out interactions with invalid users to avoid DB errors
+      const validInteractions = await this.filterValidInteractions(batch);
+      
+      if (validInteractions.length > 0) {
+        // Insert all valid interactions in one batch operation
+        await supabase
+          .from('ai_interactions')
+          .insert(validInteractions.map(item => ({
+            user_id: item.userId,
+            interaction_type: item.interactionType,
+            status: 'completed',
+            input_data: item.inputData,
+            output_data: item.outputData,
+            processing_time_ms: item.processingTimeMs,
+            tokens_used: item.tokensUsed,
+            completed_at: new Date().toISOString(),
+          })));
+      }
+    } catch (error) {
+      console.error('Failed to process AI interaction batch:', error);
+    }
+    
+    // If there are more items in the queue, continue processing
+    if (this.interactionQueue.length > 0) {
+      setTimeout(() => this.processInteractionQueue(), 2000);
+    } else {
+      this.isProcessingQueue = false;
+    }
+  }
+  
+  // Filter interactions to only include those with valid users
+  private async filterValidInteractions(
+    interactions: {
+      userId: string;
+      interactionType: AIInteractionType;
+      outputData: any;
+      processingTimeMs?: number;
+      tokensUsed?: number;
+      inputData?: any;
+      timestamp: number;
+    }[]
+  ) {
+    // First filter based on cache
+    const needsValidation = interactions.filter(item => 
+      !this.validatedUserIds.has(item.userId) && 
+      !this.invalidUserIds.has(item.userId)
+    );
+    
+    // Get unique user IDs to validate
+    const uniqueUserIds = [...new Set(needsValidation.map(item => item.userId))];
+    
+    if (uniqueUserIds.length > 0) {
+      try {
+        // Validate all unique user IDs in a single query
+        const { data: validUsers, error } = await supabase
+          .from('users')
+          .select('id')
+          .in('id', uniqueUserIds);
+          
+        if (!error && validUsers) {
+          // Update our caches
+          const validUserIdSet = new Set(validUsers.map(u => u.id));
+          
+          validUsers.forEach(user => this.validatedUserIds.add(user.id));
+          
+          uniqueUserIds
+            .filter(id => !validUserIdSet.has(id))
+            .forEach(id => this.invalidUserIds.add(id));
+        }
+      } catch (error) {
+        console.error('Error validating users:', error);
+      }
+    }
+    
+    // Return only interactions with validated user IDs
+    return interactions.filter(item => 
+      this.validatedUserIds.has(item.userId) || 
+      !this.invalidUserIds.has(item.userId)
+    );
   }
 
   // Mark an AI interaction as failed

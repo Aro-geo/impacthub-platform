@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useAI } from '@/hooks/useAI';
+import MarkdownRenderer from '@/components/ui/markdown-renderer';
 import { Users, Plus, X, Loader2, Heart } from 'lucide-react';
 
 interface Profile {
@@ -43,8 +44,54 @@ const MentorshipMatcher = () => {
   const [newSkill, setNewSkill] = useState('');
   const [activeProfile, setActiveProfile] = useState<'mentor' | 'mentee'>('mentor');
   const [matchResult, setMatchResult] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [processingStage, setProcessingStage] = useState('');
+  const [partialResult, setPartialResult] = useState('');
+  const isMountedRef = useRef(true);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const { matchMentorship, loading } = useAI();
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Scroll to results when match is available
+  useEffect(() => {
+    if (matchResult && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [matchResult]);
+
+  // Update processing stage for visual feedback
+  useEffect(() => {
+    if (isGenerating) {
+      const stages = [
+        "Analyzing mentor profile...",
+        "Analyzing mentee profile...",
+        "Identifying skill matches...",
+        "Assessing compatibility...",
+        "Generating recommendations..."
+      ];
+      
+      let currentStage = 0;
+      const stageInterval = setInterval(() => {
+        if (currentStage < stages.length) {
+          setProcessingStage(stages[currentStage]);
+          currentStage++;
+        } else {
+          clearInterval(stageInterval);
+        }
+      }, 1200);
+      
+      return () => clearInterval(stageInterval);
+    } else {
+      setProcessingStage('');
+    }
+  }, [isGenerating]);
 
   const timeZones = [
     'UTC-12', 'UTC-11', 'UTC-10', 'UTC-9', 'UTC-8', 'UTC-7', 'UTC-6',
@@ -82,10 +129,60 @@ const MentorshipMatcher = () => {
 
   const handleMatch = async () => {
     if (!mentorProfile.name || !menteeProfile.name) return;
-
-    const result = await matchMentorship(mentorProfile, menteeProfile);
-    if (result) {
-      setMatchResult(result);
+    
+    setIsGenerating(true);
+    setMatchResult('');
+    setPartialResult('');
+    
+    try {
+      // Start the mentorship matching process
+      const resultPromise = matchMentorship(mentorProfile, menteeProfile);
+      
+      // Show progressive feedback while waiting for the result
+      setTimeout(() => {
+        if (isMountedRef.current && !matchResult) {
+          setPartialResult('*Analyzing mentor and mentee profiles...*\n\n');
+        }
+      }, 800);
+      
+      setTimeout(() => {
+        if (isMountedRef.current && !matchResult) {
+          setPartialResult(prev => 
+            prev + `*Evaluating skill match between ${mentorProfile.name} and ${menteeProfile.name}...*\n\n` +
+            `- Mentor skills: ${mentorProfile.skills.join(', ')}\n` +
+            `- Mentee interests: ${menteeProfile.skills.join(', ')}\n\n`
+          );
+        }
+      }, 2000);
+      
+      setTimeout(() => {
+        if (isMountedRef.current && !matchResult) {
+          setPartialResult(prev => 
+            prev + '*Identifying potential mentorship focus areas...*\n\n'
+          );
+        }
+      }, 3200);
+      
+      // Wait for the actual result
+      const result = await resultPromise;
+      
+      if (isMountedRef.current) {
+        if (result) {
+          setMatchResult(result);
+        } else {
+          setMatchResult("Sorry, I couldn't generate a compatibility analysis. Please check that both profiles have sufficient information and try again.");
+        }
+      }
+    } catch (error) {
+      console.error('Error matching mentorship:', error);
+      if (isMountedRef.current) {
+        setMatchResult("An error occurred while analyzing mentorship compatibility. Please try again with different profile information.");
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsGenerating(false);
+        setPartialResult('');
+      }
     }
   };
 
@@ -249,13 +346,13 @@ const MentorshipMatcher = () => {
         {/* Match Button */}
         <Button 
           onClick={handleMatch}
-          disabled={loading || !isProfileComplete(mentorProfile) || !isProfileComplete(menteeProfile)}
+          disabled={isGenerating || loading || !isProfileComplete(mentorProfile) || !isProfileComplete(menteeProfile)}
           className="w-full"
         >
-          {loading ? (
+          {isGenerating || loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing Compatibility...
+              {processingStage || "Analyzing Compatibility..."}
             </>
           ) : (
             <>
@@ -265,19 +362,42 @@ const MentorshipMatcher = () => {
           )}
         </Button>
 
-        {/* Match Results */}
-        {matchResult && (
-          <Card className="bg-purple-50 border-purple-200">
+        {/* Loading Indicator with Progressive Content */}
+        {isGenerating && partialResult && (
+          <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" ref={resultRef}>
             <CardHeader>
-              <CardTitle className="text-purple-800 flex items-center gap-2">
+              <CardTitle className="text-purple-800 dark:text-purple-300 flex items-center gap-2">
+                <Heart className="h-5 w-5" />
+                Generating Compatibility Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MarkdownRenderer 
+                content={partialResult} 
+                className="text-purple-800 dark:text-purple-300"
+              />
+              <div className="flex items-center mt-4">
+                <Loader2 className="h-4 w-4 animate-spin mr-2 text-purple-700 dark:text-purple-400" />
+                <span className="text-sm text-purple-700 dark:text-purple-400">{processingStage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Match Results */}
+        {!isGenerating && matchResult && (
+          <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" ref={resultRef}>
+            <CardHeader>
+              <CardTitle className="text-purple-800 dark:text-purple-300 flex items-center gap-2">
                 <Heart className="h-5 w-5" />
                 Mentorship Compatibility Analysis
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-purple-800 text-base leading-relaxed whitespace-pre-line">
-                {matchResult}
-              </div>
+              <MarkdownRenderer 
+                content={matchResult} 
+                className="text-purple-800 dark:text-purple-300"
+              />
             </CardContent>
           </Card>
         )}

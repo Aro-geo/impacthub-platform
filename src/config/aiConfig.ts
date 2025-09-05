@@ -1,8 +1,12 @@
 // AI Configuration and Performance Settings
 
 export const AI_CONFIG = {
-  // DeepSeek-V2.5 Model Configuration
-  MODEL: 'deepseek-chat',
+  // DeepSeek AI Models Configuration
+  MODELS: {
+    CHAT: 'deepseek-chat',
+    REASONER: 'deepseek-reasoner'
+  },
+  DEFAULT_MODEL: 'deepseek-chat',
   API_URL: import.meta.env.VITE_DEEPSEEK_API_URL || 'https://api.deepseek.com/v1',
   
   // Temperature Settings for Different Task Types
@@ -53,6 +57,13 @@ export const AI_CONFIG = {
     TRANSLATION: [
       'text_translation',
       'alt_text_generation'
+    ],
+    REASONING: [
+      'complex_problem_solving',
+      'critical_thinking',
+      'mathematical_reasoning',
+      'scientific_analysis',
+      'logical_deduction'
     ]
   },
   
@@ -93,7 +104,7 @@ export function getTaskSettings(taskType: string) {
   return {
     temperature,
     maxTokens,
-    model: AI_CONFIG.MODEL,
+    model: taskType === 'reasoning' ? AI_CONFIG.MODELS.REASONER : AI_CONFIG.MODELS.CHAT,
     ...AI_CONFIG.QUALITY
   };
 }

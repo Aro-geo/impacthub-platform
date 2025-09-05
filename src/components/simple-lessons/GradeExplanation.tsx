@@ -8,21 +8,6 @@ interface GradeExplanationProps {
 const GradeExplanation = ({ userGrade }: GradeExplanationProps) => {
   if (!userGrade) return null;
 
-  const getGradeRange = (grade: number) => {
-    const minGrade = Math.max(1, grade - 1);
-    const maxGrade = Math.min(12, grade + 1);
-    
-    if (minGrade === maxGrade) {
-      return `Grade ${grade}`;
-    } else if (minGrade === grade) {
-      return `Grades ${grade}-${maxGrade}`;
-    } else if (maxGrade === grade) {
-      return `Grades ${minGrade}-${grade}`;
-    } else {
-      return `Grades ${minGrade}-${maxGrade}`;
-    }
-  };
-
   return (
     <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
       <CardContent className="p-4">
@@ -32,12 +17,8 @@ const GradeExplanation = ({ userGrade }: GradeExplanationProps) => {
           </div>
           <div className="flex-1">
             <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-1">
-              Personalized Content for You
+              Your current grade: Grade {userGrade}
             </h4>
-            <p className="text-sm text-blue-700 dark:text-blue-200">
-              We're showing lessons for <strong>{getGradeRange(userGrade)}</strong> to match your learning level. 
-              This includes content for your grade plus one level above and below for flexibility.
-            </p>
             <div className="flex items-center mt-2 text-xs text-blue-600 dark:text-blue-400">
               <GraduationCap className="h-3 w-3 mr-1" />
               <span>Your current grade: Grade {userGrade}</span>

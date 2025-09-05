@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,8 +25,45 @@ const QuizCreator = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [processingStage, setProcessingStage] = useState('');
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const { createQuiz, loading } = useAI();
+
+  // Scroll to results when content is available
+  useEffect(() => {
+    if (quiz && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [quiz]);
+
+  // Update processing stage for visual feedback
+  useEffect(() => {
+    if (isGenerating) {
+      const stages = [
+        "Analyzing content...",
+        "Identifying key concepts...",
+        "Creating questions...",
+        "Generating answer options...",
+        "Finalizing quiz..."
+      ];
+      
+      let currentStage = 0;
+      const stageInterval = setInterval(() => {
+        if (currentStage < stages.length) {
+          setProcessingStage(stages[currentStage]);
+          currentStage++;
+        } else {
+          clearInterval(stageInterval);
+        }
+      }, 1000);
+      
+      return () => clearInterval(stageInterval);
+    } else {
+      setProcessingStage('');
+    }
+  }, [isGenerating]);
 
   const handleCreateQuiz = async () => {
     if (!content.trim()) {
@@ -34,18 +71,21 @@ const QuizCreator = () => {
       return;
     }
 
-    console.log('Creating quiz with content:', content);
-    console.log('Difficulty:', difficulty);
+    setIsGenerating(true);
+    setQuiz(null);
 
     try {
-      const result = await createQuiz(content, difficulty);
-      console.log('Quiz creation result:', result);
-      console.log('Result type:', typeof result);
-      console.log('Result length:', result?.length);
-
+      // Start the quiz creation process
+      const resultPromise = createQuiz(content, difficulty);
+      
+      // We're already showing loading state through the processing stages,
+      // so we can directly await the result
+      const result = await resultPromise;
+      
       if (!result) {
         console.error('createQuiz returned null or undefined');
         alert('The AI service encountered an error while creating the quiz. This might be due to content length, API limits, or service issues. Try with shorter content or use the sample quiz.');
+        setIsGenerating(false);
         return;
       }
 
@@ -99,8 +139,11 @@ const QuizCreator = () => {
       setUserAnswers([]);
       setShowResults(false);
     } catch (error) {
-      console.error('Quiz creation error:', error);
-      alert(`Error creating quiz: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error creating quiz:', error);
+      alert('Error parsing quiz data. Please try again with different content.');
+      createFallbackQuiz();
+    } finally {
+      setIsGenerating(false);
     }
   };
 

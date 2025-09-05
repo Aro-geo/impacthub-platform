@@ -78,7 +78,7 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
   };
 
   return (
-    <Card className={`transition-shadow ${lesson.is_locked ? 'opacity-60' : 'hover:shadow-lg'}`}>
+    <Card className={`transition-shadow ${lesson.is_locked ? 'opacity-60' : 'hover:shadow-lg'} bg-white dark:bg-neutral-900`}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-2">

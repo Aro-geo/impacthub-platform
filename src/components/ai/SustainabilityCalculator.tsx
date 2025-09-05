@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +12,54 @@ const SustainabilityCalculator = () => {
   const [activities, setActivities] = useState<string[]>([]);
   const [newActivity, setNewActivity] = useState('');
   const [impactReport, setImpactReport] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [processingStage, setProcessingStage] = useState('');
+  const [partialReport, setPartialReport] = useState('');
+  const isMountedRef = useRef(true);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const { calculateImpact, loading } = useAI();
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Scroll to results when report is available
+  useEffect(() => {
+    if (impactReport && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [impactReport]);
+
+  // Update processing stage for visual feedback
+  useEffect(() => {
+    if (isGenerating) {
+      const stages = [
+        "Analyzing activities...",
+        "Calculating CO₂ savings...",
+        "Estimating environmental impact...",
+        "Generating recommendations...",
+        "Finalizing impact report..."
+      ];
+      
+      let currentStage = 0;
+      const stageInterval = setInterval(() => {
+        if (currentStage < stages.length) {
+          setProcessingStage(stages[currentStage]);
+          currentStage++;
+        } else {
+          clearInterval(stageInterval);
+        }
+      }, 1200);
+      
+      return () => clearInterval(stageInterval);
+    } else {
+      setProcessingStage('');
+    }
+  }, [isGenerating]);
 
   const commonActivities = [
     'Recycled 10 plastic bottles',
@@ -41,10 +87,58 @@ const SustainabilityCalculator = () => {
 
   const handleCalculateImpact = async () => {
     if (activities.length === 0) return;
-
-    const result = await calculateImpact(activities);
-    if (result) {
-      setImpactReport(result);
+    
+    setIsGenerating(true);
+    setImpactReport('');
+    setPartialReport('');
+    
+    try {
+      // Start the impact calculation process
+      const resultPromise = calculateImpact(activities);
+      
+      // Show progressive feedback while waiting for the result
+      setTimeout(() => {
+        if (isMountedRef.current && !impactReport) {
+          setPartialReport('*Analyzing your sustainable activities...*\n\n');
+        }
+      }, 800);
+      
+      setTimeout(() => {
+        if (isMountedRef.current && !impactReport) {
+          setPartialReport(prev => 
+            prev + '*Calculating CO₂ equivalent savings for ' + activities.length + ' activities...*\n\n'
+          );
+        }
+      }, 2000);
+      
+      setTimeout(() => {
+        if (isMountedRef.current && !impactReport) {
+          setPartialReport(prev => 
+            prev + '*Preparing sustainability impact visualization...*\n\n'
+          );
+        }
+      }, 3200);
+      
+      // Wait for the actual result
+      const result = await resultPromise;
+      
+      if (isMountedRef.current) {
+        if (result) {
+          setImpactReport(result);
+        } else {
+          setImpactReport("I'm sorry, I couldn't calculate the impact for these activities. Please try with different activities or be more specific.");
+        }
+      }
+    } catch (error) {
+      console.error('Error calculating sustainability impact:', error);
+      if (isMountedRef.current) {
+        setImpactReport("An error occurred while calculating your environmental impact. Please try again with different activities.");
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsGenerating(false);
+        setPartialReport('');
+      }
     }
   };
 
@@ -118,13 +212,13 @@ const SustainabilityCalculator = () => {
         {/* Calculate Button */}
         <Button 
           onClick={handleCalculateImpact}
-          disabled={loading || activities.length === 0}
+          disabled={isGenerating || loading || activities.length === 0}
           className="w-full"
         >
-          {loading ? (
+          {isGenerating || loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Calculating Impact...
+              {processingStage || "Calculating Impact..."}
             </>
           ) : (
             <>
@@ -134,13 +228,29 @@ const SustainabilityCalculator = () => {
           )}
         </Button>
 
+        {/* Loading Indicator with Progressive Content */}
+        {isGenerating && partialReport && (
+          <Card className="bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700" ref={resultRef}>
+            <CardContent className="pt-6">
+              <MarkdownRenderer 
+                content={partialReport} 
+                className="text-green-800 dark:text-green-200"
+              />
+              <div className="flex items-center mt-4">
+                <Loader2 className="h-4 w-4 animate-spin mr-2 text-green-700 dark:text-green-400" />
+                <span className="text-sm text-green-700 dark:text-green-400">{processingStage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Impact Report */}
-        {impactReport && (
-          <Card className="bg-green-50 border-green-200">
+        {!isGenerating && impactReport && (
+          <Card className="bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-700" ref={resultRef}>
             <CardContent className="pt-6">
               <MarkdownRenderer 
                 content={impactReport} 
-                className="text-green-800"
+                className="text-green-800 dark:text-green-200"
               />
             </CardContent>
           </Card>

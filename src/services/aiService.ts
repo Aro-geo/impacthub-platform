@@ -1,6 +1,9 @@
-// Optimized AI Service for DeepSeek-V2.5 API integration
+// Optimized AI Service for DeepSeek API integration
 const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = import.meta.env.VITE_DEEPSEEK_API_URL || 'https://api.deepseek.com/v1';
+
+// Import AI configuration
+import { AI_CONFIG } from '@/config/aiConfig';
 
 interface AIResponse {
   choices: Array<{
@@ -36,6 +39,13 @@ const TASK_TYPES = {
   TRANSLATION: ['text_translation', 'alt_text_generation'],
   CREATIVE: ['waste_classification', 'opportunity_recommendation']
 } as const;
+
+export interface AIRequestOptions {
+  temperature?: number;
+  maxTokens?: number;
+  history?: Array<{ role: string; content: string }>;
+  systemPrompt?: string;
+}
 
 class AIService {
   private requestCache = new Map<string, { response: string; timestamp: number }>();
@@ -92,6 +102,19 @@ class AIService {
     // Default to structured content
     return TEMPERATURE_SETTINGS.STRUCTURED_CONTENT;
   }
+  
+  private isReasoningTask(taskType?: string): boolean {
+    if (!taskType) return false;
+    
+    // Check if this is a reasoning task that should use the reasoner model
+    return [
+      'complex_problem_solving',
+      'critical_thinking',
+      'mathematical_reasoning',
+      'scientific_analysis',
+      'logical_deduction'
+    ].includes(taskType);
+  }
 
   private async processRequestQueue() {
     if (this.isProcessingQueue || this.requestQueue.length === 0) return;
@@ -124,6 +147,11 @@ class AIService {
     // Use optimal temperature if not specified
     const optimalTemperature = temperature ?? this.getOptimalTemperature(taskType);
     
+    // Select appropriate model based on task type
+    const modelToUse = this.isReasoningTask(taskType) 
+      ? AI_CONFIG.MODELS.REASONER 
+      : AI_CONFIG.MODELS.CHAT;
+    
     // Check cache first
     const cacheKey = this.getCacheKey(messages, optimalTemperature);
     const cached = this.requestCache.get(cacheKey);
@@ -135,7 +163,7 @@ class AIService {
     return new Promise((resolve, reject) => {
       const executeRequest = async () => {
         try {
-          console.log('Making optimized AI request to DeepSeek-V2.5');
+          console.log('Making optimized AI request to DeepSeek');
 
           const response = await fetch(`${DEEPSEEK_API_URL}/chat/completions`, {
             method: 'POST',
@@ -145,7 +173,7 @@ class AIService {
               'User-Agent': 'ImpactHub/1.0',
             },
             body: JSON.stringify({
-              model: 'deepseek-chat', // DeepSeek-V2.5 model
+              model: modelToUse, // Use the appropriate DeepSeek model based on task
               messages,
               temperature: optimalTemperature,
               max_tokens: maxTokens,
@@ -182,7 +210,7 @@ class AIService {
             timestamp: Date.now()
           });
 
-          console.log(`AI request completed with temperature: ${optimalTemperature}, tokens: ${data.usage?.total_tokens || 'unknown'}`);
+          console.log(`AI request completed with model: ${modelToUse}, temperature: ${optimalTemperature}, tokens: ${data.usage?.total_tokens || 'unknown'}`);
           resolve(formattedContent);
         } catch (error) {
           console.error('AI Service Error:', error);
@@ -209,7 +237,40 @@ class AIService {
       .replace(/^\s+|\s+$/g, '') // Trim start and end
       .replace(/[ \t]+$/gm, ''); // Remove trailing spaces on each line
   }
-
+  
+  // Add method to get default system prompt
+  private getDefaultSystemPrompt(type: string): string {
+    switch(type) {
+      case 'reasoning':
+        return 'You are an advanced reasoning assistant that excels at complex problem solving, critical thinking, mathematical reasoning, and logical deduction. Analyze the problem step-by-step and provide a clear, well-reasoned response.';
+      case 'coding':
+        return 'You are a coding assistant. Provide clear, concise, and correct code with explanations.';
+      case 'education':
+        return 'You are an educational assistant. Explain concepts clearly with examples that help students understand.';
+      default:
+        return 'You are a helpful assistant providing accurate and relevant information.';
+    }
+  }
+  
+  // Build messages array for API request
+  private buildMessagesArray(
+    userPrompt: string, 
+    history: Array<{ role: string; content: string }> = [],
+    systemPrompt: string = this.getDefaultSystemPrompt('default')
+  ): Array<{ role: string; content: string }> {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history
+    ];
+    
+    // Add user prompt if not already in history
+    if (history.length === 0 || history[history.length - 1].role !== 'user') {
+      messages.push({ role: 'user', content: userPrompt });
+    }
+    
+    return messages;
+  }
+  
   // Education Features
   async generateLearningPath(userSkills: string[], interests: string[], currentLevel: string): Promise<string> {
     console.log('Generating learning path with:', { userSkills, interests, currentLevel });
@@ -624,7 +685,7 @@ class AIService {
       const messages = [
         {
           role: 'system',
-          content: 'You are a helpful assistant. Respond with exactly: "DeepSeek-V2.5 is working perfectly!"'
+          content: 'You are a helpful assistant. Respond with exactly: "DeepSeek AI is working perfectly!"'
         },
         {
           role: 'user',
@@ -659,6 +720,29 @@ class AIService {
       };
     }
   }
+  /**
+   * Get a response using the DeepSeek Reasoner model for advanced reasoning tasks
+   */
+  async getReasonedResponse(prompt: string, options: AIRequestOptions = {}): Promise<string> {
+    try {
+      const { history = [], systemPrompt = this.getDefaultSystemPrompt('reasoning') } = options;
+      
+      // Build messages array
+      const messages = this.buildMessagesArray(prompt, history, systemPrompt);
+      
+      // Use reasoner model with appropriate settings
+      return await this.makeRequest(
+        messages, 
+        options.temperature,
+        options.maxTokens || 1200,
+        'complex_problem_solving' // Indicates this is a reasoning task
+      );
+    } catch (error) {
+      console.error('Error in getReasonedResponse:', error);
+      throw error;
+    }
+  }
 }
 
+// Export a singleton instance of the service
 export const aiService = new AIService();

@@ -129,6 +129,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       setLoading(true);
       
       // Optimized query with minimal data selection
+
       let query = supabase
         .from('simple_lessons')
         .select(`
@@ -139,6 +140,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
           duration_minutes,
           subject_id,
           order_index,
+          grade,
           subjects!fk_subject (
             id,
             name,
@@ -157,6 +159,11 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
 
       if (selectedDifficulty !== 'all') {
         query = query.eq('difficulty_level', selectedDifficulty);
+      }
+
+      // Filter by user grade
+      if (userProfile?.grade) {
+        query = query.eq('grade', userProfile.grade);
       }
 
       // Apply sorting with index optimization

@@ -15,6 +15,8 @@ import { useOffline } from "@/hooks/useOffline";
 import { aiLearningObserver } from "@/services/aiLearningObserver";
 import runDatabaseChecks from "@/utils/subjectDebugger";
 import debugSimpleLessons from "@/utils/lessonDebugger";
+import DatabaseOptimizer from "@/components/shared/DatabaseOptimizer";
+import AppOptimizer from "@/components/shared/AppOptimizer";
 
 // Lazy load all page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -53,8 +55,11 @@ const AppContent = () => {
 
   // AI Learning Observer will be initialized when user opens lessons
 
+  // Include both database optimizers for enhanced performance
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+      {user && <DatabaseOptimizer />}
+      {user && <AppOptimizer />}
       <Suspense fallback={<LoadingSpinner size="lg" text="Loading application..." />}>
         <Routes>
           <Route 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAI } from '@/hooks/useAI';
+import MarkdownRenderer from '@/components/ui/markdown-renderer';
 import { Accessibility, Mic, Volume2, Languages, Image, Loader2 } from 'lucide-react';
 
 const AccessibilityTools = () => {
@@ -15,8 +16,70 @@ const AccessibilityTools = () => {
   const [imageDescription, setImageDescription] = useState('');
   const [result, setResult] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [processingStage, setProcessingStage] = useState('');
+  const [partialResult, setPartialResult] = useState('');
+  const isMountedRef = useRef(true);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const { translateText, generateAltText, loading } = useAI();
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      
+      // Stop any ongoing speech synthesis when component unmounts
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Scroll to results when available
+  useEffect(() => {
+    if (result && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [result]);
+
+  // Update processing stage for visual feedback
+  useEffect(() => {
+    if (isGenerating) {
+      const stages = {
+        'translator': [
+          "Analyzing text...",
+          "Processing language patterns...",
+          "Translating content...",
+          "Refining translation..."
+        ],
+        'alt-text': [
+          "Analyzing image description...",
+          "Generating accessible description...",
+          "Optimizing for screen readers...",
+          "Finalizing alt text..."
+        ]
+      };
+      
+      const currentStages = stages[selectedTool as keyof typeof stages] || [];
+      
+      if (currentStages.length > 0) {
+        let currentStage = 0;
+        const stageInterval = setInterval(() => {
+          if (currentStage < currentStages.length) {
+            setProcessingStage(currentStages[currentStage]);
+            currentStage++;
+          } else {
+            clearInterval(stageInterval);
+          }
+        }, 1000);
+        
+        return () => clearInterval(stageInterval);
+      }
+    } else {
+      setProcessingStage('');
+    }
+  }, [isGenerating, selectedTool]);
 
   const languages = [
     { code: 'es', name: 'Spanish' },
@@ -104,11 +167,51 @@ const AccessibilityTools = () => {
   const handleTranslation = async () => {
     if (!inputText.trim() || !targetLanguage) return;
 
-    const languageName = languages.find(lang => lang.code === targetLanguage)?.name || targetLanguage;
-    const translatedText = await translateText(inputText, languageName);
+    setIsGenerating(true);
+    setResult('');
+    setPartialResult('');
     
-    if (translatedText) {
-      setResult(translatedText);
+    try {
+      const languageName = languages.find(lang => lang.code === targetLanguage)?.name || targetLanguage;
+      
+      // Show progressive feedback while waiting for the result
+      setTimeout(() => {
+        if (isMountedRef.current && !result) {
+          setPartialResult(`*Analyzing text in original language...*\n\n`);
+        }
+      }, 600);
+      
+      setTimeout(() => {
+        if (isMountedRef.current && !result) {
+          setPartialResult(prev => 
+            prev + `*Translating to ${languageName}...*\n\n`
+          );
+        }
+      }, 1800);
+      
+      // Start the actual translation
+      const translationPromise = translateText(inputText, languageName);
+      
+      // Wait for the actual result
+      const translatedText = await translationPromise;
+      
+      if (isMountedRef.current) {
+        if (translatedText) {
+          setResult(translatedText);
+        } else {
+          setResult(`I couldn't translate the text to ${languageName}. Please try again with different text or language.`);
+        }
+      }
+    } catch (error) {
+      console.error('Error translating text:', error);
+      if (isMountedRef.current) {
+        setResult(`An error occurred while translating: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsGenerating(false);
+        setPartialResult('');
+      }
     }
   };
 
@@ -116,10 +219,49 @@ const AccessibilityTools = () => {
   const handleAltTextGeneration = async () => {
     if (!imageDescription.trim()) return;
 
-    const altText = await generateAltText(imageDescription);
+    setIsGenerating(true);
+    setResult('');
+    setPartialResult('');
     
-    if (altText) {
-      setResult(altText);
+    try {
+      // Show progressive feedback while waiting for the result
+      setTimeout(() => {
+        if (isMountedRef.current && !result) {
+          setPartialResult(`*Analyzing image description...*\n\n`);
+        }
+      }, 600);
+      
+      setTimeout(() => {
+        if (isMountedRef.current && !result) {
+          setPartialResult(prev => 
+            prev + `*Generating accessible alt text...*\n\n`
+          );
+        }
+      }, 1800);
+      
+      // Start the actual alt text generation
+      const altTextPromise = generateAltText(imageDescription);
+      
+      // Wait for the actual result
+      const altText = await altTextPromise;
+      
+      if (isMountedRef.current) {
+        if (altText) {
+          setResult(altText);
+        } else {
+          setResult("I couldn't generate alt text for this description. Please try again with a more detailed image description.");
+        }
+      }
+    } catch (error) {
+      console.error('Error generating alt text:', error);
+      if (isMountedRef.current) {
+        setResult(`An error occurred while generating alt text: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsGenerating(false);
+        setPartialResult('');
+      }
     }
   };
 
@@ -259,12 +401,12 @@ const AccessibilityTools = () => {
               </div>
               <Button 
                 onClick={handleTranslation} 
-                disabled={loading || !inputText.trim() || !targetLanguage}
+                disabled={isGenerating || loading || !inputText.trim() || !targetLanguage}
               >
-                {loading ? (
+                {isGenerating || loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Translating...
+                    {processingStage || "Translating..."}
                   </>
                 ) : (
                   <>
@@ -290,12 +432,12 @@ const AccessibilityTools = () => {
               </div>
               <Button 
                 onClick={handleAltTextGeneration} 
-                disabled={loading || !imageDescription.trim()}
+                disabled={isGenerating || loading || !imageDescription.trim()}
               >
-                {loading ? (
+                {isGenerating || loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
+                    {processingStage || "Generating..."}
                   </>
                 ) : (
                   <>
@@ -308,14 +450,30 @@ const AccessibilityTools = () => {
           )}
         </div>
 
+        {/* Loading Indicator with Progressive Content */}
+        {isGenerating && partialResult && (
+          <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" ref={resultRef}>
+            <CardContent className="pt-6">
+              <MarkdownRenderer 
+                content={partialResult} 
+                className="text-purple-800 dark:text-purple-300"
+              />
+              <div className="flex items-center mt-4">
+                <Loader2 className="h-4 w-4 animate-spin mr-2 text-purple-700 dark:text-purple-400" />
+                <span className="text-sm text-purple-700 dark:text-purple-400">{processingStage}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Results */}
-        {result && (
-          <Card className="bg-purple-50 border-purple-200">
+        {!isGenerating && result && (
+          <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" ref={resultRef}>
             <CardHeader>
-              <CardTitle className="text-purple-800 text-lg">Result</CardTitle>
+              <CardTitle className="text-purple-800 dark:text-purple-300 text-lg">Result</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-purple-900">{result}</p>
+              <p className="text-purple-900 dark:text-purple-100">{result}</p>
             </CardContent>
           </Card>
         )}

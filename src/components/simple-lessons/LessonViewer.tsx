@@ -432,54 +432,27 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
       {/* Lesson Content */}
       <Card>
         <CardContent className="p-8">
-          <div
-            className="prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: lesson.content }}
-          />
+          {/* Support both string and object format for lesson content, with null check and vertical points for plain text */}
+          {lesson.content && typeof lesson.content === 'object' && Array.isArray((lesson.content as any)?.examples) ? (
+            <div className="space-y-8">
+              {(lesson.content as any).examples.map((example: any, idx: number) => (
+                <div key={idx} className="border-b pb-6 mb-6">
+                  <h3 className="font-semibold text-lg mb-2">Example {idx + 1}</h3>
+                  <div className="prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: example }} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <ul className="list-disc space-y-3 pl-6">
+              {(lesson.content ?? '').split(/\r?\n/).filter(Boolean).map((point, idx) => (
+                <li key={idx} className="prose prose-lg max-w-none">{point}</li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
       {/* Lesson Quizzes */}
-      {lessonQuizzes.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Practice Quiz ({lessonQuizzes.length} questions)</span>
-              <Button
-                onClick={() => setShowQuizzes(!showQuizzes)}
-                variant="outline"
-                size="sm"
-              >
-                {showQuizzes ? 'Hide' : 'Show'} Quiz
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          {showQuizzes && (
-            <CardContent className="space-y-4">
-              {lessonQuizzes.map((quiz, index) => (
-                <div key={quiz.id} className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-3">Question {index + 1}: {quiz.question}</h4>
-                  <div className="space-y-2">
-                    {quiz.options.map((option: string, optionIndex: number) => (
-                      <div key={optionIndex} className="flex items-center space-x-2">
-                        <span className="text-sm font-medium w-6">{String.fromCharCode(65 + optionIndex)}.</span>
-                        <span className="text-sm">{option}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {quiz.explanation && (
-                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded">
-                      <p className="text-sm text-blue-800 dark:text-blue-200">
-                        <strong>Answer:</strong> {String.fromCharCode(65 + quiz.correct_answer)} - {quiz.explanation}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          )}
-        </Card>
-      )}
 
       {/* Navigation Footer */}
       <Card>

@@ -17,7 +17,7 @@ export interface IncidentLog {
 export interface PerformanceMetric {
   id: string;
   timestamp: string;
-  metric: 'page_load' | 'api_response' | 'render_time' | 'memory_usage' | 'bundle_size';
+  metric: 'page_load' | 'api_response' | 'render_time' | 'memory_usage' | 'bundle_size' | 'time_to_interactive' | string;
   value: number;
   url?: string;
   component?: string;
@@ -186,6 +186,33 @@ class IncidentAnalysisService {
     };
 
     this.performanceBuffer.push(perfMetric);
+  }
+
+  /**
+   * Records a performance metric and returns a promise
+   * This is a more structured way to log performance metrics for specific events
+   * @param data Performance metric data
+   * @returns Promise that resolves when the metric is recorded
+   */
+  public recordPerformanceMetric(data: { 
+    metric: string; 
+    value: number; 
+    user_id?: string;
+    component?: string;
+    metadata?: Record<string, any>;
+  }): Promise<void> {
+    return new Promise((resolve) => {
+      this.logPerformance({
+        metric: data.metric as any,
+        value: data.value,
+        component: data.component,
+        metadata: {
+          ...(data.metadata || {}),
+          user_id: data.user_id
+        }
+      });
+      resolve();
+    });
   }
 
   public async logApiError(endpoint: string, error: any, responseTime?: number) {

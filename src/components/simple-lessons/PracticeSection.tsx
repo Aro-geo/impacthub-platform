@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import QuizInterface from './QuizInterface';
-import { debugQuizzes } from '@/utils/quizDebugger';
 import { 
   Target, 
   Trophy, 
@@ -19,8 +18,7 @@ import {
   Star,
   TrendingUp,
   Award,
-  Zap,
-  Bug
+  Zap
 } from 'lucide-react';
 
 interface Subject {
@@ -62,7 +60,7 @@ interface QuizStats {
 }
 
 const PracticeSection = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [quizzes, setQuizzes] = useState<LessonQuiz[]>([]);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -73,7 +71,7 @@ const PracticeSection = () => {
     averageScore: 0,
     bestStreak: 0
   });
-  const [recentAttempts, setRecentAttempts] = useState<(QuizAttempt & { quiz: Quiz })[]>([]);
+  const [recentAttempts, setRecentAttempts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [practiceMode, setPracticeMode] = useState<'review' | 'timed' | 'random'>('review');
   const [showQuizInterface, setShowQuizInterface] = useState(false);
@@ -111,12 +109,14 @@ const PracticeSection = () => {
   };
 
   const fetchQuizzes = async () => {
+
     let query = supabase
       .from('simple_lessons')
       .select(`
         id,
         title,
         order_index,
+        grade,
         subjects!inner (
           id,
           name,
@@ -139,6 +139,11 @@ const PracticeSection = () => {
       query = query.eq('subject_id', selectedSubject);
     }
 
+    // Filter by user grade
+    if (userProfile?.grade) {
+      query = query.eq('grade', userProfile.grade);
+    }
+
     const { data, error } = await query;
     if (error) throw error;
 
@@ -151,7 +156,8 @@ const PracticeSection = () => {
         ...quiz,
         correct_answer: typeof quiz.correct_answer === 'string' 
           ? parseInt(quiz.correct_answer, 10) 
-          : quiz.correct_answer
+          : quiz.correct_answer,
+        options: Array.isArray(quiz.options) ? quiz.options : typeof quiz.options === 'string' ? JSON.parse(quiz.options) : []
       })) || []
     })).filter(lesson => lesson.quizzes.length > 0) || [];
 
@@ -322,15 +328,6 @@ const PracticeSection = () => {
           <h2 className="text-2xl font-bold text-foreground">Practice & Quizzes</h2>
           <p className="text-muted-foreground">Test your knowledge and improve your skills</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => debugQuizzes()}
-          className="text-xs"
-        >
-          <Bug className="h-3 w-3 mr-1" />
-          Debug
-        </Button>
       </div>
 
       {/* Stats Cards */}

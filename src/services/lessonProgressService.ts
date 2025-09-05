@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { incidentAnalysisService } from './incidentAnalysisService';
+import { queryCache } from '@/utils/dbOptimization';
 
 export interface LessonProgress {
   id: string;
@@ -11,6 +12,10 @@ export interface LessonProgress {
   completed_at?: string;
   last_accessed: string;
 }
+
+// Create a cache for lesson progress data
+const PROGRESS_CACHE_TTL = 120; // 2 minutes cache for progress
+const USER_PROGRESS_SUMMARY_TTL = 300; // 5 minutes cache for summary stats
 
 class LessonProgressService {
 
@@ -96,6 +101,7 @@ class LessonProgressService {
    */
   async updateProgress(userId: string, lessonId: string, progressPercentage: number): Promise<LessonProgress | null> {
     const startTime = performance.now();
+    const cacheKey = `lesson_progress:${userId}:${lessonId}`;
 
     try {
       const status = progressPercentage >= 100 ? 'completed' : 'in_progress';
@@ -140,6 +146,14 @@ class LessonProgressService {
           status
         }
       });
+      
+      // Update the cache with the new data
+      if (data) {
+        queryCache.set(cacheKey, data as LessonProgress, PROGRESS_CACHE_TTL);
+        
+        // Also invalidate any bulk queries that might include this lesson
+        queryCache.clearByPrefix(`lesson_progress:${userId}:bulk:`);
+      }
 
       return data as LessonProgress;
     } catch (error) {

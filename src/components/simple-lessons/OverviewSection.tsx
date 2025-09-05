@@ -270,17 +270,7 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
 
       // Apply grade filter if user has a grade set
       if (userGrade) {
-        const gradeFilters = [`grade.is.null`, `grade.eq.${userGrade}`];
-
-        // Add adjacent grades if they're valid (1-12 range)
-        if (userGrade > 1) {
-          gradeFilters.push(`grade.eq.${userGrade - 1}`);
-        }
-        if (userGrade < 12) {
-          gradeFilters.push(`grade.eq.${userGrade + 1}`);
-        }
-
-        suggestedQuery = suggestedQuery.or(gradeFilters.join(','));
+        suggestedQuery = suggestedQuery.eq('grade', userGrade);
       }
 
       const [{ data: suggested }, { data: userProgress }] = await Promise.all([

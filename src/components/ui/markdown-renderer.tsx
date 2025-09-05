@@ -11,18 +11,18 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
     let html = text;
 
     // Convert headers
-    html = html.replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-gray-900 mt-6 mb-3">$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-900 mt-6 mb-4">$1</h1>');
+    html = html.replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mt-6 mb-3">$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-6 mb-4">$1</h1>');
 
     // Convert **bold** to <strong>
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900 dark:text-gray-100">$1</strong>');
 
     // Convert *italic* to <em>
-    html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em class="italic text-gray-700">$1</em>');
+    html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em class="italic text-gray-700 dark:text-gray-300">$1</em>');
 
     // Convert `code` to <code>
-    html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
+    html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm font-mono dark:text-gray-300">$1</code>');
 
     // Convert bullet points with proper nesting
     const lines = html.split('\n');
@@ -40,7 +40,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
           inList = true;
         }
         const bulletContent = trimmedLine.replace(/^[-*+] /, '');
-        processedLines.push(`<li class="text-gray-700">${bulletContent}</li>`);
+        processedLines.push(`<li class="text-gray-700 dark:text-gray-300">${bulletContent}</li>`);
       } else if (trimmedLine.match(/^\d+\. /)) {
         // Numbered lists
         if (!inList) {
@@ -48,7 +48,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
           inList = true;
         }
         const numberedContent = trimmedLine.replace(/^\d+\. /, '');
-        processedLines.push(`<li class="text-gray-700">${numberedContent}</li>`);
+        processedLines.push(`<li class="text-gray-700 dark:text-gray-300">${numberedContent}</li>`);
       } else {
         // Close list if we were in one
         if (inList) {

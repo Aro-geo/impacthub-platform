@@ -23,27 +23,44 @@ export const aiRecommendationService = {
 
   // Create new AI recommendation
   async createRecommendation(recommendation: TablesInsert<'ai_recommendations'>) {
-    const { data, error } = await supabase
-      .from('ai_recommendations')
-      .insert(recommendation)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('ai_recommendations')
+        .insert(recommendation)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) {
+        console.warn('Failed to save recommendation:', error.message);
+        if (error.code === '42501' || error.code === 'PGRST116' || error.status === 403) {
+          console.error('Permission denied: Check RLS policies for ai_recommendations table');
+        }
+        return null;
+      }
+      
+      return data;
+    } catch (err) {
+      console.error('Error creating recommendation:', err);
+      return null;
+    }
   },
 
   // Generate learning path recommendations
   async generateLearningPathRecommendations(userId: string, skills: string[], interests: string[], level: string) {
-    // This would integrate with your AI service to generate recommendations
-    // For now, we'll create a basic recommendation entry
-    const recommendation = await this.createRecommendation({
-      user_id: userId,
-      recommended_type: 'learning_path',
-      reason: `Based on skills: ${skills.join(', ')} and interests: ${interests.join(', ')} at ${level} level`
-    });
+    try {
+      // This would integrate with your AI service to generate recommendations
+      // For now, we'll create a basic recommendation entry
+      const recommendation = await this.createRecommendation({
+        user_id: userId,
+        recommended_type: 'learning_path',
+        reason: `Based on skills: ${skills.join(', ')} and interests: ${interests.join(', ')} at ${level} level`
+      });
 
-    return recommendation;
+      return recommendation;
+    } catch (err) {
+      console.error('Failed to generate learning path recommendations:', err);
+      return null;
+    }
   },
 
   // Generate mentorship recommendations
