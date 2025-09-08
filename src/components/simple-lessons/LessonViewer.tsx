@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAI } from '@/hooks/useAI';
 import { supabase } from '@/integrations/supabase/client';
 import { lessonProgressService } from '@/services/lessonProgressService';
+import MarkdownRenderer from '@/components/ui/markdown-renderer';
+import AITutor from './AITutor';
 import {
   ArrowLeft,
   ArrowRight,
@@ -59,6 +61,7 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
   const { trackLessonComplete, trackLessonView } = useAI();
   const [lesson, setLesson] = useState<LessonContent | null>(null);
   const [progress, setProgress] = useState<LessonProgress | null>(null);
+  const [subject, setSubject] = useState<string>('General');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isStarted, setIsStarted] = useState(false);
@@ -86,16 +89,23 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
       setLoading(true);
       setError(null);
 
-      // Load lesson content
+      // Load lesson content with subject information
       const { data: lessonData, error: lessonError } = await supabase
         .from('simple_lessons')
-        .select('*')
+        .select(`
+          *,
+          subjects (name)
+        `)
         .eq('id', lessonId)
         .eq('is_published', true)
         .single();
 
       if (lessonError) throw lessonError;
       setLesson(lessonData);
+      
+      // Set subject from relation or default
+      const subjectName = lessonData?.subjects?.name || 'General';
+      setSubject(subjectName);
 
       // Load user progress if authenticated
       if (user) {
@@ -432,7 +442,7 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
       {/* Lesson Content */}
       <Card>
         <CardContent className="p-8">
-          {/* Support both string and object format for lesson content, with null check and vertical points for plain text */}
+          {/* Support both string and object format for lesson content with proper rendering */}
           {lesson.content && typeof lesson.content === 'object' && Array.isArray((lesson.content as any)?.examples) ? (
             <div className="space-y-8">
               {(lesson.content as any).examples.map((example: any, idx: number) => (
@@ -443,12 +453,28 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
               ))}
             </div>
           ) : (
-            <ul className="list-disc space-y-3 pl-6">
-              {(lesson.content ?? '').split(/\r?\n/).filter(Boolean).map((point, idx) => (
-                <li key={idx} className="prose prose-lg max-w-none">{point}</li>
-              ))}
-            </ul>
+            <div className="prose prose-lg max-w-none">
+              <MarkdownRenderer content={lesson.content ?? ''} />
+            </div>
           )}
+          
+          {/* AI Tutor Button */}
+          <div className="mt-8 pt-6 border-t">
+            <div className="text-center space-y-3">
+              <h4 className="text-lg font-semibold text-foreground">Need Help Understanding This Lesson?</h4>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Get personalized guidance from our AI Tutor! Ask questions about concepts, 
+                get step-by-step explanations, and discover connections to real-world applications.
+              </p>
+              <AITutor
+                lessonTitle={lesson.title}
+                lessonContent={lesson.content || ''}
+                subject={subject || 'General'}
+                difficultyLevel={lesson.difficulty_level}
+                lessonId={lesson.id}
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 

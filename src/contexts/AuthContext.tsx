@@ -8,6 +8,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   userProfile: any | null;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, name?: string, grade?: number) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -33,13 +34,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Optimized profile fetching with caching
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, email, grade, avatar_url, created_at, updated_at') // Only select needed fields
+        .select('id, name, email, grade, avatar_url, role, created_at, updated_at') // Include role
         .eq('id', userId)
         .single();
 
@@ -65,8 +67,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           const profile = await fetchUserProfile(session.user.id);
           setUserProfile(profile);
+          // Check if user is admin
+          const isAdminUser = profile?.role === 'admin' || session.user.email === 'geokullo@gmail.com';
+          setIsAdmin(isAdminUser);
         } else {
           setUserProfile(null);
+          setIsAdmin(false);
         }
 
         setLoading(false);
@@ -81,6 +87,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         const profile = await fetchUserProfile(session.user.id);
         setUserProfile(profile);
+        // Check if user is admin
+        const isAdminUser = profile?.role === 'admin' || session?.user.email === 'geokullo@gmail.com';
+        setIsAdmin(isAdminUser);
       }
 
       setLoading(false);
@@ -215,6 +224,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) {
       const profile = await fetchUserProfile(user.id);
       setUserProfile(profile);
+      // Update admin status
+      const isAdminUser = profile?.role === 'admin' || user.email === 'geokullo@gmail.com';
+      setIsAdmin(isAdminUser);
     }
   };
 
@@ -223,6 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     userProfile,
     loading,
+    isAdmin,
     signIn,
     signUp,
     signOut,

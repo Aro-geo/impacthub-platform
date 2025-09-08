@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useForm, ValidationError } from '@formspree/react';
 import { 
   BookOpen, 
   Brain,
@@ -47,14 +48,14 @@ const Index = () => {
       ]
     },
     {
-      category: 'Accessibility Tools',
-      icon: Accessibility,
+      category: 'Simple Lessons',
+      icon: BookOpen,
       color: 'bg-purple-500',
       features: [
-        { name: 'Text-to-Speech', desc: 'Natural voice synthesis', icon: Mic },
-        { name: 'Language Translator', desc: '25+ languages supported', icon: Globe },
-        { name: 'Alt Text Generator', desc: 'AI image descriptions', icon: Accessibility },
-        { name: 'Simple Interface', desc: 'Low-literacy friendly design', icon: Heart }
+        { name: 'Visual Learning', desc: 'Image-rich easy lessons', icon: BookOpen },
+        { name: 'Self-paced Progress', desc: 'Learn at your own speed', icon: TrendingUp },
+        { name: 'Basic Skills', desc: 'Focus on essential concepts', icon: GraduationCap },
+        { name: 'Offline Access', desc: 'Learn without internet', icon: Zap }
       ]
     },
     {
@@ -71,9 +72,9 @@ const Index = () => {
   ];
 
   const stats = [
-    { icon: Users, number: '50K+', label: 'Global Learners' },
+    { icon: Users, number: '10K+', label: 'Global Learners' },
     { icon: Globe, number: '25+', label: 'Languages' },
-    { icon: BookOpen, number: '1000+', label: 'AI-Enhanced Lessons' },
+    { icon: BookOpen, number: '500+', label: 'AI-Enhanced Lessons' },
     { icon: Award, number: '95%', label: 'Success Rate' }
   ];
 
@@ -86,11 +87,11 @@ const Index = () => {
       feature: 'AI Learning'
     },
     {
-      name: 'Ahmed Hassan',
-      location: 'Egypt',
-      text: 'Voice lessons and translation made learning accessible. Perfect for our community.',
-      avatar: '👨‍💼',
-      feature: 'Accessibility'
+      name: 'John Esekon',
+      location: 'Kenya',
+      text: 'The visual lessons helped me understand key concepts. Learning at my own pace made all the difference.',
+      avatar: '👨‍🎓',
+      feature: 'Simple Lessons'
     },
     {
       name: 'Priya Sharma',
@@ -137,8 +138,8 @@ const Index = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-4xl mx-auto leading-relaxed">
-              The world's first AI-powered social impact platform combining advanced learning tools, 
-              accessibility features, and community empowerment - designed for everyone, everywhere.
+              Transforming education through AI-powered learning pathways. Simple lessons,
+              personalized guidance, and community support to help you achieve your goals.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
@@ -150,10 +151,6 @@ const Index = () => {
                 <Play className="mr-3 h-6 w-6" />
                 Start Your Journey - Free
               </Button>
-            </div>
-
-            <div className="text-gray-600">
-              No credit card required • Works offline • Available in 25+ languages
             </div>
           </div>
         </div>
@@ -173,63 +170,29 @@ const Index = () => {
 
           <div className="grid lg:grid-cols-3 gap-8 mb-16">
             {platformFeatures.map((platform, index) => (
-              <Card key={index} className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                <CardContent className="p-8">
-                  <div className={`w-16 h-16 ${platform.color} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
-                    <platform.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-heading font-bold text-foreground mb-4 text-center">
-                    {platform.category}
-                  </h3>
-                  <div className="space-y-3">
-                    {platform.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-center gap-3 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
-                        <feature.icon className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <div className="font-semibold text-foreground text-sm">{feature.name}</div>
-                          <div className="text-muted-foreground text-xs">{feature.desc}</div>
-                        </div>
+              <div key={index} className="transition-all duration-300 hover:scale-105 p-8 backdrop-blur-sm bg-transparent border border-muted-foreground/10 rounded-xl">
+                <div className={`w-16 h-16 ${platform.color} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+                  <platform.icon className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-heading font-bold text-foreground mb-4 text-center">
+                  {platform.category}
+                </h3>
+                <div className="space-y-3">
+                  {platform.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 bg-transparent border border-muted-foreground/20 rounded-lg hover:bg-background/50 dark:hover:bg-background/10 transition-colors">
+                      <feature.icon className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <div className="font-semibold text-foreground text-sm">{feature.name}</div>
+                        <div className="text-muted-foreground text-xs">{feature.desc}</div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
 
-          {/* Quick Access Buttons */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <Button
-              onClick={() => navigate('/ai-dashboard')}
-              className="h-20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl"
-            >
-              <div className="text-center">
-                <Brain className="h-8 w-8 mx-auto mb-1" />
-                <div className="font-semibold">AI Learning Tools</div>
-              </div>
-            </Button>
-            
-            <Button
-              onClick={() => navigate('/simple-lessons')}
-              className="h-20 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-2xl"
-            >
-              <div className="text-center">
-                <BookOpen className="h-8 w-8 mx-auto mb-1" />
-                <div className="font-semibold">Simple Learning</div>
-              </div>
-            </Button>
-            
-            <Button
-              onClick={() => navigate('/dashboard')}
-              className="h-20 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl"
-            >
-              <div className="text-center">
-                <Users className="h-8 w-8 mx-auto mb-1" />
-                <div className="font-semibold">Community Hub</div>
-              </div>
-            </Button>
-          </div>
-
+          {/* Quick Access Buttons - Removed as requested, will only be accessible after login */}
 
         </div>
       </section>
@@ -261,7 +224,7 @@ const Index = () => {
       </section>
 
       {/* Success Stories */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-20 px-4 bg-transparent">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-heading font-bold text-foreground mb-4">
@@ -274,53 +237,24 @@ const Index = () => {
 
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent className="p-8 text-center">
-                  <div className="text-6xl mb-4">{testimonial.avatar}</div>
-                  <div className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4">
-                    {testimonial.feature}
+              <div key={index} className="p-8 text-center rounded-lg transition-all backdrop-blur-sm bg-transparent border border-muted-foreground/10">
+                <div className="text-6xl mb-4">{testimonial.avatar}</div>
+                <div className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium mb-4">
+                  {testimonial.feature}
+                </div>
+                <p className="text-foreground text-lg mb-6 leading-relaxed italic">
+                  "{testimonial.text}"
+                </p>
+                <div>
+                  <div className="font-semibold text-foreground text-lg">
+                    {testimonial.name}
                   </div>
-                  <p className="text-foreground text-lg mb-6 leading-relaxed italic">
-                    "{testimonial.text}"
-                  </p>
-                  <div>
-                    <div className="font-semibold text-foreground text-lg">
-                      {testimonial.name}
-                    </div>
-                    <div className="text-muted-foreground">
-                      {testimonial.location}
-                    </div>
+                  <div className="text-muted-foreground">
+                    {testimonial.location}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-r from-purple-600 to-pink-600">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-heading font-bold text-white mb-6">
-            Ready to Create Impact?
-          </h2>
-          <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of learners, educators, and changemakers using AI to build a better future
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Button 
-              size="lg" 
-              className="bg-white text-purple-600 hover:bg-gray-100 px-12 py-6 text-xl rounded-2xl shadow-xl font-semibold"
-              onClick={handleGetStarted}
-            >
-              <Sparkles className="mr-3 h-6 w-6" />
-              Start Learning Today
-            </Button>
-          </div>
-          
-          <div className="text-purple-200">
-            Free forever • No ads • Privacy-focused • Open source
           </div>
         </div>
       </section>
@@ -372,14 +306,14 @@ const Index = () => {
                       </svg>
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">WhatsApp Only</p>
+                      <p className="font-semibold text-foreground">WhatsApp</p>
                       <a 
                         href="https://wa.me/254726796020" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-green-600 dark:text-green-400 hover:underline"
                       >
-                        +254 726 796 020
+                        Contact us
                       </a>
                     </div>
                   </div>
@@ -407,70 +341,111 @@ const Index = () => {
                 Send us a Message
               </h3>
               
-              <form className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Your first name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Your last name"
-                    />
-                  </div>
-                </div>
+              {(() => {
+                const [formState, handleSubmit] = useForm("xandangw");
                 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="your@email.com"
-                  />
-                </div>
+                if (formState.succeeded) {
+                  return (
+                    <div className="p-6 text-center">
+                      <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </div>
+                      <h4 className="text-xl font-semibold text-foreground mb-2">Thank You!</h4>
+                      <p className="text-muted-foreground">Your message has been sent successfully. We'll get back to you soon.</p>
+                    </div>
+                  );
+                }
                 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Subject
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="What's this about?"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Message
-                  </label>
-                  <textarea
-                    rows={5}
-                    className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                    placeholder="Tell us how we can help you..."
-                  ></textarea>
-                </div>
-                
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
-                >
-                  Send Message
-                </button>
-              </form>
+                return (
+                  <form className="space-y-6" onSubmit={handleSubmit}>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-2">
+                          First Name
+                        </label>
+                        <input
+                          id="firstName"
+                          name="firstName"
+                          type="text"
+                          className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Your first name"
+                          required
+                        />
+                        <ValidationError prefix="First Name" field="firstName" errors={formState.errors} />
+                      </div>
+                      <div>
+                        <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-2">
+                          Last Name
+                        </label>
+                        <input
+                          id="lastName"
+                          name="lastName"
+                          type="text"
+                          className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Your last name"
+                          required
+                        />
+                        <ValidationError prefix="Last Name" field="lastName" errors={formState.errors} />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                        Email
+                      </label>
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="your@email.com"
+                        required
+                      />
+                      <ValidationError prefix="Email" field="email" errors={formState.errors} />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
+                        Subject
+                      </label>
+                      <input
+                        id="subject"
+                        name="subject"
+                        type="text"
+                        className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="What's this about?"
+                        required
+                      />
+                      <ValidationError prefix="Subject" field="subject" errors={formState.errors} />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
+                        Message
+                      </label>
+                      <textarea
+                        id="message"
+                        name="message"
+                        rows={5}
+                        className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                        placeholder="Tell us how we can help you..."
+                        required
+                      ></textarea>
+                      <ValidationError prefix="Message" field="message" errors={formState.errors} />
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      disabled={formState.submitting}
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
+                    >
+                      {formState.submitting ? 'Sending...' : 'Send Message'}
+                    </button>
+                  </form>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -483,7 +458,7 @@ const Index = () => {
             <div>
               <Logo size="md" variant="white" showText className="mb-4" />
               <p className="text-gray-400 mb-4">
-                Empowering global communities through AI-powered education, accessibility tools, and social impact initiatives.
+                Transforming education through AI-powered learning pathways and simple lessons for everyone.
               </p>
             </div>
             
@@ -498,12 +473,12 @@ const Index = () => {
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">Accessibility</h4>
+              <h4 className="font-semibold mb-4">Simple Lessons</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>Text-to-Speech</li>
-                <li>Language Translation</li>
-                <li>Simple Interface</li>
-                <li>Offline Support</li>
+                <li>Visual Learning</li>
+                <li>Self-paced Progress</li>
+                <li>Basic Skills</li>
+                <li>Offline Access</li>
               </ul>
             </div>
             

@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAI } from '@/hooks/useAI';
 import { supabase } from '@/integrations/supabase/client';
+import MarkdownRenderer from '@/components/ui/markdown-renderer';
 import {
   ArrowLeft,
   ArrowRight,
@@ -397,7 +398,10 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
       {/* Question */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg text-foreground">{currentQuiz.question}</CardTitle>
+          <MarkdownRenderer
+            content={currentQuiz.question}
+            className="text-lg text-foreground font-medium"
+          />
           <p className="text-sm text-muted-foreground">From: {currentQuiz.lesson.title}</p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -425,7 +429,7 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
                     <span className="text-sm font-medium text-muted-foreground min-w-[20px]">
                       {String.fromCharCode(65 + index)}.
                     </span>
-                    <span className="text-foreground">{option}</span>
+                    <MarkdownRenderer content={option} className="text-foreground" />
                   </div>
                   {showResult && (
                     <div className="flex items-center space-x-2">
@@ -453,7 +457,10 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
               <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
                 <CardContent className="p-4">
                   <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Explanation:</h4>
-                  <p className="text-blue-700 dark:text-blue-200">{currentQuiz.explanation}</p>
+                  <MarkdownRenderer 
+                    content={currentQuiz.explanation} 
+                    className="text-blue-700 dark:text-blue-200"
+                  />
                 </CardContent>
               </Card>
               

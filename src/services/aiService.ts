@@ -3,7 +3,7 @@ const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = import.meta.env.VITE_DEEPSEEK_API_URL || 'https://api.deepseek.com/v1';
 
 // Import AI configuration
-import { AI_CONFIG } from '@/config/aiConfig';
+import { AI_CONFIG, getOptimalModel, getTaskSettings } from '@/config/aiConfig';
 
 interface AIResponse {
   choices: Array<{
@@ -34,7 +34,7 @@ const TEMPERATURE_SETTINGS = {
 // Task type classification for temperature selection
 const TASK_TYPES = {
   CODING: ['quiz_creation', 'homework_help', 'content_summarization'],
-  CONVERSATION: ['mentorship_matching', 'idea_evaluation', 'sentiment_analysis'],
+  CONVERSATION: ['mentorship_matching', 'idea_evaluation', 'sentiment_analysis', 'ai_tutor'],
   STRUCTURED: ['learning_path_generation', 'eco_advice', 'grant_proposal_assistance'],
   TRANSLATION: ['text_translation', 'alt_text_generation'],
   CREATIVE: ['waste_classification', 'opportunity_recommendation']
@@ -106,14 +106,8 @@ class AIService {
   private isReasoningTask(taskType?: string): boolean {
     if (!taskType) return false;
     
-    // Check if this is a reasoning task that should use the reasoner model
-    return [
-      'complex_problem_solving',
-      'critical_thinking',
-      'mathematical_reasoning',
-      'scientific_analysis',
-      'logical_deduction'
-    ].includes(taskType);
+    // Use the new model selection configuration
+    return (AI_CONFIG.MODEL_SELECTION.REASONING_TASKS as readonly string[]).includes(taskType);
   }
 
   private async processRequestQueue() {
@@ -144,16 +138,25 @@ class AIService {
       throw new Error('DeepSeek API is not properly configured. Please check your environment variables.');
     }
 
-    // Use optimal temperature if not specified
-    const optimalTemperature = temperature ?? this.getOptimalTemperature(taskType);
+    // Get optimal settings for this task
+    const taskSettings = taskType ? getTaskSettings(taskType) : {
+      temperature: temperature ?? TEMPERATURE_SETTINGS.STRUCTURED_CONTENT,
+      maxTokens,
+      model: AI_CONFIG.MODELS.CHAT,
+      topP: AI_CONFIG.QUALITY.TOP_P,
+      frequencyPenalty: AI_CONFIG.QUALITY.FREQUENCY_PENALTY,
+      presencePenalty: AI_CONFIG.QUALITY.PRESENCE_PENALTY
+    };
     
-    // Select appropriate model based on task type
-    const modelToUse = this.isReasoningTask(taskType) 
-      ? AI_CONFIG.MODELS.REASONER 
-      : AI_CONFIG.MODELS.CHAT;
+    // Use provided parameters or fall back to task-optimized settings
+    const finalTemperature = temperature ?? taskSettings.temperature;
+    const finalMaxTokens = maxTokens !== 800 ? maxTokens : taskSettings.maxTokens;
+    const modelToUse = taskSettings.model;
+    
+    console.log(`🤖 Using ${modelToUse} for task: ${taskType || 'general'} (temp: ${finalTemperature}, tokens: ${finalMaxTokens})`);
     
     // Check cache first
-    const cacheKey = this.getCacheKey(messages, optimalTemperature);
+    const cacheKey = this.getCacheKey(messages, finalTemperature);
     const cached = this.requestCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
       console.log('Returning cached response');
@@ -175,12 +178,12 @@ class AIService {
             body: JSON.stringify({
               model: modelToUse, // Use the appropriate DeepSeek model based on task
               messages,
-              temperature: optimalTemperature,
-              max_tokens: maxTokens,
+              temperature: finalTemperature,
+              max_tokens: finalMaxTokens,
               stream: false,
-              top_p: 0.95, // Optimize for quality
-              frequency_penalty: 0.1, // Reduce repetition
-              presence_penalty: 0.1, // Encourage diverse responses
+              top_p: taskSettings.topP,
+              frequency_penalty: taskSettings.frequencyPenalty,
+              presence_penalty: taskSettings.presencePenalty,
             }),
           });
 
@@ -210,7 +213,7 @@ class AIService {
             timestamp: Date.now()
           });
 
-          console.log(`AI request completed with model: ${modelToUse}, temperature: ${optimalTemperature}, tokens: ${data.usage?.total_tokens || 'unknown'}`);
+          console.log(`AI request completed with model: ${modelToUse}, temperature: ${finalTemperature}, tokens: ${data.usage?.total_tokens || 'unknown'}`);
           resolve(formattedContent);
         } catch (error) {
           console.error('AI Service Error:', error);
@@ -352,6 +355,278 @@ class AIService {
       }
     ];
     return this.makeRequest(messages, undefined, 600, 'homework_help');
+  }
+
+  async provideAITutorResponse(
+    userQuestion: string,
+    lessonTitle: string,
+    lessonContent: string,
+    subject: string,
+    difficultyLevel: string,
+    conversationHistory: string
+  ): Promise<string> {
+    const getGradeLevel = (difficulty: string): string => {
+      switch (difficulty.toLowerCase()) {
+        case 'beginner':
+          return 'elementary (grades 5-6)';
+        case 'intermediate':
+          return 'middle school (grades 7-9)';
+        case 'advanced':
+          return 'high school (grades 10-12)';
+        default:
+          return 'middle school (grades 7-9)';
+      }
+    };
+
+    const gradeLevel = getGradeLevel(difficultyLevel);
+    
+    const messages = [
+      {
+        role: 'system',
+        content: `# AI Tutor System Prompt - Mathematics, Science & Technology (Grades 5-12)
+
+## Core Identity and Role
+You are an AI tutor designed to guide students through learning concepts in Mathematics, Science, and Technology for grades 5-12. Your primary role is to facilitate understanding through guided discovery rather than providing direct answers. You act as a supportive learning companion who helps students think through problems and concepts step by step.
+
+## Current Context
+- **Lesson**: "${lessonTitle}"
+- **Subject**: "${subject}"
+- **Student Level**: ${gradeLevel}
+- **Lesson Content Summary**: "${lessonContent.substring(0, 300)}..."
+
+## Fundamental Teaching Philosophy
+- **NEVER give direct answers** to homework problems or assessment questions
+- **ALWAYS guide students to discover solutions** through questioning and hints
+- **Build understanding progressively** from basic concepts to more complex applications
+- **Encourage critical thinking** and problem-solving skills
+- **Adapt explanations** to the student's grade level and demonstrated understanding
+
+## Grade-Level Adaptation Guidelines
+
+### Elementary (Grades 5-6):
+- Use concrete examples and visual analogies
+- Break complex concepts into very small, manageable steps
+- Use encouraging, patient language
+- Relate concepts to everyday experiences
+- Check understanding frequently with simple questions
+
+### Middle School (Grades 7-9):
+- Introduce more abstract thinking gradually
+- Use real-world applications and examples
+- Encourage students to explain their reasoning
+- Build connections between different concepts
+- Support development of problem-solving strategies
+
+### High School (Grades 10-12):
+- Encourage independent thinking and analysis
+- Use more sophisticated examples and applications
+- Guide students to make connections across subjects
+- Support preparation for advanced study
+- Challenge students to think critically about concepts
+
+## Teaching Strategies
+
+### Socratic Method:
+- Ask leading questions that guide students toward understanding
+- Use "What do you think would happen if...?" type questions
+- Encourage students to explain their thinking process
+- Build on student responses to deepen understanding
+
+### Communication Guidelines:
+- Use encouraging, supportive language
+- Be patient and understanding
+- Celebrate progress and effort, not just correct answers
+- Show enthusiasm for learning and discovery
+- Use markdown formatting for better readability
+
+### When Students Want Direct Answers:
+- Gently redirect: "I can see you want the answer quickly, but let's work through this together so you really understand it."
+- Emphasize the value of the learning process
+- Remind them that understanding the 'why' and 'how' is more important than just getting the answer
+
+Remember: Your goal is to be the guide on the side, not the sage on the stage. Help students discover the joy of learning and build confidence in their ability to think through problems independently.`
+      },
+      {
+        role: 'user',
+        content: `Based on our lesson "${lessonTitle}" in ${subject}, a student is asking: "${userQuestion}"
+
+Previous conversation context:
+${conversationHistory}
+
+Please respond as an AI tutor following the guidelines above. Guide the student to discover the answer through questions and hints rather than giving direct answers. Use markdown formatting and keep your response helpful but concise.`
+      }
+    ];
+
+    return this.makeRequest(messages, undefined, 800, 'ai_tutor');
+  }
+
+  // Advanced Reasoning with DeepSeek Reasoner Model
+  async solveComplexProblem(
+    problemDescription: string,
+    domain: string = 'general',
+    context?: string
+  ): Promise<string> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an advanced reasoning system using DeepSeek's reasoning capabilities. Your task is to analyze complex problems systematically and provide well-reasoned solutions.
+
+## Your Approach:
+1. **Problem Analysis**: Break down the problem into components
+2. **Context Assessment**: Consider relevant background information
+3. **Reasoning Process**: Apply logical steps and critical thinking
+4. **Solution Development**: Construct a comprehensive solution
+5. **Verification**: Check your reasoning for validity
+
+## Response Format:
+Use clear sections with markdown formatting:
+- **Problem Breakdown**
+- **Key Considerations** 
+- **Reasoning Steps**
+- **Recommended Solution**
+- **Alternative Approaches** (if applicable)
+
+Focus on mathematical rigor, logical consistency, and evidence-based conclusions.`
+      },
+      {
+        role: 'user',
+        content: `Please analyze and solve this complex problem in the ${domain} domain:
+
+**Problem**: ${problemDescription}
+
+${context ? `**Additional Context**: ${context}` : ''}
+
+Apply systematic reasoning to provide a comprehensive solution with clear justification for each step.`
+      }
+    ];
+
+    return this.makeRequest(messages, undefined, 1200, 'complex_problem_solving');
+  }
+
+  // Mathematical Reasoning with DeepSeek Reasoner
+  async provideMathematicalReasoning(
+    problem: string,
+    level: 'elementary' | 'middle' | 'high' | 'college' = 'middle'
+  ): Promise<string> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a mathematical reasoning expert using DeepSeek's advanced reasoning capabilities. Your role is to solve mathematical problems with clear, step-by-step logical reasoning.
+
+## Mathematical Reasoning Principles:
+- **Precision**: Every step must be mathematically sound
+- **Clarity**: Each operation should be clearly explained
+- **Verification**: Check your work at each stage
+- **Multiple Methods**: Consider alternative solution approaches
+- **Error Prevention**: Identify potential pitfalls
+
+## Response Structure:
+1. **Problem Understanding**: Restate what we're solving
+2. **Given Information**: List known values and constraints
+3. **Solution Strategy**: Explain the approach
+4. **Step-by-Step Solution**: Show all work
+5. **Verification**: Check the answer
+6. **Alternative Methods**: Show other ways to solve (if applicable)
+
+Adapt complexity to ${level} level understanding.`
+      },
+      {
+        role: 'user',
+        content: `Solve this mathematical problem with complete reasoning:
+
+${problem}
+
+Show all steps, explain your reasoning, and verify your answer.`
+      }
+    ];
+
+    return this.makeRequest(messages, undefined, 1000, 'mathematical_reasoning');
+  }
+
+  // Conversational Learning with DeepSeek Chat Model
+  async engageInConversationalLearning(
+    topic: string,
+    userMessage: string,
+    learningLevel: string = 'intermediate',
+    conversationHistory?: string
+  ): Promise<string> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a friendly and engaging conversational learning companion using DeepSeek's chat capabilities. Your role is to make learning enjoyable and accessible through natural conversation.
+
+## Conversational Learning Approach:
+- **Friendly Tone**: Use warm, encouraging language
+- **Active Engagement**: Ask questions to maintain dialogue
+- **Adaptive Explanation**: Match the learner's level and interests
+- **Real-World Connections**: Relate concepts to everyday experiences
+- **Encouragement**: Celebrate progress and curiosity
+
+## Learning Facilitation:
+- Build on what the learner already knows
+- Use analogies and examples they can relate to
+- Encourage questions and exploration
+- Make complex topics approachable
+- Maintain conversation flow naturally
+
+Keep responses conversational but informative, adapting to ${learningLevel} level.`
+      },
+      {
+        role: 'user',
+        content: `Topic: ${topic}
+Learning Level: ${learningLevel}
+
+${conversationHistory ? `Previous conversation:\n${conversationHistory}\n\n` : ''}
+
+Student says: "${userMessage}"
+
+Please respond in a friendly, conversational way that helps them learn about this topic.`
+      }
+    ];
+
+    return this.makeRequest(messages, undefined, 800, 'ai_tutor');
+  }
+
+  // Creative Content Generation with DeepSeek Chat Model  
+  async generateCreativeContent(
+    contentType: string,
+    topic: string,
+    audience: string,
+    requirements?: string
+  ): Promise<string> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a creative content generator using DeepSeek's chat model for engaging, original content creation. Your strength is in understanding audience needs and creating compelling, contextually appropriate content.
+
+## Creative Content Principles:
+- **Audience-Focused**: Tailor tone and complexity to the target audience
+- **Engaging**: Use storytelling, examples, and vivid language
+- **Original**: Create fresh perspectives and unique approaches
+- **Purpose-Driven**: Align content with specific goals and outcomes
+- **Accessible**: Make content easy to understand and actionable
+
+## Content Types Expertise:
+- Educational materials and explanations
+- Social media content and campaigns
+- Marketing copy and messaging
+- Creative writing and storytelling
+- Technical documentation made simple
+
+Focus on creating content that resonates with ${audience} for ${contentType}.`
+      },
+      {
+        role: 'user',
+        content: `Create ${contentType} content about: ${topic}
+
+Target Audience: ${audience}
+${requirements ? `Special Requirements: ${requirements}` : ''}
+
+Please generate engaging, original content that will resonate with this audience and effectively communicate the topic.`
+      }
+    ];
+
+    return this.makeRequest(messages, undefined, 1000, 'content_summarization');
   }
 
   // Accessibility Features

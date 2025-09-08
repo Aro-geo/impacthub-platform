@@ -60,7 +60,7 @@ interface QuizStats {
 }
 
 const PracticeSection = () => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, isAdmin } = useAuth();
   const [quizzes, setQuizzes] = useState<LessonQuiz[]>([]);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -139,8 +139,8 @@ const PracticeSection = () => {
       query = query.eq('subject_id', selectedSubject);
     }
 
-    // Filter by user grade
-    if (userProfile?.grade) {
+    // Filter by user grade for non-admin users only
+    if (userProfile?.grade && !isAdmin) {
       query = query.eq('grade', userProfile.grade);
     }
 

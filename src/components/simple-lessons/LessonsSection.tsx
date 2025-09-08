@@ -51,7 +51,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
   maxLessons,
   className = ''
 }) => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, isAdmin } = useAuth();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,8 +161,8 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
         query = query.eq('difficulty_level', selectedDifficulty);
       }
 
-      // Filter by user grade
-      if (userProfile?.grade) {
+      // Filter by user grade for non-admin users only
+      if (userProfile?.grade && !isAdmin) {
         query = query.eq('grade', userProfile.grade);
       }
 
@@ -460,9 +460,9 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
         </div>
       </div>
 
-      {/* Grade Explanation */}
-      {userProfile?.grade && (
-        <GradeExplanation userGrade={userProfile.grade} />
+      {/* Grade Explanation - show for admins or users with grade */}
+      {(userProfile?.grade || isAdmin) && (
+        <GradeExplanation userGrade={userProfile?.grade} />
       )}
 
       {/* Unlock Status Notification */}

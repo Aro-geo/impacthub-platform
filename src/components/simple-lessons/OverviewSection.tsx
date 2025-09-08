@@ -195,7 +195,7 @@ const AIRecommendationsSection = () => {
 };
 
 const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [suggestedLessons, setSuggestedLessons] = useState<SuggestedLesson[]>([]);
   const [continueLesson, setContinueLesson] = useState<ContinueLesson | null>(null);
   const [loading, setLoading] = useState(true);
@@ -268,8 +268,8 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
         .eq('is_published', true)
         .not('subject_id', 'is', null);
 
-      // Apply grade filter if user has a grade set
-      if (userGrade) {
+      // Apply grade filter if user has a grade set and is not admin
+      if (userGrade && !isAdmin) {
         suggestedQuery = suggestedQuery.eq('grade', userGrade);
       }
 

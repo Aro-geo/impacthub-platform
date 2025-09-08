@@ -207,6 +207,94 @@ export const useAI = () => {
       return result;
     },
     
+    getAITutorResponse: async (
+      userQuestion: string,
+      lessonTitle: string,
+      lessonContent: string,
+      subject: string,
+      difficultyLevel: string,
+      conversationHistory: string
+    ) => {
+      const inputData = { 
+        userQuestion, 
+        lessonTitle, 
+        lessonContent: lessonContent.substring(0, 500), 
+        subject, 
+        difficultyLevel,
+        conversationHistory: conversationHistory.substring(0, 1000)
+      };
+      
+      return await executeAITask(
+        () => aiService.provideAITutorResponse(
+          userQuestion,
+          lessonTitle,
+          lessonContent,
+          subject,
+          difficultyLevel,
+          conversationHistory
+        ),
+        'ai_tutor',
+        inputData
+      );
+    },
+    
+    // Advanced Reasoning with DeepSeek Reasoner Model
+    solveComplexProblem: async (
+      problemDescription: string,
+      domain: string = 'general',
+      context?: string
+    ) => {
+      const inputData = { problemDescription, domain, context };
+      return await executeAITask(
+        () => aiService.solveComplexProblem(problemDescription, domain, context),
+        'complex_problem_solving',
+        inputData
+      );
+    },
+
+    // Mathematical Reasoning with DeepSeek Reasoner  
+    provideMathematicalReasoning: async (
+      problem: string,
+      level: 'elementary' | 'middle' | 'high' | 'college' = 'middle'
+    ) => {
+      const inputData = { problem, level };
+      return await executeAITask(
+        () => aiService.provideMathematicalReasoning(problem, level),
+        'mathematical_reasoning',
+        inputData
+      );
+    },
+
+    // Conversational Learning with DeepSeek Chat Model
+    engageInConversationalLearning: async (
+      topic: string,
+      userMessage: string,
+      learningLevel: string = 'intermediate',
+      conversationHistory?: string
+    ) => {
+      const inputData = { topic, userMessage, learningLevel, conversationHistory };
+      return await executeAITask(
+        () => aiService.engageInConversationalLearning(topic, userMessage, learningLevel, conversationHistory),
+        'ai_tutor',
+        inputData
+      );
+    },
+
+    // Creative Content Generation with DeepSeek Chat Model
+    generateCreativeContent: async (
+      contentType: string,
+      topic: string,
+      audience: string,
+      requirements?: string
+    ) => {
+      const inputData = { contentType, topic, audience, requirements };
+      return await executeAITask(
+        () => aiService.generateCreativeContent(contentType, topic, audience, requirements),
+        'content_summarization',
+        inputData
+      );
+    },
+    
     // Accessibility hooks
     generateAltText: (description: string) =>
       executeAITask(() => aiService.generateAltText(description), 'alt_text_generation', { description }),

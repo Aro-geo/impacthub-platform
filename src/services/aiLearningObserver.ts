@@ -173,7 +173,7 @@ class AILearningObserver {
       // Cache updated profile
       this.learnerProfiles.set(userId, updatedProfile);
 
-      // Save to database
+      // Save to database with all required fields
       await supabase
         .from('learner_profiles')
         .upsert({
@@ -184,6 +184,11 @@ class AILearningObserver {
           preferred_difficulty: updatedProfile.preferredDifficulty,
           learning_style: updatedProfile.learningStyle,
           recommended_topics: updatedProfile.recommendedTopics,
+          total_study_time: 0,
+          lessons_completed: 0,
+          quizzes_attempted: 0,
+          average_score: 0.0,
+          created_at: updatedProfile.lastUpdated,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'user_id'
@@ -289,31 +294,9 @@ class AILearningObserver {
   // Generate personalized learning recommendations
   async generateRecommendations(userId: string): Promise<LearningRecommendation[]> {
     try {
-      let profile = this.learnerProfiles.get(userId);
+      // First, ensure we have a learner profile
+      const profile = await this.getLearnerProfile(userId);
       
-      if (!profile) {
-        // Load from database
-        const { data } = await supabase
-          .from('learner_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-
-        if (data) {
-          profile = {
-            userId: data.user_id,
-            interests: data.interests || [],
-            strengths: data.strengths || [],
-            weaknesses: data.weaknesses || [],
-            preferredDifficulty: data.preferred_difficulty || 'medium',
-            learningStyle: data.learning_style || 'mixed',
-            recommendedTopics: data.recommended_topics || [],
-            lastUpdated: data.updated_at
-          };
-          this.learnerProfiles.set(userId, profile);
-        }
-      }
-
       if (!profile) {
         return this.getDefaultRecommendations();
       }
@@ -384,11 +367,16 @@ class AILearningObserver {
       let profile = this.learnerProfiles.get(userId);
       
       if (!profile) {
-        const { data } = await supabase
+        // Try to get profile from database
+        const { data, error } = await supabase
           .from('learner_profiles')
           .select('*')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+          console.warn('Error fetching learner profile:', error.message);
+        }
 
         if (data) {
           profile = {
@@ -402,6 +390,47 @@ class AILearningObserver {
             lastUpdated: data.updated_at
           };
           this.learnerProfiles.set(userId, profile);
+        } else {
+          // Create a default profile if it doesn't exist
+          const now = new Date().toISOString();
+          const defaultProfile = {
+            userId,
+            interests: [],
+            strengths: [],
+            weaknesses: [],
+            preferredDifficulty: 'medium',
+            learningStyle: 'mixed',
+            recommendedTopics: [],
+            lastUpdated: now
+          };
+          
+          // Create in database
+          const { error: insertError } = await supabase
+            .from('learner_profiles')
+            .upsert({
+              user_id: userId,
+              interests: [],
+              strengths: [],
+              weaknesses: [],
+              preferred_difficulty: 'medium',
+              learning_style: 'mixed',
+              recommended_topics: [],
+              total_study_time: 0,
+              lessons_completed: 0,
+              quizzes_attempted: 0,
+              average_score: 0.0,
+              created_at: now,
+              updated_at: now
+            }, {
+              onConflict: 'user_id'
+            });
+            
+          if (insertError) {
+            console.error('Error creating default learner profile:', insertError);
+          } else {
+            profile = defaultProfile;
+            this.learnerProfiles.set(userId, profile);
+          }
         }
       }
 

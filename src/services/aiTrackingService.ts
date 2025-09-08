@@ -5,6 +5,7 @@ export type AIInteractionType =
   | 'learning_path_generation'
   | 'quiz_creation'
   | 'homework_help'
+  | 'ai_tutor'
   | 'alt_text_generation'
   | 'text_translation'
   | 'eco_advice'
@@ -16,7 +17,11 @@ export type AIInteractionType =
   | 'content_summarization'
   | 'grant_proposal_assistance'
   | 'sentiment_analysis'
-  | 'complex_problem_solving';
+  | 'complex_problem_solving'
+  | 'critical_thinking'
+  | 'mathematical_reasoning'
+  | 'scientific_analysis'
+  | 'logical_deduction';
 
 export type AIInteractionStatus = 'initiated' | 'processing' | 'completed' | 'failed';
 

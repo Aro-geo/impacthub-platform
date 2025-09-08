@@ -3,11 +3,41 @@
 export const AI_CONFIG = {
   // DeepSeek AI Models Configuration
   MODELS: {
-    CHAT: 'deepseek-chat',
-    REASONER: 'deepseek-reasoner'
+    CHAT: 'deepseek-chat',        // For conversations, creativity, and general interactions
+    REASONER: 'deepseek-reasoner' // For complex reasoning, analysis, and problem-solving
   },
   DEFAULT_MODEL: 'deepseek-chat',
   API_URL: import.meta.env.VITE_DEEPSEEK_API_URL || 'https://api.deepseek.com/v1',
+  
+  // Model Selection Rules - Define which model to use for different task types
+  MODEL_SELECTION: {
+    // Tasks that require deep reasoning and analysis (use deepseek-reasoner)
+    REASONING_TASKS: [
+      'complex_problem_solving',
+      'critical_thinking', 
+      'mathematical_reasoning',
+      'scientific_analysis',
+      'logical_deduction',
+      'quiz_creation',           // Creating educational content requires reasoning
+      'learning_path_generation', // Planning learning requires analysis
+      'homework_help'            // Academic help benefits from reasoning capabilities
+    ] as const,
+    
+    // Tasks that are conversational and creative (use deepseek-chat)
+    CONVERSATIONAL_TASKS: [
+      'ai_tutor',                // Interactive tutoring is conversational
+      'mentorship_matching',     // Social matching is conversational
+      'idea_evaluation',         // Idea feedback is conversational
+      'sentiment_analysis',      // Understanding emotions is conversational
+      'opportunity_recommendation', // Recommendations are conversational
+      'content_summarization',   // Text processing is conversational
+      'text_translation',        // Language tasks are conversational
+      'alt_text_generation',     // Accessibility content is conversational
+      'eco_advice',             // Environmental advice is conversational
+      'grant_proposal_assistance', // Writing assistance is conversational
+      'waste_classification'     // Classification can be conversational
+    ] as const
+  },
   
   // Temperature Settings for Different Task Types
   TEMPERATURES: {
@@ -46,7 +76,8 @@ export const AI_CONFIG = {
       'mentorship_matching',
       'idea_evaluation',
       'sentiment_analysis',
-      'opportunity_recommendation'
+      'opportunity_recommendation',
+      'ai_tutor'
     ],
     STRUCTURED: [
       'learning_path_generation',
@@ -75,23 +106,48 @@ export const AI_CONFIG = {
   }
 } as const;
 
+// Helper function to get optimal model for a task
+export function getOptimalModel(taskType: string): string {
+  const { MODEL_SELECTION, MODELS } = AI_CONFIG;
+  
+  // Check if it's a reasoning task
+  if ((MODEL_SELECTION.REASONING_TASKS as readonly string[]).includes(taskType)) {
+    return MODELS.REASONER;
+  }
+  
+  // Check if it's a conversational task
+  if ((MODEL_SELECTION.CONVERSATIONAL_TASKS as readonly string[]).includes(taskType)) {
+    return MODELS.CHAT;
+  }
+  
+  // Default to chat model for unknown tasks
+  return MODELS.CHAT;
+}
+
 // Helper function to get optimal settings for a task
-export function getTaskSettings(taskType: string) {
+export function getTaskSettings(taskType: string): {
+  temperature: number;
+  maxTokens: number;
+  model: string;
+  topP: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+} {
   const { TEMPERATURES, PERFORMANCE, TASK_CLASSIFICATIONS } = AI_CONFIG;
   
   // Determine temperature based on task type
-  let temperature = TEMPERATURES.STRUCTURED_CONTENT;
+  let temperature: number = TEMPERATURES.STRUCTURED_CONTENT;
   
-  if (TASK_CLASSIFICATIONS.CODING.includes(taskType)) {
+  if (TASK_CLASSIFICATIONS.CODING.includes(taskType as any)) {
     temperature = TEMPERATURES.CODING_MATH;
-  } else if (TASK_CLASSIFICATIONS.CONVERSATION.includes(taskType)) {
+  } else if (TASK_CLASSIFICATIONS.CONVERSATION.includes(taskType as any)) {
     temperature = TEMPERATURES.GENERAL_CONVERSATION;
-  } else if (TASK_CLASSIFICATIONS.TRANSLATION.includes(taskType)) {
+  } else if (TASK_CLASSIFICATIONS.TRANSLATION.includes(taskType as any)) {
     temperature = TEMPERATURES.TRANSLATION;
   }
   
   // Determine max tokens based on task complexity
-  let maxTokens = PERFORMANCE.MAX_TOKENS.STANDARD;
+  let maxTokens: number = PERFORMANCE.MAX_TOKENS.STANDARD;
   
   if (['grant_proposal_assistance', 'learning_path_generation'].includes(taskType)) {
     maxTokens = PERFORMANCE.MAX_TOKENS.COMPREHENSIVE;
@@ -101,11 +157,16 @@ export function getTaskSettings(taskType: string) {
     maxTokens = PERFORMANCE.MAX_TOKENS.DETAILED;
   }
   
+  // Get optimal model for this task
+  const model = getOptimalModel(taskType);
+  
   return {
     temperature,
     maxTokens,
-    model: taskType === 'reasoning' ? AI_CONFIG.MODELS.REASONER : AI_CONFIG.MODELS.CHAT,
-    ...AI_CONFIG.QUALITY
+    model,
+    topP: AI_CONFIG.QUALITY.TOP_P,
+    frequencyPenalty: AI_CONFIG.QUALITY.FREQUENCY_PENALTY,
+    presencePenalty: AI_CONFIG.QUALITY.PRESENCE_PENALTY
   };
 }
 
