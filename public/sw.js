@@ -1,8 +1,11 @@
 // Service Worker for ImpactHub PWA
-const CACHE_NAME = 'impacthub-v1';
-const STATIC_CACHE = 'static-v1';
-const DYNAMIC_CACHE = 'dynamic-v1';
-const LEARNING_CACHE = 'learning-v1';
+const CACHE_NAME = 'impacthub-v2'; // Increment version to force cache update
+const STATIC_CACHE = 'static-v2';
+const DYNAMIC_CACHE = 'dynamic-v2';
+const LEARNING_CACHE = 'learning-v2';
+
+// Session state tracking
+let authStateExpiry = null;
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
@@ -83,10 +86,18 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Network first strategy (for API calls)
+// Network first strategy (for API calls) with timeout
 async function networkFirstStrategy(request) {
   try {
-    const networkResponse = await fetch(request);
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const networkResponse = await fetch(request, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
     
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
@@ -99,6 +110,12 @@ async function networkFirstStrategy(request) {
     const cachedResponse = await caches.match(request);
     
     if (cachedResponse) {
+      // Check if cached response is for authenticated content and session might be expired
+      if (request.url.includes('/api/') && authStateExpiry && Date.now() > authStateExpiry) {
+        console.log('Cached response may be stale due to session expiry');
+        // Return cache but also attempt background refresh
+        refreshInBackground(request);
+      }
       return cachedResponse;
     }
     
@@ -108,6 +125,19 @@ async function networkFirstStrategy(request) {
     }
     
     throw error;
+  }
+}
+
+// Background refresh for stale content
+async function refreshInBackground(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(request, response.clone());
+    }
+  } catch (error) {
+    console.log('Background refresh failed:', error);
   }
 }
 
@@ -274,7 +304,53 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CACHE_LEARNING_CONTENT') {
     event.waitUntil(cacheLearningContent(event.data.content));
   }
+  
+  if (event.data && event.data.type === 'AUTH_STATE_CHANGED') {
+    // Update auth state tracking
+    if (event.data.authenticated && event.data.expiresAt) {
+      authStateExpiry = event.data.expiresAt * 1000; // Convert to milliseconds
+      console.log('Service Worker: Auth state updated, expires at', new Date(authStateExpiry));
+    } else {
+      authStateExpiry = null;
+      console.log('Service Worker: User logged out, clearing auth state');
+      // Clear cached authenticated content
+      clearAuthenticatedCache();
+    }
+  }
+  
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    event.waitUntil(clearAllCaches());
+  }
 });
+
+// Clear authenticated content from cache
+async function clearAuthenticatedCache() {
+  try {
+    const cache = await caches.open(DYNAMIC_CACHE);
+    const requests = await cache.keys();
+    
+    for (const request of requests) {
+      if (request.url.includes('/api/') || request.url.includes('/dashboard')) {
+        await cache.delete(request);
+      }
+    }
+    
+    console.log('Service Worker: Cleared authenticated cache');
+  } catch (error) {
+    console.error('Service Worker: Failed to clear authenticated cache', error);
+  }
+}
+
+// Clear all caches
+async function clearAllCaches() {
+  try {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map(name => caches.delete(name)));
+    console.log('Service Worker: All caches cleared');
+  } catch (error) {
+    console.error('Service Worker: Failed to clear caches', error);
+  }
+}
 
 // Cache learning content for offline access
 async function cacheLearningContent(content) {

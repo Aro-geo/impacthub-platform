@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { serviceWorkerUtils } from '@/utils/serviceWorkerUtils';
 
 interface AuthContextType {
   user: User | null;
@@ -35,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [sessionCheckInterval, setSessionCheckInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Optimized profile fetching with caching
   const fetchUserProfile = async (userId: string) => {
@@ -57,12 +59,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Check and refresh session if needed
+  const checkAndRefreshSession = async () => {
+    try {
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Session check error:', error);
+        // Clear invalid session
+        setSession(null);
+        setUser(null);
+        setUserProfile(null);
+        setIsAdmin(false);
+        return;
+      }
+
+      if (currentSession) {
+        // Check if session is about to expire (within 5 minutes)
+        const expiresAt = currentSession.expires_at;
+        const now = Math.floor(Date.now() / 1000);
+        const timeUntilExpiry = expiresAt - now;
+
+        if (timeUntilExpiry < 300) { // Less than 5 minutes
+          console.log('Session expiring soon, refreshing...');
+          const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError) {
+            console.error('Session refresh failed:', refreshError);
+            // Force sign out if refresh fails
+            await signOut();
+            return;
+          }
+
+          if (refreshedSession) {
+            setSession(refreshedSession);
+            setUser(refreshedSession.user);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Session check failed:', error);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event);
+        
         setSession(session);
         setUser(session?.user ?? null);
+
+        // Notify service worker about auth state change
+        serviceWorkerUtils.notifyAuthStateChanged(!!session, session);
 
         if (session?.user) {
           const profile = await fetchUserProfile(session.user.id);
@@ -70,9 +120,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Check if user is admin
           const isAdminUser = profile?.role === 'admin' || session.user.email === 'geokullo@gmail.com';
           setIsAdmin(isAdminUser);
+
+          // Set up periodic session check (every 2 minutes)
+          if (sessionCheckInterval) {
+            clearInterval(sessionCheckInterval);
+          }
+          const interval = setInterval(checkAndRefreshSession, 2 * 60 * 1000);
+          setSessionCheckInterval(interval);
         } else {
           setUserProfile(null);
           setIsAdmin(false);
+          
+          // Clear session check interval
+          if (sessionCheckInterval) {
+            clearInterval(sessionCheckInterval);
+            setSessionCheckInterval(null);
+          }
         }
 
         setLoading(false);
@@ -90,12 +153,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Check if user is admin
         const isAdminUser = profile?.role === 'admin' || session?.user.email === 'geokullo@gmail.com';
         setIsAdmin(isAdminUser);
+
+        // Set up periodic session check
+        const interval = setInterval(checkAndRefreshSession, 2 * 60 * 1000);
+        setSessionCheckInterval(interval);
       }
 
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Cleanup on unmount
+    return () => {
+      subscription.unsubscribe();
+      if (sessionCheckInterval) {
+        clearInterval(sessionCheckInterval);
+      }
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

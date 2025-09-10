@@ -77,7 +77,24 @@ class AIService {
     }
     
     // Clean cache periodically
-    setInterval(() => this.cleanCache(), 60000); // Clean every minute
+    const cacheCleanInterval = setInterval(() => this.cleanCache(), 60000); // Clean every minute
+    
+    // Store interval reference for cleanup
+    this.cacheCleanInterval = cacheCleanInterval;
+    
+    // Listen for page unload to cleanup
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => this.cleanup());
+    }
+  }
+
+  private cacheCleanInterval: NodeJS.Timeout | null = null;
+
+  private cleanup() {
+    if (this.cacheCleanInterval) {
+      clearInterval(this.cacheCleanInterval);
+      this.cacheCleanInterval = null;
+    }
   }
 
   private cleanCache() {
@@ -181,9 +198,20 @@ class AIService {
     }
 
     return new Promise((resolve, reject) => {
+      // Set up timeout (30 seconds for regular requests)
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Request timeout: AI service took too long to respond'));
+      }, 30000);
+
       const executeRequest = async () => {
         try {
           console.log('Making optimized AI request to DeepSeek');
+
+          // Create AbortController for request cancellation
+          const abortController = new AbortController();
+          const requestTimeoutId = setTimeout(() => {
+            abortController.abort();
+          }, 25000); // 25 second timeout for the actual request
 
           const response = await fetch(`${DEEPSEEK_API_URL}/chat/completions`, {
             method: 'POST',
@@ -202,7 +230,10 @@ class AIService {
               frequency_penalty: taskSettings.frequencyPenalty,
               presence_penalty: taskSettings.presencePenalty,
             }),
+            signal: abortController.signal,
           });
+
+          clearTimeout(requestTimeoutId);
 
           if (!response.ok) {
             const errorText = await response.text();
@@ -231,10 +262,18 @@ class AIService {
           });
 
           console.log(`AI request completed with model: ${modelToUse}, temperature: ${finalTemperature}, tokens: ${data.usage?.total_tokens || 'unknown'}`);
+          
+          clearTimeout(timeoutId);
           resolve(formattedContent);
         } catch (error) {
+          clearTimeout(timeoutId);
           console.error('AI Service Error:', error);
-          reject(error instanceof Error ? error : new Error('Failed to get AI response'));
+          
+          if (error instanceof Error && error.name === 'AbortError') {
+            reject(new Error('Request was cancelled due to timeout'));
+          } else {
+            reject(error instanceof Error ? error : new Error('Failed to get AI response'));
+          }
         }
       };
 

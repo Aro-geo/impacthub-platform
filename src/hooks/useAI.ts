@@ -10,6 +10,7 @@ export const useAI = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const activeRequestsRef = useRef(new Set<Promise<any>>());
 
   // Initialize AI learning observer when hook is first used (with singleton protection)
   useEffect(() => {
@@ -34,8 +35,43 @@ export const useAI = () => {
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
+      // Cancel any pending requests
+      activeRequestsRef.current.clear();
     };
   }, []);
+
+  // Enhanced loading state management with timeout protection
+  const setLoadingWithTimeout = (isLoading: boolean, timeoutMs: number = 30000) => {
+    if (!isMountedRef.current) return;
+    
+    setLoading(isLoading);
+    
+    if (isLoading) {
+      // Set a timeout to prevent stuck loading states
+      const timeoutId = setTimeout(() => {
+        if (isMountedRef.current) {
+          console.warn('Loading state timeout reached, forcing reset');
+          setLoading(false);
+          setError('Request timed out. Please try again.');
+          toast({
+            title: "Request Timeout",
+            description: "The request took too long. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }, timeoutMs);
+      
+      // Store timeout for cleanup
+      const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => {
+          clearTimeout(timeoutId);
+          resolve(null);
+        }, timeoutMs);
+      });
+      
+      activeRequestsRef.current.add(timeoutPromise);
+    }
+  };
 
   const executeAITask = async <T>(
     task: () => Promise<T>,
@@ -43,16 +79,23 @@ export const useAI = () => {
     inputData?: any,
     successMessage?: string
   ): Promise<T | null> => {
-    // Set loading state immediately
-    setLoading(true);
+    // Set loading state immediately with timeout protection
+    setLoadingWithTimeout(true);
     setError(null);
     
     const startTime = Date.now();
     
     try {
+      // Create a promise that can be cancelled
+      const taskPromise = task();
+      activeRequestsRef.current.add(taskPromise);
+      
       // Execute the AI task first - this is where the AI generates content
-      const result = await task();
+      const result = await taskPromise;
       const processingTime = Date.now() - startTime;
+      
+      // Remove from active requests
+      activeRequestsRef.current.delete(taskPromise);
       
       // Handle case where component is unmounted during the AI task
       if (!isMountedRef.current) {
@@ -367,17 +410,26 @@ export const useAI = () => {
       } = {},
       taskType: string = 'general'
     ) => {
-      setLoading(true);
+      setLoadingWithTimeout(true);
       setError(null);
       
       try {
-        await aiService.streamResponse(prompt, options, taskType);
+        const streamPromise = aiService.streamResponse(prompt, options, taskType);
+        activeRequestsRef.current.add(streamPromise);
+        
+        await streamPromise;
+        
+        activeRequestsRef.current.delete(streamPromise);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to stream response';
-        setError(errorMessage);
-        console.error('Stream response error:', error);
+        if (isMountedRef.current) {
+          setError(errorMessage);
+          console.error('Stream response error:', error);
+        }
       } finally {
-        setLoading(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
     },
 
