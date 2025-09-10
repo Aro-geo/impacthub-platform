@@ -96,7 +96,7 @@ const Dashboard = () => {
         Promise.all([
           supabase.from('lesson_quiz_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
           supabase.from('community_posts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('post_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+          supabase.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
           supabase.from('ai_interactions' as any).select('id').eq('user_id', user.id),
           supabase.from('profiles').select('impact_points').eq('id', user.id).single()
         ])
@@ -207,7 +207,7 @@ const Dashboard = () => {
       // Count community posts and comments as connections
       const [postsResult, commentsResult] = await Promise.all([
         supabase.from('community_posts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('post_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+        supabase.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
       ]);
       
       const connections = (postsResult.count || 0) + (commentsResult.count || 0);
@@ -254,7 +254,7 @@ const Dashboard = () => {
         lessonProgressService.getUserStats(user.id),
         supabase.from('lesson_quiz_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('community_posts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('post_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
         fetchAIInteractionCount()
       ]);
 
