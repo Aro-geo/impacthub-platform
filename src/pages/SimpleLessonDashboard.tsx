@@ -194,7 +194,11 @@ const SimpleLessonDashboard = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             }>
-              <OverviewSection userStats={userStats} onRefresh={fetchUserStats} />
+              <OverviewSection 
+                userStats={userStats} 
+                onRefresh={fetchUserStats} 
+                onNavigateToTab={setActiveTab}
+              />
             </Suspense>
           </TabsContent>
 

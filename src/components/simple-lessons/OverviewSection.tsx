@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAI } from '@/hooks/useAI';
 import { supabase } from '@/integrations/supabase/client';
+import { lessonProgressService } from '@/services/lessonProgressService';
 import {
   BookOpen,
   Play,
@@ -30,6 +31,7 @@ interface UserStats {
 interface OverviewSectionProps {
   userStats: UserStats;
   onRefresh: () => void;
+  onNavigateToTab: (tab: string) => void;
 }
 
 interface SuggestedLesson {
@@ -160,7 +162,7 @@ const AIRecommendationsSection = () => {
                   <h4 className="font-medium text-foreground text-sm truncate">
                     {rec.title}
                   </h4>
-                  <Badge className={getPriorityColor(rec.priority)} size="sm">
+                  <Badge className={getPriorityColor(rec.priority)}>
                     {rec.priority}
                   </Badge>
                 </div>
@@ -194,7 +196,7 @@ const AIRecommendationsSection = () => {
   );
 };
 
-const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
+const OverviewSection = ({ userStats, onRefresh, onNavigateToTab }: OverviewSectionProps) => {
   const { user, isAdmin } = useAuth();
   const [suggestedLessons, setSuggestedLessons] = useState<SuggestedLesson[]>([]);
   const [continueLesson, setContinueLesson] = useState<ContinueLesson | null>(null);
@@ -229,12 +231,26 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
         .maybeSingle();
 
       if (inProgressLesson?.simple_lessons) {
-        setContinueLesson({
-          id: inProgressLesson.simple_lessons.id,
-          title: inProgressLesson.simple_lessons.title,
-          subject_name: inProgressLesson.simple_lessons.subjects?.name || 'Unknown',
-          progress_percentage: inProgressLesson.progress_percentage
-        });
+        // Additional safety check: if progress is 100%, the lesson should be marked as completed
+        if (inProgressLesson.progress_percentage >= 100) {
+          // This lesson should have been marked as completed, let's fix it
+          try {
+            await lessonProgressService.completeLesson(user?.id!, inProgressLesson.simple_lessons.id);
+            // Don't show this lesson in continue learning since it's now completed
+            setContinueLesson(null);
+          } catch (error) {
+            console.error('Error completing lesson:', error);
+            // Still don't show it as it's 100% complete
+            setContinueLesson(null);
+          }
+        } else {
+          setContinueLesson({
+            id: inProgressLesson.simple_lessons.id,
+            title: inProgressLesson.simple_lessons.title,
+            subject_name: inProgressLesson.simple_lessons.subjects?.name || 'Unknown',
+            progress_percentage: inProgressLesson.progress_percentage
+          });
+        }
       }
 
       // Get user profile for grade filtering
@@ -386,7 +402,7 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
       {/* Continue Learning & Suggestions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Continue Where You Left Off */}
-        <Card>
+        <Card className="bg-card dark:bg-card">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Play className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -411,7 +427,15 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
                     {continueLesson.progress_percentage}% complete
                   </p>
                 </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600">
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                  onClick={() => {
+                    if (continueLesson?.id) {
+                      // Navigate to lessons tab to view the lesson
+                      onNavigateToTab('lessons');
+                    }
+                  }}
+                >
                   <Play className="mr-2 h-4 w-4" />
                   Continue Lesson
                 </Button>
@@ -420,7 +444,11 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
               <div className="text-center py-6">
                 <BookOpen className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
                 <p className="text-muted-foreground mb-4">No lessons in progress</p>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => onNavigateToTab('lessons')}
+                >
                   Browse Lessons
                 </Button>
               </div>
@@ -429,7 +457,7 @@ const OverviewSection = ({ userStats, onRefresh }: OverviewSectionProps) => {
         </Card>
 
         {/* AI-Powered Suggestions */}
-        <Card>
+        <Card className="bg-card dark:bg-card">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />

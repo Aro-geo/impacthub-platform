@@ -57,19 +57,26 @@ const AITutor: React.FC<AITutorProps> = ({
       role: 'assistant',
       content: `👋 Hello! I'm your AI tutor, here to help you understand "${lessonTitle}" better.
 
-I'm designed to guide you through learning concepts step by step, rather than giving you direct answers. Think of me as a supportive learning companion who will help you discover solutions through questioning and guidance.
+I'm designed to guide you through learning step by step with clear explanations and just the right amount of questions. Think of me as a supportive learning companion who will help you discover solutions through guidance, examples, and strategic questions.
 
 **What I can help you with:**
-- Clarifying concepts from the lesson
-- Breaking down complex ideas into simpler parts
-- Guiding you through problem-solving steps
-- Connecting this lesson to real-world applications
-- Providing guidance when you're stuck
+- 📚 Clarifying concepts from the lesson with clear explanations
+- 🔧 Breaking down complex ideas into simpler, manageable parts  
+- 🎯 Guiding you through problem-solving with step-by-step direction
+- 🌍 Connecting this lesson to real-world applications and examples
+- 💡 Providing helpful hints and guidance when you're stuck
+
+**My teaching approach:**
+- I'll give you clear guidance and examples
+- I'll ask focused questions (usually just one at a time) when they help you learn
+- I'll provide direction rather than leaving you guessing
+- I'll celebrate your progress and help build your confidence
 
 **How to get the best help:**
 - Ask specific questions about what you don't understand
 - Tell me what part is confusing you
 - Share your thinking process so I can guide you better
+- Don't worry if you need more explanation - I'm here to help!
 
 What would you like to explore about this ${subject} lesson? Is there a particular concept or part that you'd like to understand better?`,
       timestamp: new Date()
@@ -234,7 +241,7 @@ What would you like to explore about this ${subject} lesson? Is there a particul
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask me anything about this lesson... What would you like to understand better?"
+                  placeholder="Ask about any concept you'd like me to explain or clarify..."
                   className="flex-1 min-h-[40px] max-h-[120px] resize-none"
                   disabled={isGenerating}
                 />
@@ -248,7 +255,7 @@ What would you like to explore about this ${subject} lesson? Is there a particul
               </div>
             </div>
             <div className="text-xs text-muted-foreground">
-              💡 I'll guide you through learning concepts step by step. Press Enter to send.
+              💡 I'll provide clear guidance and ask focused questions to help you learn. Press Enter to send.
             </div>
           </div>
         </div>
