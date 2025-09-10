@@ -36,4 +36,14 @@ supabase/
 *.njsproj
 *.sln
 *.sw?
+
+# Documentation files
+*.md
+docs/
+documentation/
+CHANGELOG*
+README*
+NOTES*
+TODO*
+FIXME*
 .md
