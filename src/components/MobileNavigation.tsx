@@ -117,8 +117,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border md:hidden safe-area-bottom">
-        <div className="grid grid-cols-5 h-16">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden safe-area-bottom">
+        <div className="grid grid-cols-5 h-16 bg-background">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -128,7 +128,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 key={item.id}
                 onClick={() => handleNavigation(item)}
                 className={cn(
-                  "flex flex-col items-center justify-center space-y-1 transition-colors",
+                  "flex flex-col items-center justify-center space-y-1 transition-colors bg-background",
                   "min-h-[44px] px-2 py-1",
                   active 
                     ? "text-primary bg-primary/10" 

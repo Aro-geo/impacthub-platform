@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { incidentAnalysisService } from './incidentAnalysisService';
 import { queryCache } from '@/utils/dbOptimization';
+import { achievementsService } from './achievementsService';
 
 export interface LessonProgress {
   id: string;
@@ -153,6 +154,17 @@ class LessonProgressService {
         
         // Also invalidate any bulk queries that might include this lesson
         queryCache.clearByPrefix(`lesson_progress:${userId}:bulk:`);
+
+        // If lesson was completed, update streaks and check achievements
+        if (status === 'completed') {
+          try {
+            await achievementsService.updateUserStreaks(userId, true);
+            await achievementsService.checkAndAwardAchievements(userId);
+          } catch (achievementError) {
+            console.error('Error updating achievements:', achievementError);
+            // Don't fail the whole operation if achievements fail
+          }
+        }
       }
 
       return data as LessonProgress;

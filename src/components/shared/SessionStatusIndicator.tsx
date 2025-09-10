@@ -104,27 +104,6 @@ const SessionStatusIndicator = () => {
     );
   }
 
-  // Debugging info for stuck loading states (only in development)
-  if (process.env.NODE_ENV === 'development') {
-    return (
-      <div className="fixed bottom-4 right-4 z-50">
-        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border text-xs">
-          <div>Status: {isOnline ? 'Online' : 'Offline'}</div>
-          <div>User: {user ? 'Authenticated' : 'Not authenticated'}</div>
-          <div>SW: {serviceWorkerUtils.isAvailable() ? 'Active' : 'Inactive'}</div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClearCache}
-            className="mt-2 w-full text-xs"
-          >
-            Clear Cache & Reload
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return null;
 };
 

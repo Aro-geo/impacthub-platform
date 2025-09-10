@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAI } from '@/hooks/useAI';
 import { lessonProgressService } from '@/services/lessonProgressService';
+import { achievementsService } from '@/services/achievementsService';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,11 @@ const Dashboard = () => {
     lessonsCompleted: 0,
     quizzesAttempted: 0,
     communityConnections: 0
+  });
+  const [achievementsData, setAchievementsData] = useState({
+    badges: [],
+    currentStreak: 0,
+    totalAchievements: 0
   });
   const [loading, setLoading] = useState(true);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
@@ -83,6 +89,9 @@ const Dashboard = () => {
         getUserStats(),
         // Lesson stats
         lessonProgressService.getUserStats(user.id),
+        // Achievements and streaks
+        achievementsService.getUserAchievements(user.id),
+        achievementsService.getUserStreaks(user.id),
         // Combined database query for all counts to reduce concurrent requests
         Promise.all([
           supabase.from('lesson_quiz_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
@@ -107,21 +116,41 @@ const Dashboard = () => {
         }));
       }
 
+      // Process lesson stats
+      if (results[1].status === 'fulfilled') {
+        const lessonStats = results[1].value;
+        setDashboardStats(prev => ({
+          ...prev,
+          lessonsCompleted: lessonStats.completedLessons
+        }));
+      }
+
+      // Process achievements data
+      if (results[2].status === 'fulfilled' && results[3].status === 'fulfilled') {
+        const achievements = results[2].value;
+        const streaks = results[3].value;
+        setAchievementsData({
+          badges: achievements || [],
+          currentStreak: streaks?.current_streak || 0,
+          totalAchievements: achievements?.length || 0
+        });
+      }
+
       // Process combined database results
-      if (results[2].status === 'fulfilled') {
-        const [quizCount, communityPosts, communityComments, aiInteractions, profile] = results[2].value;
+      if (results[4].status === 'fulfilled') {
+        const [quizResult, postsResult, commentsResult, aiInteractionsResult, profileResult] = results[4].value;
         
-        const quizzesAttempted = quizCount.count || 0;
-        const communityConnections = (communityPosts.count || 0) + (communityComments.count || 0);
-        const aiInteractionCount = aiInteractions?.data?.length || 0;
-        const profilePoints = profile?.data?.impact_points || 0;
+        const quizzesAttempted = quizResult.count || 0;
+        const communityConnections = (postsResult.count || 0) + (commentsResult.count || 0);
+        const aiInteractionCount = aiInteractionsResult?.data?.length || 0;
+        const profilePoints = profileResult?.data?.impact_points || 0;
         
         // Calculate impact points
         const calculatedPoints = profilePoints || (
           (results[1].status === 'fulfilled' ? results[1].value.completedLessons * 10 : 0) +
           (quizzesAttempted * 2) +
-          ((communityPosts.count || 0) * 15) +
-          ((communityComments.count || 0) * 5) +
+          ((postsResult.count || 0) * 15) +
+          ((commentsResult.count || 0) * 5) +
           (aiInteractionCount * 3)
         );
 
@@ -419,7 +448,8 @@ const Dashboard = () => {
                             <div className="w-full bg-muted rounded-full h-1.5 mt-2">
                               <div
                                 className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all duration-300"
-                                style={{ width: `${lesson.progress}%` }}
+                                data-progress={lesson.progress}
+                                style={{ width: `${Math.min(100, Math.max(0, lesson.progress))}%` }}
                               ></div>
                             </div>
                           </div>
@@ -454,13 +484,32 @@ const Dashboard = () => {
                             <p className="text-sm text-muted-foreground">Learning milestones</p>
                           </div>
                         </div>
-                        <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">0</div>
+                        <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{achievementsData.totalAchievements}</div>
                       </div>
-                      <div className="text-center py-4">
-                        <Award className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
-                        <p className="text-muted-foreground text-sm">No badges yet</p>
-                        <p className="text-muted-foreground/70 text-xs">Complete lessons to earn your first badge</p>
-                      </div>
+                      {achievementsData.badges.length > 0 ? (
+                        <div className="space-y-2">
+                          {achievementsData.badges.slice(0, 3).map((badge: any, index) => (
+                            <div key={index} className="flex items-center gap-2 p-2 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 rounded-lg">
+                              <span className="text-lg">{badge.achievement?.icon || '🏆'}</span>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-foreground">{badge.achievement?.name || 'Achievement'}</p>
+                                <p className="text-xs text-muted-foreground">{badge.achievement?.description || 'Congratulations!'}</p>
+                              </div>
+                            </div>
+                          ))}
+                          {achievementsData.badges.length > 3 && (
+                            <p className="text-xs text-center text-muted-foreground">
+                              +{achievementsData.badges.length - 3} more achievements
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-4">
+                          <Award className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+                          <p className="text-muted-foreground text-sm">No badges yet</p>
+                          <p className="text-muted-foreground/70 text-xs">Complete lessons to earn your first badge</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -476,7 +525,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
+                  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
                     <div className="text-4xl mb-4">🎓</div>
                     <div className="mt-auto">
                       <h3 className="font-semibold mb-2">AI Learning Tools</h3>
@@ -488,7 +537,7 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
+                  <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
                     <div className="text-4xl mb-4">📚</div>
                     <div className="mt-auto">
                       <h3 className="font-semibold mb-2">Simple Lessons</h3>
@@ -500,7 +549,7 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
+                  <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center text-center min-h-[200px]">
                     <div className="text-4xl mb-4">🎤</div>
                     <div className="mt-auto">
                       <h3 className="font-semibold mb-2">Voice Practice</h3>
