@@ -37,13 +37,15 @@ supabase/
 *.sln
 *.sw?
 
-# Documentation files
-*.md
+# Documentation files (exclude most but allow README and .kiro)
 docs/
 documentation/
 CHANGELOG*
-README*
 NOTES*
 TODO*
 FIXME*
-.md
+
+# Exclude .md files but allow specific ones
+*.md
+!README*.md
+!.kiro/**/*.md
