@@ -46,6 +46,26 @@ const SimpleLessonDashboard = () => {
     try {
       setStatsLoading(true);
       
+      // Get user profile for grade filtering
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('grade, role')
+        .eq('id', user?.id)
+        .single();
+      
+      const isAdmin = profile?.role === 'admin' || user?.email === 'geokullo@gmail.com';
+      
+      // Build total lessons query with grade filtering
+      let totalLessonsQuery = supabase
+        .from('simple_lessons')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_published', true);
+      
+      // Filter by user grade for non-admin users
+      if (profile?.grade && !isAdmin) {
+        totalLessonsQuery = totalLessonsQuery.eq('grade', profile.grade);
+      }
+      
       // Batch all queries for better performance
       const [
         { count: totalLessons },
@@ -53,10 +73,7 @@ const SimpleLessonDashboard = () => {
         { count: quizAttempts },
         { data: streakData }
       ] = await Promise.all([
-        supabase
-          .from('simple_lessons')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_published', true),
+        totalLessonsQuery,
         supabase
           .from('lesson_progress')
           .select('*', { count: 'exact', head: true })

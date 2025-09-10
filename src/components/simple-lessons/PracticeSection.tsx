@@ -167,16 +167,33 @@ const PracticeSection = () => {
   const fetchQuizStats = async () => {
     if (!user) return;
 
-    const { data: attempts, error } = await supabase
+    // Get user's grade-appropriate lesson IDs first
+    let lessonIds: string[] = [];
+    if (userProfile?.grade && !isAdmin) {
+      const { data: lessons } = await supabase
+        .from('simple_lessons')
+        .select('id')
+        .eq('grade', userProfile.grade)
+        .eq('is_published', true);
+      lessonIds = lessons?.map(l => l.id) || [];
+    }
+
+    let attemptsQuery = supabase
       .from('lesson_quiz_attempts')
       .select(`
         *,
-        lesson_quizzes (
+        lesson_quizzes!inner (
           lesson_id
         )
       `)
       .eq('user_id', user.id);
 
+    // Filter by grade-appropriate lessons for non-admin users
+    if (lessonIds.length > 0) {
+      attemptsQuery = attemptsQuery.in('lesson_quizzes.lesson_id', lessonIds);
+    }
+
+    const { data: attempts, error } = await attemptsQuery;
     if (error) throw error;
 
     const totalAttempts = attempts?.length || 0;
@@ -220,11 +237,22 @@ const PracticeSection = () => {
   const fetchRecentAttempts = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
+    // Get user's grade-appropriate lesson IDs first
+    let lessonIds: string[] = [];
+    if (userProfile?.grade && !isAdmin) {
+      const { data: lessons } = await supabase
+        .from('simple_lessons')
+        .select('id')
+        .eq('grade', userProfile.grade)
+        .eq('is_published', true);
+      lessonIds = lessons?.map(l => l.id) || [];
+    }
+
+    let attemptsQuery = supabase
       .from('lesson_quiz_attempts')
       .select(`
         *,
-        lesson_quizzes (
+        lesson_quizzes!inner (
           id,
           question,
           lesson_id,
@@ -243,6 +271,12 @@ const PracticeSection = () => {
       .order('attempted_at', { ascending: false })
       .limit(5);
 
+    // Filter by grade-appropriate lessons for non-admin users
+    if (lessonIds.length > 0) {
+      attemptsQuery = attemptsQuery.in('lesson_quizzes.lesson_id', lessonIds);
+    }
+
+    const { data, error } = await attemptsQuery;
     if (error) throw error;
 
     const formattedAttempts = data?.map(attempt => ({

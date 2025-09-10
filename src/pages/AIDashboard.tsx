@@ -12,8 +12,8 @@ import {
   GraduationCap,
   Leaf,
   Users,
-  MessageSquare,
-  Accessibility
+  Accessibility,
+  Zap
 } from 'lucide-react';
 
 // Import AI Components
@@ -22,8 +22,8 @@ import QuizCreator from '@/components/ai/QuizCreator';
 import HomeworkHelper from '@/components/ai/HomeworkHelper';
 import SustainabilityCalculator from '@/components/ai/SustainabilityCalculator';
 import MentorshipMatcher from '@/components/ai/MentorshipMatcher';
-import OptimizedUnifiedCommunityForum from '@/components/shared/OptimizedUnifiedCommunityForum';
 import AccessibilityTools from '@/components/ai/AccessibilityTools';
+import StreamingDemo from '@/components/ai/StreamingDemo';
 
 
 const AIDashboard = () => {
@@ -48,55 +48,23 @@ const AIDashboard = () => {
     // Switch to the tool tab immediately for better performance
     setActiveTab(toolId);
 
-    // Track interaction in background without blocking UI
-    if (user) {
-      // Run tracking asynchronously without awaiting to avoid blocking
-      setTimeout(async () => {
-        try {
-          // Map tool IDs to interaction types
-          const interactionTypeMap: Record<string, string> = {
-            'learning-path': 'learning_path_generation',
-            'quiz-creator': 'quiz_creation',
-            'homework-helper': 'homework_help',
-            'accessibility': 'alt_text_generation',
-            'sustainability': 'sustainability_impact',
-            'mentorship': 'mentorship_matching',
-            'forum': 'sentiment_analysis'
-          };
-
-          const interactionType = interactionTypeMap[toolId];
-          if (interactionType) {
-            // Record the tool access interaction in background
-            const interactionId = await aiTrackingService.startInteraction(
-              user.id,
-              interactionType as any,
-              {
-                tool_accessed: toolName,
-                access_method: 'dashboard_card',
-                timestamp: new Date().toISOString()
-              }
-            );
-
-            // Mark as completed immediately for tool access
-            await aiTrackingService.completeInteraction(
-              interactionId,
-              { tool_opened: toolName },
-              50, // Small processing time for tool access
-              0 // No tokens used for tool access
-            );
-
-            // Refresh stats quietly in background
-            const updatedStats = await getUserStats();
-            setAiStats(updatedStats);
-          }
-        } catch (error) {
-          console.error('Error tracking tool interaction:', error);
-        }
-      }, 0);
-    }
+    // Don't track just opening tools - only track when AI actually generates content
+    // The individual AI components will handle their own interaction tracking
+    // when they actually use AI to generate responses
+    
+    console.log(`Opened ${toolName} tool`);
   };
 
   const aiFeatures = [
+    {
+      id: 'streaming',
+      title: 'Real-time AI Streaming',
+      description: 'Experience AI responses in real-time with token-by-token streaming',
+      icon: Zap,
+      category: 'Technology',
+      color: 'text-yellow-600 dark:text-yellow-400',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20'
+    },
     {
       id: 'learning-path',
       title: 'Learning Path Generator',
@@ -150,15 +118,6 @@ const AIDashboard = () => {
       category: 'Community',
       color: 'text-orange-600 dark:text-orange-400',
       bgColor: 'bg-orange-50 dark:bg-orange-900/20'
-    },
-    {
-      id: 'forum',
-      title: 'Smart Community Forum',
-      description: 'AI-powered discussions with sentiment analysis',
-      icon: MessageSquare,
-      category: 'Community',
-      color: 'text-indigo-600 dark:text-indigo-400',
-      bgColor: 'bg-indigo-50 dark:bg-indigo-900/20'
     }
   ];
 
@@ -192,13 +151,13 @@ const AIDashboard = () => {
         }} className="space-y-6">
           <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="streaming">Streaming</TabsTrigger>
             <TabsTrigger value="learning-path">Learning Path</TabsTrigger>
             <TabsTrigger value="quiz-creator">Quiz Creator</TabsTrigger>
             <TabsTrigger value="homework-helper">Homework Help</TabsTrigger>
             <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
             <TabsTrigger value="sustainability">Sustainability</TabsTrigger>
             <TabsTrigger value="mentorship">Mentorship</TabsTrigger>
-            <TabsTrigger value="forum">Forum</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -267,17 +226,14 @@ const AIDashboard = () => {
                     <Leaf className="h-6 w-6" />
                     Calculate Impact
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="h-20 flex-col gap-2"
-                    onClick={() => handleToolInteraction('forum', 'Smart Community Forum')}
-                  >
-                    <MessageSquare className="h-6 w-6" />
-                    Join Discussion
-                  </Button>
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Real-time Streaming Demo */}
+          <TabsContent value="streaming">
+            <StreamingDemo />
           </TabsContent>
 
           {/* AI Feature Tabs */}
@@ -304,15 +260,6 @@ const AIDashboard = () => {
           <TabsContent value="mentorship">
             <MentorshipMatcher />
           </TabsContent>
-
-          <TabsContent value="forum">
-            <OptimizedUnifiedCommunityForum
-              context="ai-tools"
-              title="AI Community Forum"
-              description="Discuss AI tools, get help, and share insights"
-            />
-          </TabsContent>
-
 
         </Tabs>
       </div>

@@ -271,15 +271,32 @@ class LessonProgressService {
     completionPercentage: number;
   }> {
     try {
+      // Get user profile to check grade and admin status
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('grade, role, email')
+        .eq('id', userId)
+        .single();
+
+      const isAdmin = profile?.role === 'admin' || profile?.email === 'geokullo@gmail.com';
+
+      // Build query for total lessons with grade filtering
+      let totalLessonsQuery = supabase
+        .from('simple_lessons')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_published', true);
+
+      // Filter by user grade for non-admin users
+      if (profile?.grade && !isAdmin) {
+        totalLessonsQuery = totalLessonsQuery.eq('grade', profile.grade);
+      }
+
       const [progressResult, totalResult] = await Promise.all([
         supabase
           .from('lesson_progress')
           .select('status')
           .eq('user_id', userId),
-        supabase
-          .from('simple_lessons')
-          .select('id', { count: 'exact', head: true })
-          .eq('is_published', true)
+        totalLessonsQuery
       ]);
 
       const progress = progressResult.data || [];

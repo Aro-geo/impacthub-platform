@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAI } from '@/hooks/useAI';
+import { lessonProgressService } from '@/services/lessonProgressService';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,24 +37,222 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [aiStats, setAiStats] = useState<any>(null);
+  const [dashboardStats, setDashboardStats] = useState({
+    impactPoints: 0,
+    lessonsCompleted: 0,
+    quizzesAttempted: 0,
+    communityConnections: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   useEffect(() => {
-    const fetchAIStats = async () => {
-      if (user) {
-        const stats = await getUserStats();
-        setAiStats(stats);
+    const fetchAllStats = async () => {
+      if (!user) return;
+      
+      // Debounce to prevent multiple rapid calls
+      const now = Date.now();
+      if (now - lastFetchTime < 2000) { // 2 second debounce
+        return;
+      }
+      setLastFetchTime(now);
+      
+      setLoading(true);
+      try {
+        // Fetch all data in a single optimized call to reduce concurrent queries
+        await fetchAllStatsOptimized();
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchAIStats();
-  }, [user, getUserStats]);
+    const timeoutId = setTimeout(fetchAllStats, 100); // Small delay to batch multiple effect triggers
+    return () => clearTimeout(timeoutId);
+  }, [user, getUserStats, lastFetchTime]);
+
+  // Optimized single function to fetch all stats with minimal database calls
+  const fetchAllStatsOptimized = async () => {
+    if (!user) return;
+    
+    try {
+      // Use Promise.allSettled to prevent one failure from blocking others
+      const results = await Promise.allSettled([
+        // AI stats
+        getUserStats(),
+        // Lesson stats
+        lessonProgressService.getUserStats(user.id),
+        // Combined database query for all counts to reduce concurrent requests
+        Promise.all([
+          supabase.from('lesson_quiz_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+          supabase.from('community_posts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+          supabase.from('post_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+          supabase.from('ai_interactions' as any).select('id').eq('user_id', user.id),
+          supabase.from('profiles').select('impact_points').eq('id', user.id).single()
+        ])
+      ]);
+
+      // Process AI stats
+      if (results[0].status === 'fulfilled') {
+        setAiStats(results[0].value);
+      }
+
+      // Process lesson stats
+      if (results[1].status === 'fulfilled') {
+        const lessonStats = results[1].value;
+        setDashboardStats(prev => ({
+          ...prev,
+          lessonsCompleted: lessonStats.completedLessons
+        }));
+      }
+
+      // Process combined database results
+      if (results[2].status === 'fulfilled') {
+        const [quizCount, communityPosts, communityComments, aiInteractions, profile] = results[2].value;
+        
+        const quizzesAttempted = quizCount.count || 0;
+        const communityConnections = (communityPosts.count || 0) + (communityComments.count || 0);
+        const aiInteractionCount = aiInteractions?.data?.length || 0;
+        const profilePoints = profile?.data?.impact_points || 0;
+        
+        // Calculate impact points
+        const calculatedPoints = profilePoints || (
+          (results[1].status === 'fulfilled' ? results[1].value.completedLessons * 10 : 0) +
+          (quizzesAttempted * 2) +
+          ((communityPosts.count || 0) * 15) +
+          ((communityComments.count || 0) * 5) +
+          (aiInteractionCount * 3)
+        );
+
+        setDashboardStats(prev => ({
+          ...prev,
+          quizzesAttempted,
+          communityConnections,
+          impactPoints: calculatedPoints
+        }));
+      }
+    } catch (error) {
+      console.error('Error in optimized stats fetch:', error);
+    }
+  };
+
+  const fetchAIStats = async () => {
+    const stats = await getUserStats();
+    setAiStats(stats);
+  };
+
+  const fetchLessonStats = async () => {
+    if (!user) return;
+    try {
+      const lessonStats = await lessonProgressService.getUserStats(user.id);
+      setDashboardStats(prev => ({
+        ...prev,
+        lessonsCompleted: lessonStats.completedLessons
+      }));
+    } catch (error) {
+      console.error('Error fetching lesson stats:', error);
+    }
+  };
+
+  const fetchQuizStats = async () => {
+    if (!user) return;
+    try {
+      const { count } = await supabase
+        .from('lesson_quiz_attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      
+      setDashboardStats(prev => ({
+        ...prev,
+        quizzesAttempted: count || 0
+      }));
+    } catch (error) {
+      console.error('Error fetching quiz stats:', error);
+    }
+  };
+
+  const fetchCommunityStats = async () => {
+    if (!user) return;
+    try {
+      // Count community posts and comments as connections
+      const [postsResult, commentsResult] = await Promise.all([
+        supabase.from('community_posts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('post_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+      ]);
+      
+      const connections = (postsResult.count || 0) + (commentsResult.count || 0);
+      
+      setDashboardStats(prev => ({
+        ...prev,
+        communityConnections: connections
+      }));
+    } catch (error) {
+      console.error('Error fetching community stats:', error);
+    }
+  };
+
+  const fetchAIInteractionCount = async () => {
+    if (!user) return 0;
+    try {
+      // Direct query to ai_interactions table using a manual count
+      const { data } = await supabase
+        .from('ai_interactions' as any)
+        .select('id')
+        .eq('user_id', user.id);
+      
+      return data?.length || 0;
+    } catch (error) {
+      console.error('Error counting AI interactions:', error);
+      return 0;
+    }
+  };
+
+  const fetchImpactPoints = async () => {
+    if (!user) return;
+    try {
+      // Get impact points from user profile first, then calculate additional based on activities
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('impact_points')
+        .eq('id', user.id)
+        .single();
+
+      const profilePoints = profile?.impact_points || 0;
+
+      // Calculate additional points based on activities if profile points are low
+      const [lessonStats, quizCount, communityPosts, communityComments, aiInteractionCount] = await Promise.all([
+        lessonProgressService.getUserStats(user.id),
+        supabase.from('lesson_quiz_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('community_posts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('post_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        fetchAIInteractionCount()
+      ]);
+
+      // Use profile points if available, otherwise calculate
+      const calculatedPoints = profilePoints || (
+        (lessonStats.completedLessons * 10) + // 10 points per lesson
+        ((quizCount.count || 0) * 2) + // 2 points per quiz attempt
+        ((communityPosts.count || 0) * 15) + // 15 points per community post
+        ((communityComments.count || 0) * 5) + // 5 points per comment
+        (aiInteractionCount * 3) // 3 points per AI interaction
+      );
+
+      setDashboardStats(prev => ({
+        ...prev,
+        impactPoints: calculatedPoints
+      }));
+    } catch (error) {
+      console.error('Error calculating impact points:', error);
+    }
+  };
 
   const stats = [
-    { label: 'Impact Points', value: '0', icon: Award, color: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Lessons Completed', value: '0', icon: BookOpen, color: 'text-green-600 dark:text-green-400' },
-    { label: 'AI Interactions', value: aiStats?.totalInteractions?.toString() || '0', icon: Brain, color: 'text-purple-600 dark:text-purple-400' },
-    { label: 'Quizzes Attempted', value: '0', icon: Target, color: 'text-green-600 dark:text-green-400' },
-    { label: 'Community Connections', value: '0', icon: Users, color: 'text-indigo-600 dark:text-indigo-400' },
+    { label: 'Impact Points', value: loading ? '...' : dashboardStats.impactPoints.toString(), icon: Award, color: 'text-blue-600 dark:text-blue-400' },
+    { label: 'Lessons Completed', value: loading ? '...' : dashboardStats.lessonsCompleted.toString(), icon: BookOpen, color: 'text-green-600 dark:text-green-400' },
+    { label: 'AI Interactions', value: loading ? '...' : (aiStats?.totalInteractions?.toString() || '0'), icon: Brain, color: 'text-purple-600 dark:text-purple-400' },
+    { label: 'Quizzes Attempted', value: loading ? '...' : dashboardStats.quizzesAttempted.toString(), icon: Target, color: 'text-green-600 dark:text-green-400' },
+    { label: 'Community Connections', value: loading ? '...' : dashboardStats.communityConnections.toString(), icon: Users, color: 'text-indigo-600 dark:text-indigo-400' },
   ];
 
   const quickActions = [
@@ -218,7 +418,7 @@ const Dashboard = () => {
                             </div>
                             <div className="w-full bg-muted rounded-full h-1.5 mt-2">
                               <div
-                                className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full"
+                                className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all duration-300"
                                 style={{ width: `${lesson.progress}%` }}
                               ></div>
                             </div>

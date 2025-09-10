@@ -89,10 +89,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
 
   useEffect(() => {
     fetchLessons();
-    // Initialize AI Learning Observer when user opens lessons
-    if (user && selectedSubject !== 'all') {
-      aiLearningObserver.initializeAutoConnection();
-    }
+    // Initialize AI Learning Observer when user opens lessons (removed duplicate initialization)
   }, [user, selectedSubject, selectedDifficulty, sortBy]);
 
   const fetchSubjects = useCallback(async () => {

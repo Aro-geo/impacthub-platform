@@ -11,13 +11,26 @@ export const useAI = () => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Initialize AI learning observer when hook is first used
+  // Initialize AI learning observer when hook is first used (with singleton protection)
   useEffect(() => {
-    aiLearningObserver.initializeAutoConnection();
+    // Only initialize if not already done to prevent multiple connections
+    const initializeOnce = async () => {
+      try {
+        await aiLearningObserver.initializeAutoConnection();
+      } catch (error) {
+        console.warn('AI Learning Observer already initialized');
+      }
+    };
+    initializeOnce();
   }, []);
 
   // Create a ref to track if the component is still mounted
   const isMountedRef = useRef(true);
+  
+  // Throttling for getUserStats to prevent excessive calls
+  const lastGetStatsCall = useRef<number>(0);
+  const STATS_THROTTLE_MS = 1000; // 1 second throttle
+  
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
@@ -340,9 +353,124 @@ export const useAI = () => {
     useReasoningModel: (prompt: string, options: any = {}) =>
       executeAITask(() => aiService.getReasonedResponse(prompt, options), 'complex_problem_solving', options, 'Reasoning completed'),
     
-    // Get user AI statistics
+    // STREAMING METHODS - Enable real-time token-by-token output
+    
+    /**
+     * Stream a general AI response with real-time token output
+     */
+    streamResponse: async (
+      prompt: string,
+      options: AIRequestOptions & { 
+        onToken?: (token: string) => void;
+        onComplete?: (response: string) => void;
+        onError?: (error: Error) => void;
+      } = {},
+      taskType: string = 'general'
+    ) => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await aiService.streamResponse(prompt, options, taskType);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to stream response';
+        setError(errorMessage);
+        console.error('Stream response error:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    /**
+     * Stream a reasoned response using DeepSeek Reasoner model with real-time output
+     */
+    streamReasonedResponse: async (
+      prompt: string,
+      options: AIRequestOptions & {
+        onToken?: (token: string) => void;
+        onComplete?: (response: string) => void;
+        onError?: (error: Error) => void;
+      } = {}
+    ) => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await aiService.streamReasonedResponse(prompt, options);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to stream reasoned response';
+        setError(errorMessage);
+        console.error('Stream reasoned response error:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    /**
+     * Stream conversational learning with real-time output
+     */
+    streamConversationalLearning: async (
+      topic: string,
+      userMessage: string,
+      learningLevel: string = 'intermediate',
+      options: AIRequestOptions & {
+        onToken?: (token: string) => void;
+        onComplete?: (response: string) => void;
+        onError?: (error: Error) => void;
+      } = {}
+    ) => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await aiService.streamConversationalLearning(topic, userMessage, learningLevel, options);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to stream conversational learning';
+        setError(errorMessage);
+        console.error('Stream conversational learning error:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    /**
+     * Stream homework help with real-time output
+     */
+    streamHomeworkHelp: async (
+      question: string,
+      subject: string,
+      options: AIRequestOptions & {
+        onToken?: (token: string) => void;
+        onComplete?: (response: string) => void;
+        onError?: (error: Error) => void;
+      } = {}
+    ) => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await aiService.streamHomeworkHelp(question, subject, options);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to stream homework help';
+        setError(errorMessage);
+        console.error('Stream homework help error:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    // Get user AI statistics (with throttling)
     getUserStats: async () => {
       if (!user) return null;
+      
+      // Throttle to prevent excessive calls
+      const now = Date.now();
+      if (now - lastGetStatsCall.current < STATS_THROTTLE_MS) {
+        console.log('getUserStats throttled, skipping call');
+        return null;
+      }
+      lastGetStatsCall.current = now;
+      
       return await aiTrackingService.getUserStats(user.id);
     },
     

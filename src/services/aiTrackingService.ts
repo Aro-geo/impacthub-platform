@@ -53,6 +53,10 @@ class AITrackingService {
   // Process validation cache to avoid repeated checks
   private validatedUserIds = new Set<string>();
   private invalidUserIds = new Set<string>();
+  
+  // Query cache to prevent duplicate requests
+  private statsCache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_DURATION = 30000; // 30 seconds cache
 
   // Start tracking an AI interaction - only when processing begins
   async startInteraction(userId: string, type: AIInteractionType, inputData?: any): Promise<string> {
@@ -129,9 +133,20 @@ class AITrackingService {
           })
           .eq('id', interactionId);
       }
+      
+      // Clear cache for this user when new interaction is completed
+      if (userId) {
+        this.clearUserStatsCache(userId);
+      }
     } catch (error) {
       console.error('Failed to complete AI interaction tracking:', error);
     }
+  }
+  
+  // Clear stats cache for a specific user
+  private clearUserStatsCache(userId: string): void {
+    const cacheKey = `stats_${userId}`;
+    this.statsCache.delete(cacheKey);
   }
   
   // Schedule background processing of the interaction queue
@@ -171,6 +186,10 @@ class AITrackingService {
             tokens_used: item.tokensUsed,
             completed_at: new Date().toISOString(),
           })));
+        
+        // Clear cache for users whose interactions were processed
+        const processedUserIds = new Set(validInteractions.map(item => item.userId));
+        processedUserIds.forEach(userId => this.clearUserStatsCache(userId));
       }
     } catch (error) {
       console.error('Failed to process AI interaction batch:', error);
@@ -326,50 +345,64 @@ class AITrackingService {
 
   // Get user's AI usage statistics
   async getUserStats(userId: string): Promise<any> {
+    // Check cache first
+    const cacheKey = `stats_${userId}`;
+    const cached = this.statsCache.get(cacheKey);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < this.CACHE_DURATION) {
+      return cached.data;
+    }
+
     try {
-      // Get total interactions
-      const { count: totalInteractions } = await supabase
-        .from('ai_interactions')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+      // Combine queries to reduce database load
+      const [
+        totalInteractionsResult,
+        successfulInteractionsResult,
+        recentStatsResult,
+        interactionTypesResult
+      ] = await Promise.all([
+        supabase
+          .from('ai_interactions')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId),
+        supabase
+          .from('ai_interactions')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('status', 'completed'),
+        supabase
+          .from('ai_usage_stats')
+          .select('*')
+          .eq('user_id', userId)
+          .order('date', { ascending: false })
+          .limit(30),
+        supabase
+          .from('ai_interactions')
+          .select('interaction_type')
+          .eq('user_id', userId)
+          .eq('status', 'completed')
+      ]);
 
-      // Get successful interactions
-      const { count: successfulInteractions } = await supabase
-        .from('ai_interactions')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('status', 'completed');
-
-      // Get recent usage stats
-      const { data: recentStats } = await supabase
-        .from('ai_usage_stats')
-        .select('*')
-        .eq('user_id', userId)
-        .order('date', { ascending: false })
-        .limit(30);
-
-      // Get most used interaction types
-      const { data: interactionTypes } = await supabase
-        .from('ai_interactions')
-        .select('interaction_type')
-        .eq('user_id', userId)
-        .eq('status', 'completed');
-
-      const typeCount = interactionTypes?.reduce((acc, item) => {
+      const typeCount = interactionTypesResult.data?.reduce((acc, item) => {
         acc[item.interaction_type] = (acc[item.interaction_type] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
 
-      return {
-        totalInteractions: totalInteractions || 0,
-        successfulInteractions: successfulInteractions || 0,
-        failedInteractions: (totalInteractions || 0) - (successfulInteractions || 0),
-        recentStats: recentStats || [],
+      const result = {
+        totalInteractions: totalInteractionsResult.count || 0,
+        successfulInteractions: successfulInteractionsResult.count || 0,
+        failedInteractions: (totalInteractionsResult.count || 0) - (successfulInteractionsResult.count || 0),
+        recentStats: recentStatsResult.data || [],
         mostUsedTypes: Object.entries(typeCount)
           .sort(([,a], [,b]) => b - a)
           .slice(0, 5)
           .map(([type, count]) => ({ type, count })),
       };
+
+      // Cache the result
+      this.statsCache.set(cacheKey, { data: result, timestamp: now });
+      return result;
     } catch (error) {
       console.error('Failed to get user AI stats:', error);
       return {

@@ -392,11 +392,11 @@ const Index = () => {
                     </div>
                     
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                      <label htmlFor="index-email" className="block text-sm font-medium text-foreground mb-2">
                         Email
                       </label>
                       <input
-                        id="email"
+                        id="index-email"
                         name="email"
                         type="email"
                         className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"

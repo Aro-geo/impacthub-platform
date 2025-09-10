@@ -77,6 +77,49 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
     try {
       setLoading(true);
       
+      // First, get the user's profile to check grade and admin status
+      let userGrade = null;
+      let isAdmin = false;
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('grade, role')
+          .eq('id', user.id)
+          .single();
+        
+        isAdmin = profile?.role === 'admin' || user.email === 'geokullo@gmail.com';
+        userGrade = profile?.grade;
+      }
+
+      // Get lesson IDs that match the user's grade and subject filters
+      let lessonQuery = supabase
+        .from('simple_lessons')
+        .select('id')
+        .eq('is_published', true);
+
+      // Apply grade filter for non-admin users
+      if (userGrade && !isAdmin) {
+        lessonQuery = lessonQuery.eq('grade', userGrade);
+      }
+
+      // Apply subject filter if specified
+      if (selectedSubject !== 'all') {
+        lessonQuery = lessonQuery.eq('subject_id', selectedSubject);
+      }
+
+      const { data: lessons, error: lessonError } = await lessonQuery;
+      if (lessonError) throw lessonError;
+
+      const lessonIds = lessons?.map(l => l.id) || [];
+      
+      // If no lessons match the criteria, return empty
+      if (lessonIds.length === 0) {
+        setQuizzes([]);
+        return;
+      }
+
+      // Now get quizzes for those lessons
       let query = supabase
         .from('lesson_quizzes')
         .select(`
@@ -85,6 +128,7 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
           options,
           correct_answer,
           explanation,
+          lesson_id,
           simple_lessons!inner (
             id,
             title,
@@ -98,9 +142,11 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({
         .order('order_index');
 
       if (selectedLessonId) {
+        // Filter by specific lesson if provided
         query = query.eq('lesson_id', selectedLessonId);
-      } else if (selectedSubject !== 'all') {
-        query = query.eq('simple_lessons.subject_id', selectedSubject);
+      } else {
+        // Filter by the grade-appropriate lesson IDs
+        query = query.in('lesson_id', lessonIds);
       }
 
       const { data, error } = await query;

@@ -177,11 +177,11 @@ const ImpactLearnAuth = () => {
               
               {authMethod === 'email' ? (
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-base font-medium">
+                  <Label htmlFor="impact-email" className="text-base font-medium">
                     Email Address
                   </Label>
                   <Input
-                    id="email"
+                    id="impact-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}

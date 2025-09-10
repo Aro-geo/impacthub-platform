@@ -22,6 +22,19 @@ interface AIResponse {
   };
 }
 
+interface AIStreamResponse {
+  choices: Array<{
+    delta: {
+      content?: string;
+    };
+    finish_reason?: string;
+  }>;
+  error?: {
+    message: string;
+    type: string;
+  };
+}
+
 // Temperature settings for different task types
 const TEMPERATURE_SETTINGS = {
   CODING_MATH: 0.0,        // Precise, deterministic responses
@@ -45,6 +58,10 @@ export interface AIRequestOptions {
   maxTokens?: number;
   history?: Array<{ role: string; content: string }>;
   systemPrompt?: string;
+  stream?: boolean;
+  onToken?: (token: string) => void;
+  onComplete?: (fullResponse: string) => void;
+  onError?: (error: Error) => void;
 }
 
 class AIService {
@@ -225,6 +242,141 @@ class AIService {
       this.requestQueue.push(executeRequest);
       this.processRequestQueue();
     });
+  }
+
+  // Streaming version of makeRequest for real-time token output
+  private async makeStreamRequest(
+    messages: Array<{ role: string; content: string }>, 
+    options: AIRequestOptions = {},
+    taskType?: string
+  ): Promise<void> {
+    const { 
+      temperature, 
+      maxTokens = 800, 
+      onToken, 
+      onComplete, 
+      onError 
+    } = options;
+
+    // Check if API is configured
+    if (!DEEPSEEK_API_KEY) {
+      const error = new Error('DeepSeek API is not properly configured. Please check your environment variables.');
+      onError?.(error);
+      throw error;
+    }
+
+    // Get optimal settings for this task
+    const taskSettings = taskType ? getTaskSettings(taskType) : {
+      temperature: temperature ?? TEMPERATURE_SETTINGS.STRUCTURED_CONTENT,
+      maxTokens,
+      model: AI_CONFIG.MODELS.CHAT,
+      topP: AI_CONFIG.QUALITY.TOP_P,
+      frequencyPenalty: AI_CONFIG.QUALITY.FREQUENCY_PENALTY,
+      presencePenalty: AI_CONFIG.QUALITY.PRESENCE_PENALTY
+    };
+    
+    // Use provided parameters or fall back to task-optimized settings
+    const finalTemperature = temperature ?? taskSettings.temperature;
+    const finalMaxTokens = maxTokens !== 800 ? maxTokens : taskSettings.maxTokens;
+    const modelToUse = taskSettings.model;
+    
+    console.log(`🚀 Streaming with ${modelToUse} for task: ${taskType || 'general'} (temp: ${finalTemperature}, tokens: ${finalMaxTokens})`);
+
+    try {
+      const response = await fetch(`${DEEPSEEK_API_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+          'User-Agent': 'ImpactHub/1.0',
+        },
+        body: JSON.stringify({
+          model: modelToUse,
+          messages,
+          temperature: finalTemperature,
+          max_tokens: finalMaxTokens,
+          stream: true, // Enable streaming
+          top_p: taskSettings.topP,
+          frequency_penalty: taskSettings.frequencyPenalty,
+          presence_penalty: taskSettings.presencePenalty,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('AI API Error Response:', errorText);
+        const error = new Error(`AI API error (${response.status}): ${response.statusText}`);
+        onError?.(error);
+        throw error;
+      }
+
+      if (!response.body) {
+        const error = new Error('No response body available for streaming');
+        onError?.(error);
+        throw error;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.trim() === '') continue;
+            if (line.trim() === 'data: [DONE]') continue;
+            
+            if (line.startsWith('data: ')) {
+              try {
+                const jsonData = line.slice(6); // Remove 'data: ' prefix
+                const data: AIStreamResponse = JSON.parse(jsonData);
+
+                if (data.error) {
+                  const error = new Error(`AI API returned error: ${data.error.message}`);
+                  onError?.(error);
+                  throw error;
+                }
+
+                const content = data.choices[0]?.delta?.content;
+                if (content) {
+                  fullResponse += content;
+                  onToken?.(content); // Send each token to the callback
+                }
+
+                // Check if streaming is complete
+                if (data.choices[0]?.finish_reason === 'stop') {
+                  break;
+                }
+              } catch (parseError) {
+                console.warn('Failed to parse streaming chunk:', line);
+                // Continue processing other chunks
+              }
+            }
+          }
+        }
+
+        // Format the complete response
+        const formattedResponse = this.formatStructuredResponse(fullResponse);
+        console.log(`Streaming completed with model: ${modelToUse}, temperature: ${finalTemperature}`);
+        onComplete?.(formattedResponse);
+
+      } finally {
+        reader.releaseLock();
+      }
+
+    } catch (error) {
+      console.error('AI Streaming Error:', error);
+      const finalError = error instanceof Error ? error : new Error('Failed to get streaming AI response');
+      onError?.(finalError);
+      throw finalError;
+    }
   }
 
   // Format structured response - preserve markdown formatting
@@ -1014,6 +1166,158 @@ Please generate engaging, original content that will resonate with this audience
       );
     } catch (error) {
       console.error('Error in getReasonedResponse:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Stream a response using real-time token-by-token output
+   */
+  async streamResponse(
+    prompt: string, 
+    options: AIRequestOptions = {},
+    taskType: string = 'general'
+  ): Promise<void> {
+    try {
+      const { history = [], systemPrompt = this.getDefaultSystemPrompt('default') } = options;
+      
+      // Build messages array
+      const messages = this.buildMessagesArray(prompt, history, systemPrompt);
+      
+      // Use streaming with appropriate settings
+      await this.makeStreamRequest(
+        messages,
+        options,
+        taskType
+      );
+    } catch (error) {
+      console.error('Error in streamResponse:', error);
+      options.onError?.(error instanceof Error ? error : new Error('Failed to stream response'));
+      throw error;
+    }
+  }
+
+  /**
+   * Stream a reasoned response using the DeepSeek Reasoner model with real-time output
+   */
+  async streamReasonedResponse(
+    prompt: string, 
+    options: AIRequestOptions = {}
+  ): Promise<void> {
+    try {
+      const { history = [], systemPrompt = this.getDefaultSystemPrompt('reasoning') } = options;
+      
+      // Build messages array
+      const messages = this.buildMessagesArray(prompt, history, systemPrompt);
+      
+      // Use streaming with reasoner model settings
+      await this.makeStreamRequest(
+        messages,
+        {
+          ...options,
+          maxTokens: options.maxTokens || 1200
+        },
+        'complex_problem_solving'
+      );
+    } catch (error) {
+      console.error('Error in streamReasonedResponse:', error);
+      options.onError?.(error instanceof Error ? error : new Error('Failed to stream reasoned response'));
+      throw error;
+    }
+  }
+
+  /**
+   * Stream conversational learning responses with real-time output
+   */
+  async streamConversationalLearning(
+    topic: string,
+    userMessage: string,
+    learningLevel: string = 'intermediate',
+    options: AIRequestOptions = {}
+  ): Promise<void> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a friendly and engaging conversational learning companion using DeepSeek's chat capabilities. Your role is to make learning enjoyable and accessible through natural conversation.
+
+## Conversational Learning Approach:
+- **Friendly Tone**: Use warm, encouraging language
+- **Active Engagement**: Ask questions to maintain dialogue
+- **Adaptive Explanation**: Match the learner's level and interests
+- **Real-World Connections**: Relate concepts to everyday experiences
+- **Encouragement**: Celebrate progress and curiosity
+
+## Learning Facilitation:
+- Build on what the learner already knows
+- Use analogies and examples they can relate to
+- Encourage questions and exploration
+- Make complex topics approachable
+- Maintain conversation flow naturally
+
+Keep responses conversational but informative, adapting to ${learningLevel} level.`
+      },
+      {
+        role: 'user',
+        content: `Topic: ${topic}
+Learning Level: ${learningLevel}
+
+Student says: "${userMessage}"
+
+Please respond in a friendly, conversational way that helps them learn about this topic.`
+      }
+    ];
+
+    try {
+      await this.makeStreamRequest(
+        messages,
+        {
+          ...options,
+          maxTokens: options.maxTokens || 800
+        },
+        'ai_tutor'
+      );
+    } catch (error) {
+      console.error('Error in streamConversationalLearning:', error);
+      options.onError?.(error instanceof Error ? error : new Error('Failed to stream conversational learning'));
+      throw error;
+    }
+  }
+
+  /**
+   * Stream homework help with real-time output
+   */
+  async streamHomeworkHelp(
+    question: string,
+    subject: string,
+    options: AIRequestOptions = {}
+  ): Promise<void> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a knowledgeable tutor specializing in ${subject}. Provide clear, step-by-step explanations that help students understand concepts rather than just giving answers.`
+      },
+      {
+        role: 'user',
+        content: `Subject: ${subject}
+
+Question: ${question}
+
+Please provide a detailed explanation with step-by-step reasoning.`
+      }
+    ];
+
+    try {
+      await this.makeStreamRequest(
+        messages,
+        {
+          ...options,
+          maxTokens: options.maxTokens || 1000
+        },
+        'homework_help'
+      );
+    } catch (error) {
+      console.error('Error in streamHomeworkHelp:', error);
+      options.onError?.(error instanceof Error ? error : new Error('Failed to stream homework help'));
       throw error;
     }
   }

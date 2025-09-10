@@ -251,9 +251,9 @@ const FloatingAuthModal: React.FC<FloatingAuthModalProps> = ({
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="floating-email">Email</Label>
                 <Input
-                  id="email"
+                  id="floating-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
