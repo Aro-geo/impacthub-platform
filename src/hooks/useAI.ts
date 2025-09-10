@@ -459,6 +459,97 @@ export const useAI = () => {
       }
     },
 
+    /**
+     * Stream AI Tutor response with real-time output
+     */
+    streamAITutorResponse: async (
+      userQuestion: string,
+      lessonTitle: string,
+      lessonContent: string,
+      subject: string,
+      difficultyLevel: string,
+      conversationHistory: string,
+      options: AIRequestOptions & {
+        onToken?: (token: string) => void;
+        onComplete?: (response: string) => void;
+        onError?: (error: Error) => void;
+      } = {}
+    ) => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await aiService.streamAITutorResponse(
+          userQuestion,
+          lessonTitle,
+          lessonContent,
+          subject,
+          difficultyLevel,
+          conversationHistory,
+          options
+        );
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to stream AI tutor response';
+        setError(errorMessage);
+        console.error('Stream AI tutor response error:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    /**
+     * Stream quiz creation with real-time output
+     */
+    streamQuizFromContent: async (
+      content: string,
+      difficulty: string = 'easy',
+      options: AIRequestOptions & {
+        onToken?: (token: string) => void;
+        onComplete?: (response: string) => void;
+        onError?: (error: Error) => void;
+      } = {}
+    ) => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await aiService.streamQuizFromContent(content, difficulty, options);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to stream quiz creation';
+        setError(errorMessage);
+        console.error('Stream quiz creation error:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    /**
+     * Stream learning path generation with real-time output
+     */
+    streamLearningPath: async (
+      userSkills: string[],
+      interests: string[],
+      currentLevel: string,
+      options: AIRequestOptions & {
+        onToken?: (token: string) => void;
+        onComplete?: (response: string) => void;
+        onError?: (error: Error) => void;
+      } = {}
+    ) => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await aiService.streamLearningPath(userSkills, interests, currentLevel, options);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to stream learning path generation';
+        setError(errorMessage);
+        console.error('Stream learning path error:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+
     // Get user AI statistics (with throttling)
     getUserStats: async () => {
       if (!user) return null;

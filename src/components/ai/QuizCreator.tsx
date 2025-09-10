@@ -29,7 +29,7 @@ const QuizCreator = () => {
   const [processingStage, setProcessingStage] = useState('');
   const resultRef = useRef<HTMLDivElement>(null);
 
-  const { createQuiz, loading } = useAI();
+  const { streamQuizFromContent, loading } = useAI();
 
   // Scroll to results when content is available
   useEffect(() => {
@@ -73,31 +73,52 @@ const QuizCreator = () => {
 
     setIsGenerating(true);
     setQuiz(null);
+    
+    let streamedContent = '';
 
     try {
-      // Start the quiz creation process
-      const resultPromise = createQuiz(content, difficulty);
-      
-      // We're already showing loading state through the processing stages,
-      // so we can directly await the result
-      const result = await resultPromise;
-      
+      await streamQuizFromContent(content, difficulty, {
+        onToken: (token: string) => {
+          streamedContent += token;
+          setProcessingStage('Generating quiz...');
+        },
+        onComplete: (response: string) => {
+          console.log('Quiz creation completed:', response);
+          streamedContent = response;
+          processQuizResponse(streamedContent);
+        },
+        onError: (error: Error) => {
+          console.error('Error creating quiz:', error);
+          alert('Error creating quiz. Please try again with different content.');
+          createFallbackQuiz();
+        }
+      });
+    } catch (error) {
+      console.error('Error creating quiz:', error);
+      alert('Error creating quiz. Please try again with different content.');
+      createFallbackQuiz();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const processQuizResponse = (result: string) => {
+    try {
       if (!result) {
-        console.error('createQuiz returned null or undefined');
-        alert('The AI service encountered an error while creating the quiz. This might be due to content length, API limits, or service issues. Try with shorter content or use the sample quiz.');
-        setIsGenerating(false);
+        console.error('processQuizResponse received null or undefined');
+        createFallbackQuiz();
         return;
       }
 
       if (typeof result !== 'string') {
-        console.error('createQuiz returned non-string result:', result);
-        alert('Unexpected response format from AI service. Please try again.');
+        console.error('processQuizResponse received non-string result:', result);
+        createFallbackQuiz();
         return;
       }
 
       if (result.length === 0) {
-        console.error('createQuiz returned empty string');
-        alert('AI service returned empty response. Please try with different content.');
+        console.error('processQuizResponse received empty string');
+        createFallbackQuiz();
         return;
       }
 
@@ -110,7 +131,6 @@ const QuizCreator = () => {
 
       if (jsonStart === -1 || jsonEnd === 0) {
         console.error('No JSON found in response');
-        // Try to create a fallback quiz
         createFallbackQuiz();
         return;
       }
@@ -139,11 +159,8 @@ const QuizCreator = () => {
       setUserAnswers([]);
       setShowResults(false);
     } catch (error) {
-      console.error('Error creating quiz:', error);
-      alert('Error parsing quiz data. Please try again with different content.');
+      console.error('Error parsing quiz data:', error);
       createFallbackQuiz();
-    } finally {
-      setIsGenerating(false);
     }
   };
 

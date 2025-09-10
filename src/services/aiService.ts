@@ -465,6 +465,59 @@ class AIService {
     }
   }
 
+  /**
+   * Stream learning path generation with real-time output
+   */
+  async streamLearningPath(
+    userSkills: string[], 
+    interests: string[], 
+    currentLevel: string,
+    options: AIRequestOptions = {}
+  ): Promise<void> {
+    console.log('Streaming learning path with:', { userSkills, interests, currentLevel });
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a friendly teacher helping students learn. Structure your response with clear headers and bullet points. Use markdown formatting: ## for main headers, ### for subheaders, and - for bullet points. Write in simple, clear language. Always start with a main header (##) and organize content in logical sections with bullet points for key information.'
+      },
+      {
+        role: 'user',
+        content: `I am a ${currentLevel} student. My skills are: ${userSkills.join(', ')}. I am interested in: ${interests.join(', ')}. Please create a structured learning plan for me with the following sections:
+
+## Your Personalized Learning Path
+
+### Current Assessment
+- Analyze my current skills
+
+### Recommended Learning Areas
+- List 3-4 key areas to focus on
+
+### Step-by-Step Plan
+- Provide a clear progression path
+
+### Resources & Next Steps
+- Suggest specific resources and actions`
+      }
+    ];
+
+    try {
+      await this.makeStreamRequest(
+        messages,
+        {
+          ...options,
+          maxTokens: options.maxTokens || 800
+        },
+        'learning_path_generation'
+      );
+      console.log('Learning path streaming completed successfully');
+    } catch (error) {
+      console.error('Error in streamLearningPath:', error);
+      options.onError?.(error instanceof Error ? error : new Error('Failed to stream learning path'));
+      throw error;
+    }
+  }
+
   async createQuizFromContent(content: string, difficulty: string = 'easy'): Promise<string> {
     const messages = [
       {
@@ -478,6 +531,41 @@ class AIService {
     ];
 
     return this.makeRequest(messages, undefined, 800, 'quiz_creation');
+  }
+
+  /**
+   * Stream quiz creation with real-time output
+   */
+  async streamQuizFromContent(
+    content: string, 
+    difficulty: string = 'easy',
+    options: AIRequestOptions = {}
+  ): Promise<void> {
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a teacher creating simple quizzes for students. Make questions easy to understand. Use simple words. Create exactly 5 questions. Return ONLY valid JSON format with no extra text, explanations, or markdown. The JSON must be properly formatted and parseable.'
+      },
+      {
+        role: 'user',
+        content: `Create a simple ${difficulty} level quiz from this text: "${content}". Return only this JSON format with exactly 5 questions: {"questions": [{"question": "What is the main topic?", "options": ["Option A", "Option B", "Option C", "Option D"], "correct": 0, "explanation": "Brief explanation"}]}`
+      }
+    ];
+
+    try {
+      await this.makeStreamRequest(
+        messages,
+        {
+          ...options,
+          maxTokens: options.maxTokens || 800
+        },
+        'quiz_creation'
+      );
+    } catch (error) {
+      console.error('Error in streamQuizFromContent:', error);
+      options.onError?.(error instanceof Error ? error : new Error('Failed to stream quiz creation'));
+      throw error;
+    }
   }
 
   async provideHomeworkHelp(question: string, subject: string): Promise<string> {
@@ -697,6 +785,103 @@ Please respond as an AI tutor following the balanced questioning guidelines abov
     ];
 
     return this.makeRequest(messages, undefined, 800, 'ai_tutor');
+  }
+
+  /**
+   * Stream AI Tutor response with real-time output
+   */
+  async streamAITutorResponse(
+    userQuestion: string,
+    lessonTitle: string,
+    lessonContent: string,
+    subject: string,
+    difficultyLevel: string,
+    conversationHistory: string,
+    options: AIRequestOptions = {}
+  ): Promise<void> {
+    const getGradeLevel = (difficulty: string): string => {
+      switch (difficulty.toLowerCase()) {
+        case 'beginner':
+          return 'elementary (grades 5-6)';
+        case 'intermediate':
+          return 'middle school (grades 7-9)';
+        case 'advanced':
+          return 'high school (grades 10-12)';
+        default:
+          return 'middle school (grades 7-9)';
+      }
+    };
+
+    const gradeLevel = getGradeLevel(difficultyLevel);
+    
+    const messages = [
+      {
+        role: 'system',
+        content: `# AI Tutor System Prompt - Mathematics, Science & Technology (Grades 5-12)
+
+## Core Identity and Role
+You are an AI tutor designed to guide students through learning concepts in Mathematics, Science, and Technology for grades 5-12. Your primary role is to facilitate understanding through guided discovery rather than providing direct answers. You act as a supportive learning companion who helps students think through problems and concepts step by step.
+
+## Current Context
+- **Lesson**: "${lessonTitle}"
+- **Subject**: "${subject}"
+- **Student Level**: ${gradeLevel}
+- **Lesson Content Summary**: "${lessonContent.substring(0, 300)}..."
+
+## CORE RULE: BALANCED QUESTIONING - QUALITY OVER QUANTITY
+**Ask fewer, better questions.** Each question should have a clear purpose and move the student forward in their learning.
+
+### Question Limits Per Response
+- **Maximum 2 questions per response** (ideally just 1)
+- **Wait for student's answer** before asking the next question
+- **If you must ask 2 questions**, make the second one optional: "If you want to explore this further, you might also think about..."
+
+### When to Ask Questions vs When to Guide
+
+#### ASK QUESTIONS when:
+- Student seems confident and ready to think independently
+- You need to check their understanding of a key concept
+- Student has made an error and needs to discover it themselves
+- Student is at a decision point and needs to choose an approach
+
+#### PROVIDE GUIDANCE when:
+- Student seems overwhelmed or frustrated
+- Student has already answered several questions correctly
+- You're introducing a completely new concept
+- Student explicitly asks for help or direction
+
+Remember: Your goal is to guide learning, not to quiz students. Questions should feel like natural conversation, not an interrogation. Most of the time, students learn better from clear guidance combined with occasional strategic questions rather than constant questioning.`
+      },
+      {
+        role: 'user',
+        content: `Based on our lesson "${lessonTitle}" in ${subject}, a student is asking: "${userQuestion}"
+
+Previous conversation context:
+${conversationHistory}
+
+Please respond as an AI tutor following the balanced questioning guidelines above. Remember:
+- Ask a MAXIMUM of 2 questions per response (ideally just 1)
+- Provide guidance and direction rather than multiple questions
+- Use clear explanations, examples, and encouragement
+- Guide the student to discover the answer step by step
+- Use markdown formatting and keep your response helpful but focused.`
+      }
+    ];
+
+    try {
+      await this.makeStreamRequest(
+        messages,
+        {
+          ...options,
+          maxTokens: options.maxTokens || 800
+        },
+        'ai_tutor'
+      );
+    } catch (error) {
+      console.error('Error in streamAITutorResponse:', error);
+      options.onError?.(error instanceof Error ? error : new Error('Failed to stream AI tutor response'));
+      throw error;
+    }
   }
 
   // Advanced Reasoning with DeepSeek Reasoner Model

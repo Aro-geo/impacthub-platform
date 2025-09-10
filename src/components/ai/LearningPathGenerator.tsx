@@ -20,7 +20,7 @@ const LearningPathGenerator = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const resultRef = useRef<HTMLDivElement>(null);
 
-    const { generateLearningPath, loading } = useAI();
+    const { streamLearningPath, loading } = useAI();
 
     const addSkill = () => {
         if (newSkill.trim() && !skills.includes(newSkill.trim())) {
@@ -87,19 +87,28 @@ const LearningPathGenerator = () => {
             setIsGenerating(true);
             setLearningPath(''); // Clear previous results
             
-            // Start showing placeholder content while waiting for real content
-            const result = await generateLearningPath(skills, interests, currentLevel);
+            let streamedContent = '';
             
-            if (result) {
-                // Small delay to ensure smooth transition from placeholder to real content
-                setTimeout(() => {
-                    setLearningPath(result);
-                    setIsGenerating(false);
-                }, 300);
-            } else {
-                setLearningPath("Sorry, I couldn't generate a learning path right now. Please try again later.");
-                setIsGenerating(false);
-            }
+            await streamLearningPath(
+                skills,
+                interests,
+                currentLevel,
+                {
+                    onToken: (token: string) => {
+                        streamedContent += token;
+                        setLearningPath(streamedContent);
+                    },
+                    onComplete: (response: string) => {
+                        setLearningPath(response);
+                        setIsGenerating(false);
+                    },
+                    onError: (error: Error) => {
+                        console.error('Learning path generation error:', error);
+                        setLearningPath("There was an error generating your learning path. Please check your internet connection and try again.");
+                        setIsGenerating(false);
+                    }
+                }
+            );
         } catch (error) {
             console.error('Learning path generation error:', error);
             setLearningPath("There was an error generating your learning path. Please check your internet connection and try again.");

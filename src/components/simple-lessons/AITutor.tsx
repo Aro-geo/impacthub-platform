@@ -36,7 +36,7 @@ const AITutor: React.FC<AITutorProps> = ({
   const [hasInitialized, setHasInitialized] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { getAITutorResponse, loading } = useAI();
+  const { streamAITutorResponse, loading } = useAI();
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -99,43 +99,70 @@ What would you like to explore about this ${subject} lesson? Is there a particul
     setInputMessage('');
     setIsGenerating(true);
 
-    try {
-      const context = `
-        Lesson: ${lessonTitle}
-        Subject: ${subject}
-        Lesson Content: ${lessonContent}
-        
-        Please provide helpful guidance on the student's question about this lesson. Guide them through understanding rather than giving direct answers.
-      `;
+    // Create a placeholder assistant message for streaming
+    const assistantMessageId = `assistant-${Date.now()}`;
+    const assistantMessage: ChatMessage = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, assistantMessage]);
 
-      const response = await getAITutorResponse(
+    try {
+      // Build conversation history for context
+      const conversationHistory = messages
+        .map(msg => `${msg.role === 'user' ? 'Student' : 'AI Tutor'}: ${msg.content}`)
+        .join('\n\n');
+
+      await streamAITutorResponse(
         inputMessage,
-        context,
         lessonTitle,
         lessonContent,
         subject,
-        difficultyLevel
+        difficultyLevel,
+        conversationHistory,
+        {
+          onToken: (token: string) => {
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: msg.content + token }
+                  : msg
+              )
+            );
+          },
+          onComplete: (response: string) => {
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: response }
+                  : msg
+              )
+            );
+          },
+          onError: (error: Error) => {
+            console.error('Error getting AI response:', error);
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: 'I apologize, but I encountered an error. Please try asking your question again.' }
+                  : msg
+              )
+            );
+          }
+        }
       );
-      
-      if (response) {
-        const assistantMessage: ChatMessage = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: response,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, assistantMessage]);
-      }
     } catch (error) {
       console.error('Error getting AI response:', error);
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please try asking your question again.',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === assistantMessageId 
+            ? { ...msg, content: 'I apologize, but I encountered an error. Please try asking your question again.' }
+            : msg
+        )
+      );
     } finally {
       setIsGenerating(false);
     }

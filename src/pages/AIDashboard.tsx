@@ -23,7 +23,6 @@ import HomeworkHelper from '@/components/ai/HomeworkHelper';
 import SustainabilityCalculator from '@/components/ai/SustainabilityCalculator';
 import MentorshipMatcher from '@/components/ai/MentorshipMatcher';
 import AccessibilityTools from '@/components/ai/AccessibilityTools';
-import StreamingDemo from '@/components/ai/StreamingDemo';
 
 
 const AIDashboard = () => {
@@ -56,15 +55,6 @@ const AIDashboard = () => {
   };
 
   const aiFeatures = [
-    {
-      id: 'streaming',
-      title: 'Real-time AI Streaming',
-      description: 'Experience AI responses in real-time with token-by-token streaming',
-      icon: Zap,
-      category: 'Technology',
-      color: 'text-yellow-600 dark:text-yellow-400',
-      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20'
-    },
     {
       id: 'learning-path',
       title: 'Learning Path Generator',
@@ -149,9 +139,8 @@ const AIDashboard = () => {
             setActiveTab(value);
           }
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="streaming">Streaming</TabsTrigger>
             <TabsTrigger value="learning-path">Learning Path</TabsTrigger>
             <TabsTrigger value="quiz-creator">Quiz Creator</TabsTrigger>
             <TabsTrigger value="homework-helper">Homework Help</TabsTrigger>
@@ -229,11 +218,6 @@ const AIDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          {/* Real-time Streaming Demo */}
-          <TabsContent value="streaming">
-            <StreamingDemo />
           </TabsContent>
 
           {/* AI Feature Tabs */}
