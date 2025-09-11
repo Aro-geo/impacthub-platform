@@ -105,7 +105,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   return (
     <>
       {/* Status Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-2 md:hidden safe-area-top">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-4 py-2 md:hidden safe-area-top">
         <div className="flex items-center justify-between">
           <Logo size="sm" showText />
           
@@ -117,7 +117,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border md:hidden safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 md:hidden safe-area-bottom">
         <div className="grid grid-cols-5 h-16">
           {navItems.map((item) => {
             const Icon = item.icon;

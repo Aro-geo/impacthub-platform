@@ -452,19 +452,19 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 dark:bg-slate-950 text-white py-16 px-4">
+      <footer className="bg-white dark:bg-slate-950 text-gray-900 dark:text-white py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <Logo size="md" variant="white" showText className="mb-4" />
-              <p className="text-gray-400 mb-4">
+              <Logo size="md" variant="default" showText className="mb-4" />
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Transforming education through AI-powered learning pathways and simple lessons for everyone.
               </p>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4">AI Learning</h4>
-              <ul className="space-y-2 text-gray-400">
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
                 <li>Learning Path Generator</li>
                 <li>AI Quiz Creator</li>
                 <li>Homework Helper</li>
@@ -474,7 +474,7 @@ const Index = () => {
             
             <div>
               <h4 className="font-semibold mb-4">Simple Lessons</h4>
-              <ul className="space-y-2 text-gray-400">
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
                 <li>Visual Learning</li>
                 <li>Self-paced Progress</li>
                 <li>Basic Skills</li>
@@ -484,7 +484,7 @@ const Index = () => {
             
             <div>
               <h4 className="font-semibold mb-4">Community</h4>
-              <ul className="space-y-2 text-gray-400">
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
                 <li>Mentorship Matching</li>
                 <li>Learning Groups</li>
                 <li>Impact Tracking</li>
@@ -493,8 +493,8 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="border-t border-gray-800 pt-8 text-center">
-            <p className="text-gray-400">
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 text-center">
+            <p className="text-gray-600 dark:text-gray-400">
               © 2024 ImpactHub AI. Made with ❤️ for global education equity and social impact.
             </p>
           </div>
