@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/ui/logo';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 import {
   DropdownMenu,
@@ -13,14 +14,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Play, GraduationCap, Shield } from 'lucide-react';
+import { User, Settings, LogOut, Play, GraduationCap, Shield, Menu, Home, BookOpen, Brain, Users as UsersIcon, Target } from 'lucide-react';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 
 const Navigation = () => {
-  const { user, signOut, userProfile } = useAuth();
+  const { user, signOut, userProfile, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navigationItems = [
+    { name: 'Dashboard', href: '/dashboard', icon: Home, requiresAuth: true },
+    { name: 'Simple Lessons', href: '/simple-lessons', icon: BookOpen, requiresAuth: true },
+    { name: 'AI Tools', href: '/ai-dashboard', icon: Brain, requiresAuth: true },
+    { name: 'Practice', href: '/practice', icon: Target, requiresAuth: true },
+    { name: 'Community', href: '/community', icon: UsersIcon, requiresAuth: false },
+  ];
+
+  const filteredNavItems = navigationItems.filter(item => 
+    !item.requiresAuth || user
+  );
 
   const handleAuthAction = () => {
     if (user) {
@@ -60,15 +74,76 @@ const Navigation = () => {
     return 'U';
   };
 
-  // Check if user is admin
-  const isAdmin = user?.email === 'geokullo@gmail.com';
+  const MobileSidebar = () => (
+    <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="sm" className="md:hidden">
+          <Menu className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-80 p-0">
+        <div className="flex flex-col h-full">
+          <div className="p-6 border-b">
+            <Logo size="lg" showText />
+          </div>
+          <nav className="flex-1 p-4 space-y-2">
+            {filteredNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => {
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg hover:bg-accent transition-colors"
+                >
+                  <Icon className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium">{item.name}</span>
+                </button>
+              );
+            })}
+          </nav>
+          {user && (
+            <div className="p-4 border-t">
+              <div className="flex items-center space-x-3 mb-4">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={user.user_metadata?.avatar_url} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium text-sm">{getFirstName()}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => {
+                  signOut();
+                  setSidebarOpen(false);
+                }}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
 
   return (
     <nav className="bg-background/95 backdrop-blur-sm border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center">
+          {/* Logo and Mobile Menu */}
+          <div className="flex items-center space-x-4">
+            <MobileSidebar />
             <div className="flex-shrink-0">
               <button
                 onClick={() => navigate('/')}

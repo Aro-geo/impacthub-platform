@@ -491,8 +491,8 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       {/* Filters */}
       {showSearch && (
         <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <CardContent className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             <div className="lg:col-span-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -549,8 +549,8 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       {/* Lessons Grid/List - Only show when subject is selected */}
       {selectedSubject !== 'all' && filteredLessons.length > 0 ? (
         <div className={viewMode === 'grid' 
-          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          : "space-y-4"
+          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+          : "space-y-3 sm:space-y-4"
         }>
           {filteredLessons.map((lesson) => (
             <LessonCard

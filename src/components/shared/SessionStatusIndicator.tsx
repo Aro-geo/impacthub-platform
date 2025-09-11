@@ -1,110 +1,108 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Wifi, WifiOff, Clock, RefreshCw } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOffline } from '@/hooks/useOffline';
-import { serviceWorkerUtils } from '@/utils/serviceWorkerUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 
-const SessionStatusIndicator = () => {
-  const { user, session, loading } = useAuth();
-  const { isOnline } = useOffline();
-  const [sessionWarning, setSessionWarning] = useState<string | null>(null);
-  const [showStatus, setShowStatus] = useState(false);
+const SessionStatusIndicator: React.FC = () => {
+  const { user, session } = useAuth();
+  const [sessionStatus, setSessionStatus] = useState<'active' | 'refreshing' | 'expired' | 'offline'>('active');
+  const [timeUntilExpiry, setTimeUntilExpiry] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!session) {
+      setSessionStatus('offline');
+      return;
+    }
+
     const checkSessionStatus = () => {
-      if (!user || !session) {
-        setSessionWarning(null);
-        setShowStatus(false);
-        return;
-      }
-
-      const now = Math.floor(Date.now() / 1000);
       const expiresAt = session.expires_at;
-      const timeUntilExpiry = expiresAt - now;
+      const now = Math.floor(Date.now() / 1000);
+      const timeLeft = expiresAt - now;
 
-      if (timeUntilExpiry < 300) { // Less than 5 minutes
-        setSessionWarning('Your session will expire soon. Please save your work.');
-        setShowStatus(true);
-      } else if (timeUntilExpiry < 600) { // Less than 10 minutes
-        setSessionWarning('Your session is active.');
-        setShowStatus(false);
+      setTimeUntilExpiry(timeLeft);
+
+      if (timeLeft <= 0) {
+        setSessionStatus('expired');
+      } else if (timeLeft < 300) { // Less than 5 minutes
+        setSessionStatus('refreshing');
       } else {
-        setSessionWarning(null);
-        setShowStatus(false);
+        setSessionStatus('active');
       }
     };
 
-    // Check immediately and then every minute
+    // Check immediately
     checkSessionStatus();
-    const interval = setInterval(checkSessionStatus, 60000);
+
+    // Check every 30 seconds
+    const interval = setInterval(checkSessionStatus, 30000);
 
     return () => clearInterval(interval);
-  }, [user, session]);
+  }, [session]);
 
-  const handleRefresh = () => {
-    window.location.reload();
+  // Auto-refresh session when it's about to expire
+  useEffect(() => {
+    if (sessionStatus === 'refreshing' && session) {
+      const refreshSession = async () => {
+        try {
+          await supabase.auth.refreshSession();
+        } catch (error) {
+          console.error('Failed to refresh session:', error);
+          setSessionStatus('expired');
+        }
+      };
+
+      refreshSession();
+    }
+  }, [sessionStatus, session]);
+
+  if (!user) return null;
+
+  const getStatusIcon = () => {
+    switch (sessionStatus) {
+      case 'refreshing':
+        return <RefreshCw className="h-3 w-3 animate-spin" />;
+      case 'expired':
+      case 'offline':
+        return <WifiOff className="h-3 w-3" />;
+      default:
+        return <Wifi className="h-3 w-3" />;
+    }
   };
 
-  const handleClearCache = () => {
-    serviceWorkerUtils.clearAllCaches();
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+  const getStatusColor = () => {
+    switch (sessionStatus) {
+      case 'refreshing':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
+      case 'expired':
+      case 'offline':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
+      default:
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+    }
   };
 
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="fixed top-4 right-4 z-50">
-        <Alert className="w-80">
-          <Clock className="h-4 w-4" />
-          <AlertDescription>
-            Loading...
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  const getStatusText = () => {
+    switch (sessionStatus) {
+      case 'refreshing':
+        return 'Refreshing...';
+      case 'expired':
+        return 'Session Expired';
+      case 'offline':
+        return 'Offline';
+      default:
+        return 'Connected';
+    }
+  };
 
-  // Show offline status
-  if (!isOnline) {
-    return (
-      <div className="fixed top-4 right-4 z-50">
-        <Alert variant="destructive" className="w-80">
-          <WifiOff className="h-4 w-4" />
-          <AlertDescription>
-            You're offline. Some features may not work properly.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  // Show session warning
-  if (showStatus && sessionWarning) {
-    return (
-      <div className="fixed top-4 right-4 z-50">
-        <Alert variant="default" className="w-80">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>{sessionWarning}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              className="ml-2"
-            >
-              <RefreshCw className="h-3 w-3" />
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  return null;
+  return (
+    <div className="fixed top-4 right-4 z-50 md:hidden">
+      <Badge className={`${getStatusColor()} flex items-center space-x-1`}>
+        {getStatusIcon()}
+        <span className="text-xs">{getStatusText()}</span>
+      </Badge>
+    </div>
+  );
 };
 
 export default SessionStatusIndicator;

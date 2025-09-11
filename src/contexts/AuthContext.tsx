@@ -103,67 +103,118 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let mounted = true;
+
+    // Initialize session on mount
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          if (mounted) {
+            setLoading(false);
+          }
+          return;
+        }
+
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+
+          if (session?.user) {
+            const profile = await fetchUserProfile(session.user.id);
+            setUserProfile(profile);
+            const isAdminUser = profile?.role === 'admin' || session.user.email === 'geokullo@gmail.com';
+            setIsAdmin(isAdminUser);
+
+            // Set up periodic session check
+            const interval = setInterval(checkAndRefreshSession, 2 * 60 * 1000);
+            setSessionCheckInterval(interval);
+          } else {
+            setUserProfile(null);
+            setIsAdmin(false);
+          }
+          
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event);
+        console.log('Auth state changed:', event, session?.user?.id);
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        if (!mounted) return;
 
-        // Notify service worker about auth state change
-        serviceWorkerUtils.notifyAuthStateChanged(!!session, session);
+        // Handle different auth events
+        switch (event) {
+          case 'SIGNED_IN':
+          case 'TOKEN_REFRESHED':
+            setSession(session);
+            setUser(session?.user ?? null);
+            if (session?.user) {
+              const profile = await fetchUserProfile(session.user.id);
+              setUserProfile(profile);
+              const isAdminUser = profile?.role === 'admin' || session.user.email === 'geokullo@gmail.com';
+              setIsAdmin(isAdminUser);
 
-        if (session?.user) {
-          const profile = await fetchUserProfile(session.user.id);
-          setUserProfile(profile);
-          // Check if user is admin
-          const isAdminUser = profile?.role === 'admin' || session.user.email === 'geokullo@gmail.com';
-          setIsAdmin(isAdminUser);
-
-          // Set up periodic session check (every 2 minutes)
-          if (sessionCheckInterval) {
-            clearInterval(sessionCheckInterval);
-          }
-          const interval = setInterval(checkAndRefreshSession, 2 * 60 * 1000);
-          setSessionCheckInterval(interval);
-        } else {
-          setUserProfile(null);
-          setIsAdmin(false);
+              // Set up periodic session check
+              if (sessionCheckInterval) {
+                clearInterval(sessionCheckInterval);
+              }
+              const interval = setInterval(checkAndRefreshSession, 2 * 60 * 1000);
+              setSessionCheckInterval(interval);
+            }
+            break;
           
-          // Clear session check interval
-          if (sessionCheckInterval) {
-            clearInterval(sessionCheckInterval);
-            setSessionCheckInterval(null);
-          }
+          case 'SIGNED_OUT':
+            setSession(null);
+            setUser(null);
+            setUserProfile(null);
+            setIsAdmin(false);
+            if (sessionCheckInterval) {
+              clearInterval(sessionCheckInterval);
+              setSessionCheckInterval(null);
+            }
+            break;
+          
+          default:
+            setSession(session);
+            setUser(session?.user ?? null);
+            if (session?.user) {
+              const profile = await fetchUserProfile(session.user.id);
+              setUserProfile(profile);
+              const isAdminUser = profile?.role === 'admin' || session.user.email === 'geokullo@gmail.com';
+              setIsAdmin(isAdminUser);
+            } else {
+              setUserProfile(null);
+              setIsAdmin(false);
+            }
         }
-
+        
+        // Notify service worker about auth state change
+        try {
+          serviceWorkerUtils.notifyAuthStateChanged(!!session, session);
+        } catch (error) {
+          console.warn('Service worker notification failed:', error);
+        }
+        
         setLoading(false);
       }
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Initialize auth
+    initializeAuth();
 
-      if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        setUserProfile(profile);
-        // Check if user is admin
-        const isAdminUser = profile?.role === 'admin' || session?.user.email === 'geokullo@gmail.com';
-        setIsAdmin(isAdminUser);
-
-        // Set up periodic session check
-        const interval = setInterval(checkAndRefreshSession, 2 * 60 * 1000);
-        setSessionCheckInterval(interval);
-      }
-
-      setLoading(false);
-    });
-
-    // Cleanup on unmount
     return () => {
+      mounted = false;
       subscription.unsubscribe();
       if (sessionCheckInterval) {
         clearInterval(sessionCheckInterval);
@@ -201,15 +252,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      // Clear session check interval
+      if (sessionCheckInterval) {
+        clearInterval(sessionCheckInterval);
+        setSessionCheckInterval(null);
+      }
+
+      // Sign out from Supabase
       await supabase.auth.signOut();
+      
       // Clear user state immediately
       setUser(null);
       setSession(null);
       setUserProfile(null);
+      setIsAdmin(false);
+      
+      // Broadcast session update to other tabs
+      serviceWorkerUtils.broadcastSessionUpdate();
+      
       // Redirect to landing page after logout
       window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
+      // Clear state even if signOut fails
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      setIsAdmin(false);
+      
       // Force redirect even if there's an error
       window.location.href = '/';
     }

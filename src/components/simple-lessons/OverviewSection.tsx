@@ -376,14 +376,14 @@ const OverviewSection = ({ userStats, onRefresh, onNavigateToTab }: OverviewSect
 
       {/* Progress Overview */}
       <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Your Learning Progress</h2>
-              <p className="text-blue-100 dark:text-blue-200">{getMotivationalMessage()}</p>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
+            <div className="flex-1">
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">Your Learning Progress</h2>
+              <p className="text-blue-100 dark:text-blue-200 text-sm sm:text-base">{getMotivationalMessage()}</p>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold">{userStats.completionPercentage}%</div>
+            <div className="text-center sm:text-right">
+              <div className="text-2xl sm:text-3xl font-bold">{userStats.completionPercentage}%</div>
               <div className="text-blue-100 dark:text-blue-200 text-sm">Complete</div>
             </div>
           </div>
@@ -400,7 +400,7 @@ const OverviewSection = ({ userStats, onRefresh, onNavigateToTab }: OverviewSect
 
 
       {/* Continue Learning & Suggestions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Continue Where You Left Off */}
         <Card className="bg-card dark:bg-card">
           <CardHeader>

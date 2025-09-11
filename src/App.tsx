@@ -12,13 +12,14 @@ import MobileNavigation from "@/components/MobileNavigation";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import { useOffline } from "@/hooks/useOffline";
+import { useSessionPersistence } from "@/hooks/useSessionPersistence";
 import { aiLearningObserver } from "@/services/aiLearningObserver";
 import runDatabaseChecks from "@/utils/subjectDebugger";
 import debugSimpleLessons from "@/utils/lessonDebugger";
 import DatabaseOptimizer from "@/components/shared/DatabaseOptimizer";
 import AppOptimizer from "@/components/shared/AppOptimizer";
 import SessionStatusIndicator from "@/components/shared/SessionStatusIndicator";
-import { registerServiceWorker } from "@/utils/serviceWorkerUtils";
+import { serviceWorkerUtils } from "@/utils/serviceWorkerUtils";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 
 // Lazy load all page components for code splitting
@@ -48,6 +49,9 @@ const AppContent = () => {
   
   // Monitor page visibility for session validation
   usePageVisibility();
+  
+  // Enable session persistence
+  useSessionPersistence();
 
   // Run database checks when app starts in development
   useEffect(() => {
@@ -58,8 +62,8 @@ const AppContent = () => {
       debugSimpleLessons();
     }
 
-    // Register service worker in all environments
-    registerServiceWorker();
+    // Initialize session sync across tabs
+    serviceWorkerUtils.syncSessionAcrossTabs();
   }, []);
 
   // AI Learning Observer will be initialized when user opens lessons

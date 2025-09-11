@@ -164,25 +164,25 @@ const SimpleLessonDashboard = () => {
     <div className="min-h-screen">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Simple Lessons</h1>
-          <p className="text-muted-foreground mt-2">Continue your learning journey</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Simple Lessons</h1>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">Continue your learning journey</p>
         </div>
 
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
           {/* Navigation Tabs */}
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1">
             {tabItems.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex items-center space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                className="flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-sm py-2 sm:py-1.5 px-2 min-h-[60px] sm:min-h-[44px]"
               >
-                <tab.icon className={`h-4 w-4 ${tab.color}`} />
-                <span className="hidden sm:inline">{tab.label}</span>
+                <tab.icon className={`h-5 w-5 sm:h-4 sm:w-4 ${tab.color}`} />
+                <span className="text-xs sm:text-sm font-medium">{tab.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
