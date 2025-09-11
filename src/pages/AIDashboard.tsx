@@ -21,7 +21,6 @@ import LearningPathGenerator from '@/components/ai/LearningPathGenerator';
 import QuizCreator from '@/components/ai/QuizCreator';
 import HomeworkHelper from '@/components/ai/HomeworkHelper';
 import SustainabilityCalculator from '@/components/ai/SustainabilityCalculator';
-import MentorshipMatcher from '@/components/ai/MentorshipMatcher';
 import AccessibilityTools from '@/components/ai/AccessibilityTools';
 
 
@@ -99,15 +98,6 @@ const AIDashboard = () => {
       category: 'Sustainability',
       color: 'text-emerald-600 dark:text-emerald-400',
       bgColor: 'bg-emerald-50 dark:bg-emerald-900/20'
-    },
-    {
-      id: 'mentorship',
-      title: 'Mentorship Matcher',
-      description: 'Find perfect mentor-mentee matches using AI',
-      icon: Users,
-      category: 'Community',
-      color: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-50 dark:bg-orange-900/20'
     }
   ];
 
@@ -139,14 +129,13 @@ const AIDashboard = () => {
             setActiveTab(value);
           }
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="learning-path">Learning Path</TabsTrigger>
             <TabsTrigger value="quiz-creator">Quiz Creator</TabsTrigger>
             <TabsTrigger value="homework-helper">Homework Help</TabsTrigger>
             <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
             <TabsTrigger value="sustainability">Sustainability</TabsTrigger>
-            <TabsTrigger value="mentorship">Mentorship</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -239,10 +228,6 @@ const AIDashboard = () => {
 
           <TabsContent value="sustainability">
             <SustainabilityCalculator />
-          </TabsContent>
-
-          <TabsContent value="mentorship">
-            <MentorshipMatcher />
           </TabsContent>
 
         </Tabs>
