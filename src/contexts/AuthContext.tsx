@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Check and refresh session if needed
+  // Check and refresh session if needed (defensive; Supabase autoRefreshToken handles most cases)
   const checkAndRefreshSession = async () => {
     try {
       const { data: { session: currentSession }, error } = await supabase.auth.getSession();
@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
 
-    // Initialize session on mount
+    // Initialize session on mount – restore persisted auth before first paint of protected UI
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    // Set up auth state listener
+    // Single global auth state listener (Supabase already refreshes tokens in background)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.id);
@@ -156,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Handle different auth events
         switch (event) {
           case 'SIGNED_IN':
-          case 'TOKEN_REFRESHED':
+          case 'TOKEN_REFRESHED': // Explicitly handle silent refresh events
             setSession(session);
             setUser(session?.user ?? null);
             if (session?.user) {
@@ -165,12 +165,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const isAdminUser = profile?.role === 'admin' || session.user.email === 'geokullo@gmail.com';
               setIsAdmin(isAdminUser);
 
-              // Set up periodic session check
-              if (sessionCheckInterval) {
-                clearInterval(sessionCheckInterval);
+              // Avoid stacking intervals (keep a single defensive checker)
+              if (!sessionCheckInterval) {
+                const interval = setInterval(checkAndRefreshSession, 2 * 60 * 1000);
+                setSessionCheckInterval(interval);
               }
-              const interval = setInterval(checkAndRefreshSession, 2 * 60 * 1000);
-              setSessionCheckInterval(interval);
             }
             break;
           
@@ -185,7 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             break;
           
-          default:
+          default: // USER_UPDATED, PASSWORD_RECOVERY, etc.
             setSession(session);
             setUser(session?.user ?? null);
             if (session?.user) {
@@ -210,7 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Initialize auth
+  // Initialize auth (restore persisted session once listener is ready)
     initializeAuth();
 
     return () => {

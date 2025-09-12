@@ -32,10 +32,17 @@ export const useSessionPersistence = () => {
   }, []);
 
   // Handle storage events for cross-tab session sync
-  const handleStorageChange = useCallback((event: StorageEvent) => {
+  const handleStorageChange = useCallback(async (event: StorageEvent) => {
     if (event.key === 'impacthub-auth' && event.newValue !== event.oldValue) {
-      // Session changed in another tab, reload to sync
-      window.location.reload();
+      // Session changed in another tab. Instead of a full reload (which was causing UI flicker
+      // and perceived "disappearance" after idle), we just fetch the latest session so that
+      // Supabase's auth state change listener in AuthContext will reconcile state.
+      try {
+        console.log('[SessionPersistence] Detected cross-tab auth change, synchronizing session');
+        await supabase.auth.getSession();
+      } catch (e) {
+        console.warn('[SessionPersistence] Failed to sync session after storage change', e);
+      }
     }
   }, []);
 

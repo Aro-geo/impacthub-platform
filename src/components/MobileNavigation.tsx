@@ -53,7 +53,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       id: 'community',
       label: 'Community',
       icon: Users,
-      path: '/dashboard',
+      path: '/community',
       requiresAuth: true
     },
     {
