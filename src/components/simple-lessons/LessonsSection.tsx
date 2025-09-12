@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useLessons } from '@/hooks/useLessons';
 import { aiLearningObserver } from '@/services/aiLearningObserver';
 import { 
   Search, 
@@ -52,9 +53,11 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
   className = ''
 }) => {
   const { user, userProfile, isAdmin } = useAuth();
-  const [lessons, setLessons] = useState<Lesson[]>([]);
+  // Local UI state now derived from resilient hook
+  const [lessons, setLessons] = useState<Lesson[]>([]); // will be fed from hook (kept for minimal change footprint)
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [loading, setLoading] = useState(true);
+  // loading now derived from useLessons hook
+  const [legacyLoading] = useState(false); // retained to minimize structural diff (unused)
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
@@ -74,23 +77,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
 
   useEffect(() => {
     fetchSubjects();
-    
-    // Setup event listener for lesson completion to refresh lessons list
-    const handleLessonCompleted = () => {
-      fetchLessons();
-    };
-    
-    window.addEventListener('lessonCompleted', handleLessonCompleted);
-    
-    return () => {
-      window.removeEventListener('lessonCompleted', handleLessonCompleted);
-    };
-  }, []); // Only fetch subjects once
-
-  useEffect(() => {
-    fetchLessons();
-    // Initialize AI Learning Observer when user opens lessons (removed duplicate initialization)
-  }, [user, selectedSubject, selectedDifficulty, sortBy]);
+  }, []);
 
   const fetchSubjects = useCallback(async () => {
     try {
@@ -121,170 +108,21 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
     }
   }, []);
 
-  const fetchLessons = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // Optimized query with minimal data selection
+  // Use resilient hook
+  const { lessons: hookLessons, loading: hookLoading, error: hookError, stale, refetch } = useLessons({
+    subject: selectedSubject,
+    difficulty: selectedDifficulty,
+    userId: user ? user.id : null,
+    grade: userProfile?.grade ?? null,
+    isAdmin,
+    sortBy,
+    limit: 10
+  });
 
-      let query = supabase
-        .from('simple_lessons')
-        .select(`
-          id,
-          title,
-          description,
-          difficulty_level,
-          duration_minutes,
-          subject_id,
-          order_index,
-          grade,
-          subjects!fk_subject (
-            id,
-            name,
-            color,
-            icon
-          )
-        `)
-        .eq('is_published', true)
-        .not('subject_id', 'is', null)
-        .limit(10); // Further reduced limit for faster loading
-
-      // Apply filters
-      if (selectedSubject !== 'all') {
-        query = query.eq('subject_id', selectedSubject);
-      }
-
-      if (selectedDifficulty !== 'all') {
-        query = query.eq('difficulty_level', selectedDifficulty);
-      }
-
-      // Filter by user grade for non-admin users only
-      if (userProfile?.grade && !isAdmin) {
-        query = query.eq('grade', userProfile.grade);
-      }
-
-      // Apply sorting with index optimization
-      switch (sortBy) {
-        case 'title':
-          query = query.order('title');
-          break;
-        case 'difficulty':
-          query = query.order('difficulty_level');
-          break;
-        case 'duration':
-          query = query.order('duration_minutes');
-          break;
-        default:
-          query = query.order('order_index', { ascending: true }); // Use indexed column
-      }
-
-      // Execute main query first
-      console.log('Fetching lessons for subject:', selectedSubject, 'difficulty:', selectedDifficulty);
-      const { data: lessonsData, error: lessonsError } = await query;
-      console.log('Lessons query result:', { lessonsData, lessonsError });
-      
-      // Always fetch subjects directly to avoid relying on join
-      let subjectMap: Record<string, any> = {};
-      try {
-        // Get all subject IDs from lessons
-        const subjectIds = lessonsData ? [...new Set(lessonsData.filter(l => l.subject_id).map(l => l.subject_id))] : [];
-        console.log('Subject IDs from lessons:', subjectIds);
-        
-        if (subjectIds.length > 0) {
-          // Fetch subjects directly
-          const { data: subjectsData, error: subjectsError } = await supabase
-            .from('subjects')
-            .select('id, name, color, icon')
-            .in('id', subjectIds);
-            
-          if (subjectsError) {
-            console.warn('Error fetching subjects:', subjectsError);
-          } else {
-            console.log('Fetched subjects:', subjectsData);
-            
-            // Create a map for faster lookups
-            subjectMap = (subjectsData || []).reduce((acc, subject) => {
-              acc[subject.id] = subject;
-              return acc;
-            }, {} as Record<string, any>);
-          }
-        }
-      } catch (subjectError) {
-        console.error('Error in subject fetching process:', subjectError);
-      }
-      
-      // Get progress and bookmarks separately (optional)
-      let progressData = [];
-      let bookmarksData = [];
-      
-      if (user) {
-        try {
-          const [progressResult, bookmarksResult] = await Promise.all([
-            supabase.from('lesson_progress').select('lesson_id, status, progress_percentage').eq('user_id', user.id),
-            supabase.from('user_bookmarks').select('lesson_id').eq('user_id', user.id)
-          ]);
-          progressData = progressResult.data || [];
-          bookmarksData = bookmarksResult.data || [];
-        } catch (error) {
-          console.warn('Error fetching user data:', error);
-        }
-      }
-
-      if (lessonsError) {
-        console.error('Lessons query error:', lessonsError);
-        throw lessonsError;
-      }
-
-      // Optimized data processing
-      const progressMap = new Map(
-        (progressData || []).map(p => [p.lesson_id, p])
-      );
-      const bookmarksSet = new Set(
-        (bookmarksData || []).map(b => b.lesson_id)
-      );
-
-      // Efficient data combination with unlock-after-first-completion logic
-      const lessonsWithProgress = (lessonsData || [])
-        .sort((a, b) => a.order_index - b.order_index) // Sort by order first
-        .map((lesson, index, sortedLessons) => {
-          const progress = progressMap.get(lesson.id);
-          
-          // Determine if lesson is locked - unlock all lessons if any lesson has been completed
-          let isLocked = false;
-          if (index > 0) {
-            // Check if ANY lesson has been completed
-            const hasAnyCompletedLesson = Array.from(progressMap.values()).some(
-              p => p.status === 'completed'
-            );
-            // Lock only if no lessons have been completed yet
-            isLocked = !hasAnyCompletedLesson;
-          }
-          
-          // Get subject from our map or fallback
-          const subject = lesson.subject_id && subjectMap[lesson.subject_id] 
-            ? subjectMap[lesson.subject_id]
-            : (lesson.subjects || { id: 'unknown', name: 'Unknown', color: '#cccccc', icon: 'book' });
-            
-          return {
-            ...lesson,
-            subject: subject,
-            progress: progress ? {
-              status: progress.status,
-              progress_percentage: progress.progress_percentage
-            } : { status: 'not_started' as const, progress_percentage: 0 },
-            is_bookmarked: bookmarksSet.has(lesson.id),
-            is_locked: isLocked
-          };
-        });
-
-      setLessons(lessonsWithProgress);
-    } catch (error) {
-      console.error('Error fetching lessons:', error);
-      setLessons([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedSubject, selectedDifficulty, sortBy, user]);
+  // Mirror into local lessons state only when new array identity appears
+  useEffect(() => {
+    if (hookLessons) setLessons(hookLessons as any);
+  }, [hookLessons]);
 
   const toggleBookmark = useCallback(async (lessonId: string) => {
     if (!user) return;
@@ -354,11 +192,11 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
         });
       
       // Refresh lessons to update UI
-      fetchLessons();
+      refetch();
     } catch (error) {
       console.error('Error starting lesson:', error);
     }
-  }, [user, lessons, fetchLessons]);
+  }, [user, lessons, refetch]);
 
   // Memoized filtering for better performance
   const filteredLessons = useMemo(() => {
@@ -402,7 +240,8 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
     </div>
   ), []);
 
-  if (loading) {
+  const loading = hookLoading; // preserve existing local variable usage
+  if (hookLoading && !lessons.length) {
     return LoadingSkeleton;
   }
 
@@ -414,7 +253,7 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
         onClose={() => setSelectedLessonId(null)}
         onLessonComplete={() => {
           // Refresh lessons when lesson is completed to unlock next lesson
-          fetchLessons();
+          refetch();
           // Close the lesson viewer after completion
           setSelectedLessonId(null);
         }}
@@ -547,6 +386,12 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
       )}
 
       {/* Lessons Grid/List - Only show when subject is selected */}
+      {stale && (
+        <div className="text-xs text-muted-foreground">Refreshing lessons…</div>
+      )}
+      {hookError && !lessons.length && (
+        <div className="text-sm text-red-600">{hookError}</div>
+      )}
       {selectedSubject !== 'all' && filteredLessons.length > 0 ? (
         <div className={viewMode === 'grid' 
           ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"

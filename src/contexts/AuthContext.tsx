@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { serviceWorkerUtils } from '@/utils/serviceWorkerUtils';
@@ -37,6 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sessionCheckInterval, setSessionCheckInterval] = useState<NodeJS.Timeout | null>(null);
+  const previousSessionRef = useRef<Session | null>(null);
+  const prevUserIdRef = useRef<string | null>(null);
 
   // Optimized profile fetching with caching
   const fetchUserProfile = async (userId: string) => {
@@ -146,16 +148,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Single global auth state listener (Supabase already refreshes tokens in background)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        let effectiveEvent = event;
+        if (event === 'SIGNED_IN' && prevUserIdRef.current && prevUserIdRef.current === session?.user?.id) {
+          console.log('[auth] duplicate SIGNED_IN treated as TOKEN_REFRESHED');
+          effectiveEvent = 'TOKEN_REFRESHED';
+        }
+        console.log('Auth state changed:', effectiveEvent, session?.user?.id);
+        prevUserIdRef.current = session?.user?.id || null;
         
         if (!mounted) return;
 
         // Handle different auth events
-        switch (event) {
+        switch (effectiveEvent) {
           case 'SIGNED_IN':
           case 'TOKEN_REFRESHED': // Explicitly handle silent refresh events
-            setSession(session);
-            setUser(session?.user ?? null);
+            // Suppress transient null replacements
+            if (session) {
+              setSession(session);
+              setUser(session.user);
+              previousSessionRef.current = session;
+            } else if (previousSessionRef.current) {
+              console.log('[auth] suppressing transient null session during refresh');
+            } else {
+              setSession(null);
+              setUser(null);
+            }
             if (session?.user) {
               const profile = await fetchUserProfile(session.user.id);
               setUserProfile(profile);
@@ -179,11 +196,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               clearInterval(sessionCheckInterval);
               setSessionCheckInterval(null);
             }
+            previousSessionRef.current = null;
             break;
           
           default: // USER_UPDATED, PASSWORD_RECOVERY, etc.
-            setSession(session);
-            setUser(session?.user ?? null);
+            if (session) {
+              setSession(session);
+              setUser(session.user);
+              previousSessionRef.current = session;
+            } else if (previousSessionRef.current) {
+              console.log('[auth] suppressing transient null session (other event)');
+            } else {
+              setSession(null);
+              setUser(null);
+            }
             if (session?.user) {
               const profile = await fetchUserProfile(session.user.id);
               setUserProfile(profile);
