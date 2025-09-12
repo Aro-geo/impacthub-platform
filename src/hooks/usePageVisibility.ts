@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { safeRefreshSession } from '@/integrations/supabase/client';
 
 // Hook to handle page visibility and session validation
 export const usePageVisibility = () => {
@@ -19,54 +20,36 @@ export const usePageVisibility = () => {
         const hiddenDuration = Date.now() - lastVisibleTime.current;
         console.log('Page visible after', hiddenDuration / 1000, 'seconds');
 
-        // If page was hidden for more than 5 minutes, validate session
+        // If page was hidden for more than 5 minutes, validate session (softly, no redirect)
         if (hiddenDuration > 5 * 60 * 1000 && user && session) {
-          console.log('Page was idle for over 5 minutes, validating session...');
-          
+          console.log('Page idle >5m, validating session silently');
           try {
-            // Import dynamically to avoid circular dependencies
             const { supabase } = await import('@/integrations/supabase/client');
             const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-            
-            if (error || !currentSession) {
-              console.log('Session expired during idle time');
-              toast({
-                title: "Session Expired",
-                description: "Please sign in again to continue.",
-                variant: "destructive",
-              });
-              
-              // Force reload to redirect to auth
-              setTimeout(() => {
-                window.location.href = '/auth';
-              }, 2000);
+            if (error) {
+              console.warn('Idle session check error (will retry later):', error);
+            } else if (!currentSession) {
+              // Try one silent refresh before notifying user
+              try {
+                await safeRefreshSession(2);
+                toast({ title: 'Session Restored', description: 'Your session was restored after idle.' });
+              } catch {
+                toast({ title: 'Session Needs Re-login', description: 'Please re-authenticate soon.', variant: 'destructive' });
+              }
             } else {
-              // Check if session is about to expire
-              const expiresAt = currentSession.expires_at;
               const now = Math.floor(Date.now() / 1000);
-              const timeUntilExpiry = expiresAt - now;
-
-              if (timeUntilExpiry < 300) { // Less than 5 minutes
-                console.log('Session expiring soon, attempting refresh...');
-                const { error: refreshError } = await supabase.auth.refreshSession();
-                
-                if (refreshError) {
-                  console.error('Failed to refresh session:', refreshError);
-                  toast({
-                    title: "Session Refresh Failed",
-                    description: "Please sign in again to continue.",
-                    variant: "destructive",
-                  });
-                } else {
-                  toast({
-                    title: "Session Refreshed",
-                    description: "Your session has been automatically renewed.",
-                  });
+              const timeUntilExpiry = currentSession.expires_at - now;
+              if (timeUntilExpiry < 300) {
+                try {
+                  await safeRefreshSession();
+                  console.log('Session refreshed after idle');
+                } catch (err) {
+                  console.warn('Post-idle refresh failed (will rely on auth listener):', err);
                 }
               }
             }
-          } catch (error) {
-            console.error('Error validating session after idle time:', error);
+          } catch (err) {
+            console.error('Idle validation unexpected error:', err);
           }
         }
 

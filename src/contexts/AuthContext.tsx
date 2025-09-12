@@ -81,19 +81,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const timeUntilExpiry = expiresAt - now;
 
         if (timeUntilExpiry < 300) { // Less than 5 minutes
-          console.log('Session expiring soon, refreshing...');
-          const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError) {
-            console.error('Session refresh failed:', refreshError);
-            // Force sign out if refresh fails
-            await signOut();
-            return;
-          }
-
-          if (refreshedSession) {
-            setSession(refreshedSession);
-            setUser(refreshedSession.user);
+          console.log('Session expiring soon, attempting safe refresh...');
+          try {
+            const { safeRefreshSession } = await import('@/integrations/supabase/client');
+            const refreshed = await safeRefreshSession();
+            if (refreshed) {
+              setSession(refreshed);
+              setUser(refreshed.user);
+            }
+          } catch (refreshError) {
+            console.warn('Session refresh attempt failed; will retry later', refreshError);
           }
         }
       }

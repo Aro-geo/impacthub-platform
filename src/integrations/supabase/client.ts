@@ -58,3 +58,26 @@ export const jwtUtils = {
     }
   }
 };
+
+// Exponential backoff session refresh helper
+export async function safeRefreshSession(maxAttempts = 3) {
+  let lastError: any = null;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const start = performance.now();
+      const { data, error } = await supabase.auth.refreshSession();
+      if (!error && data?.session) {
+        console.log('[auth] refresh success', { attempt: attempt + 1, ms: Math.round(performance.now() - start) });
+        return data.session;
+      }
+      lastError = error || new Error('Unknown refresh error');
+    } catch (err) {
+      lastError = err;
+    }
+    // Backoff delay (200ms, 600ms, 1400ms...)
+    const delay = 200 * Math.pow(2, attempt) - (attempt === 0 ? 0 : 0);
+    await new Promise(r => setTimeout(r, delay));
+  }
+  console.warn('[auth] refresh failed after retries', lastError);
+  throw lastError;
+}

@@ -306,14 +306,18 @@ self.addEventListener('message', (event) => {
   }
   
   if (event.data && event.data.type === 'AUTH_STATE_CHANGED') {
-    // Update auth state tracking
-    if (event.data.authenticated && event.data.expiresAt) {
-      authStateExpiry = event.data.expiresAt * 1000; // Convert to milliseconds
+    // Support both new shape (top-level) and legacy payload shape
+    const authenticated = typeof event.data.authenticated === 'boolean'
+      ? event.data.authenticated
+      : event.data.payload?.isAuthenticated;
+    const expiresAt = event.data.expiresAt || event.data.payload?.expiresAt || null;
+
+    if (authenticated && expiresAt) {
+      authStateExpiry = expiresAt * 1000; // Convert to ms
       console.log('Service Worker: Auth state updated, expires at', new Date(authStateExpiry));
     } else {
       authStateExpiry = null;
       console.log('Service Worker: User logged out, clearing auth state');
-      // Clear cached authenticated content
       clearAuthenticatedCache();
     }
   }

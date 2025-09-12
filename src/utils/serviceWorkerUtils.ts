@@ -6,11 +6,9 @@ export const serviceWorkerUtils = {
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
           type: 'AUTH_STATE_CHANGED',
-          payload: {
-            isAuthenticated,
-            userId: session?.user?.id || null,
-            expiresAt: session?.expires_at || null
-          }
+          authenticated: isAuthenticated,
+          userId: session?.user?.id || null,
+          expiresAt: session?.expires_at || null
         });
       }
     } catch (error) {
@@ -24,8 +22,10 @@ export const serviceWorkerUtils = {
     
     channel.addEventListener('message', (event) => {
       if (event.data.type === 'SESSION_UPDATED') {
-        // Force a session check when another tab updates the session
-        window.location.reload();
+        // Soft session sync: trigger session fetch without full reload
+        import('@/integrations/supabase/client').then(({ supabase }) => {
+          supabase.auth.getSession();
+        }).catch(() => {/* ignore */});
       }
     });
 
