@@ -70,6 +70,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip cross-origin requests (e.g., Supabase REST/realtime, CDNs)
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   // Handle different types of requests
   if (url.pathname.startsWith('/api/')) {
     // API requests - network first with cache fallback
@@ -123,8 +128,8 @@ async function networkFirstStrategy(request) {
     if (request.mode === 'navigate') {
       return caches.match('/offline.html');
     }
-    
-    throw error;
+    // For non-navigation requests with no cache, return an error response instead of throwing
+    return new Response('', { status: 504, statusText: 'Gateway Timeout' });
   }
 }
 
@@ -164,8 +169,9 @@ async function cacheFirstStrategy(request, cacheName) {
     if (request.mode === 'navigate') {
       return caches.match('/offline.html');
     }
-    
-    throw error;
+    // For non-navigation requests with no cache, return an error response instead of throwing
+    const fallbackStatus = request.destination === 'script' || request.destination === 'style' || request.destination === 'image' ? 504 : 408;
+    return new Response('', { status: fallbackStatus, statusText: 'Offline or Network Error' });
   }
 }
 
@@ -247,6 +253,14 @@ async function updateActionRetryCount(actionId) {
   // Implementation would update retry count in IndexedDB
   console.log('Updating retry count for action:', actionId);
 }
+
+// Handle auth state messages
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'AUTH_STATE_CHANGED') {
+    authStateExpiry = event.data.expiresAt;
+    console.log('Service Worker: Auth state updated', { expiresAt: authStateExpiry });
+  }
+});
 
 // Push notification handling
 self.addEventListener('push', (event) => {

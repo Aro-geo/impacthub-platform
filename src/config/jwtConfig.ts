@@ -3,31 +3,24 @@
  * This file contains JWT verification settings and public keys
  */
 
+// NOTE: All values now sourced from environment to avoid hard-coding project identifiers.
+// Provide minimal safe fallbacks for local dev only (non-secret). Do NOT commit real keys.
 export const jwtConfig = {
-  // Discovery URL for fetching JSON Web Key Set (JWKS)
-  discoveryUrl: 'https://otxttowidmshxzzfxpdu.supabase.co/auth/v1/.well-known/jwks.json',
-  
-  // JWT Key ID for this Supabase project
-  keyId: 'ea850cb6-6488-49dc-8a38-c8121457ba54',
-  
-  // Public key for JWT verification (JSON Web Key format)
-  publicKey: {
-    "x": "UHfi96E-Mf8_pO8Mnc-_FmKk68d6AN7o3Pww2-W1o7s",
-    "y": "5KfP0xY6zeP-1EukVW6627QB-gDEjF1lk_tMJUb7hXU",
-    "alg": "ES256",
-    "crv": "P-256",
-    "ext": true,
-    "kid": "ea850cb6-6488-49dc-8a38-c8121457ba54",
-    "kty": "EC",
-    "key_ops": [
-      "verify"
-    ]
-  },
-  
-  // JWT Algorithm used by Supabase
+  // Discovery URL for JWKS (public) – constructed from Supabase URL if provided
+  discoveryUrl: `${import.meta.env.VITE_SUPABASE_URL || ''}/auth/v1/.well-known/jwks.json`,
+  // Key ID (public identifier) – optional
+  keyId: import.meta.env.VITE_SUPABASE_JWT_KID || undefined,
+  // Public key (JWK) optionally injected for offline verification caching
+  publicKey: (() => {
+    try {
+      const raw = import.meta.env.VITE_SUPABASE_JWT_JWK;
+      if (raw) return JSON.parse(raw);
+    } catch (e) {
+      console.warn('[jwtConfig] Failed to parse VITE_SUPABASE_JWT_JWK');
+    }
+    return undefined; // Will fetch dynamically
+  })(),
   algorithm: 'ES256',
-  
-  // Curve type for elliptic curve cryptography
   curve: 'P-256'
 };
 
@@ -37,6 +30,9 @@ export const jwtConfig = {
  */
 export const fetchJWKS = async (): Promise<any> => {
   try {
+    if (!jwtConfig.discoveryUrl) {
+      throw new Error('JWKS discovery URL is not configured. Set VITE_SUPABASE_URL.');
+    }
     const response = await fetch(jwtConfig.discoveryUrl);
     if (!response.ok) {
       throw new Error(`Failed to fetch JWKS: ${response.statusText}`);

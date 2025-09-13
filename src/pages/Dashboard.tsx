@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAI } from '@/hooks/useAI';
+// Legacy services kept for fallback; core data now via RPC (useDashboardData)
 import { lessonProgressService } from '@/services/lessonProgressService';
 import { achievementsService } from '@/services/achievementsService';
 import { supabase } from '@/integrations/supabase/client';
+import { useDashboardData, useConnectionHealth } from '@/hooks/useRPCDashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,119 +54,25 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
-  useEffect(() => {
-    const fetchAllStats = async () => {
-      if (!user) return;
-      
-      // Debounce to prevent multiple rapid calls
-      const now = Date.now();
-      if (now - lastFetchTime < 2000) { // 2 second debounce
-        return;
-      }
-      setLastFetchTime(now);
-      
-      setLoading(true);
-      try {
-        // Fetch all data in a single optimized call to reduce concurrent queries
-        await fetchAllStatsOptimized();
-      } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // New RPC-based dashboard data
+  const { data: rpcDashboard, loading: rpcLoading, error: rpcError, lastFetched, refetch } = useDashboardData(!!user);
+  const { healthy: connectionHealthy } = useConnectionHealth(45000);
 
-    const timeoutId = setTimeout(fetchAllStats, 100); // Small delay to batch multiple effect triggers
-    return () => clearTimeout(timeoutId);
-  }, [user, getUserStats, lastFetchTime]);
+  // Merge RPC dashboard data into legacy state for minimal template change
+  useEffect(() => {
+    if (rpcDashboard) {
+      setDashboardStats(prev => ({
+        ...prev,
+        lessonsCompleted: rpcDashboard.completedLessons ?? prev.lessonsCompleted,
+        impactPoints: (rpcDashboard.progress?.completed || 0) * 10 || prev.impactPoints,
+      }));
+      // AI interactions / community connections could be derived later if added to RPC payload
+    }
+  }, [rpcDashboard]);
 
   // Optimized single function to fetch all stats with minimal database calls
-  const fetchAllStatsOptimized = async () => {
-    if (!user) return;
-    
-    try {
-      // Use Promise.allSettled to prevent one failure from blocking others
-      const results = await Promise.allSettled([
-        // AI stats
-        getUserStats(),
-        // Lesson stats
-        lessonProgressService.getUserStats(user.id),
-        // Achievements and streaks
-        achievementsService.getUserAchievements(user.id),
-        achievementsService.getUserStreaks(user.id),
-        // Combined database query for all counts to reduce concurrent requests
-        Promise.all([
-          supabase.from('lesson_quiz_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('community_posts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('post_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('ai_interactions' as any).select('id').eq('user_id', user.id),
-          supabase.from('profiles').select('impact_points').eq('id', user.id).single()
-        ])
-      ]);
-
-      // Process AI stats
-      if (results[0].status === 'fulfilled') {
-        setAiStats(results[0].value);
-      }
-
-      // Process lesson stats
-      if (results[1].status === 'fulfilled') {
-        const lessonStats = results[1].value;
-        setDashboardStats(prev => ({
-          ...prev,
-          lessonsCompleted: lessonStats.completedLessons
-        }));
-      }
-
-      // Process lesson stats
-      if (results[1].status === 'fulfilled') {
-        const lessonStats = results[1].value;
-        setDashboardStats(prev => ({
-          ...prev,
-          lessonsCompleted: lessonStats.completedLessons
-        }));
-      }
-
-      // Process achievements data
-      if (results[2].status === 'fulfilled' && results[3].status === 'fulfilled') {
-        const achievements = results[2].value;
-        const streaks = results[3].value;
-        setAchievementsData({
-          badges: achievements || [],
-          currentStreak: streaks?.current_streak || 0,
-          totalAchievements: achievements?.length || 0
-        });
-      }
-
-      // Process combined database results
-      if (results[4].status === 'fulfilled') {
-        const [quizResult, postsResult, commentsResult, aiInteractionsResult, profileResult] = results[4].value;
-        
-        const quizzesAttempted = quizResult.count || 0;
-        const communityConnections = (postsResult.count || 0) + (commentsResult.count || 0);
-        const aiInteractionCount = aiInteractionsResult?.data?.length || 0;
-        const profilePoints = profileResult?.data?.impact_points || 0;
-        
-        // Calculate impact points
-        const calculatedPoints = profilePoints || (
-          (results[1].status === 'fulfilled' ? results[1].value.completedLessons * 10 : 0) +
-          (quizzesAttempted * 2) +
-          ((postsResult.count || 0) * 15) +
-          ((commentsResult.count || 0) * 5) +
-          (aiInteractionCount * 3)
-        );
-
-        setDashboardStats(prev => ({
-          ...prev,
-          quizzesAttempted,
-          communityConnections,
-          impactPoints: calculatedPoints
-        }));
-      }
-    } catch (error) {
-      console.error('Error in optimized stats fetch:', error);
-    }
-  };
+  // Legacy fetchAllStatsOptimized removed in favor of RPC; keep placeholder for potential fallback usage.
+  const fetchAllStatsOptimized = async () => { /* deprecated: replaced by RPC get_user_dashboard */ };
 
   const fetchAIStats = async () => {
     const stats = await getUserStats();
@@ -276,12 +184,13 @@ const Dashboard = () => {
     }
   };
 
+  const unifiedLoading = loading || rpcLoading;
   const stats = [
-    { label: 'Impact Points', value: loading ? '...' : dashboardStats.impactPoints.toString(), icon: Award, color: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Lessons Completed', value: loading ? '...' : dashboardStats.lessonsCompleted.toString(), icon: BookOpen, color: 'text-green-600 dark:text-green-400' },
-    { label: 'AI Interactions', value: loading ? '...' : (aiStats?.totalInteractions?.toString() || '0'), icon: Brain, color: 'text-purple-600 dark:text-purple-400' },
-    { label: 'Quizzes Attempted', value: loading ? '...' : dashboardStats.quizzesAttempted.toString(), icon: Target, color: 'text-green-600 dark:text-green-400' },
-    { label: 'Community Connections', value: loading ? '...' : dashboardStats.communityConnections.toString(), icon: Users, color: 'text-indigo-600 dark:text-indigo-400' },
+    { label: 'Impact Points', value: unifiedLoading ? '...' : dashboardStats.impactPoints.toString(), icon: Award, color: 'text-blue-600 dark:text-blue-400' },
+    { label: 'Lessons Completed', value: unifiedLoading ? '...' : dashboardStats.lessonsCompleted.toString(), icon: BookOpen, color: 'text-green-600 dark:text-green-400' },
+    { label: 'AI Interactions', value: unifiedLoading ? '...' : (aiStats?.totalInteractions?.toString() || '0'), icon: Brain, color: 'text-purple-600 dark:text-purple-400' },
+    { label: 'Quizzes Attempted', value: unifiedLoading ? '...' : dashboardStats.quizzesAttempted.toString(), icon: Target, color: 'text-green-600 dark:text-green-400' },
+    { label: 'Community Connections', value: unifiedLoading ? '...' : dashboardStats.communityConnections.toString(), icon: Users, color: 'text-indigo-600 dark:text-indigo-400' },
   ];
 
   const quickActions = [

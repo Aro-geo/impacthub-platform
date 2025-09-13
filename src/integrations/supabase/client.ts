@@ -17,6 +17,19 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storageKey: 'impacthub-auth',
     detectSessionInUrl: true,
     flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'x-client-info': 'impacthub-web'
+    }
+  },
+  db: {
+    schema: 'public'
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
 });
 
@@ -56,6 +69,16 @@ export const jwtUtils = {
         await supabase.auth.refreshSession();
       }
     }
+  }
+};
+
+// Add connection health check
+export const checkConnection = async () => {
+  try {
+    const { error } = await supabase.from('profiles').select('id').limit(1);
+    return !error;
+  } catch {
+    return false;
   }
 };
 
