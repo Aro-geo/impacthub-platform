@@ -1,59 +1,104 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
-import { NavigationSidebar } from './NavigationSidebar';
-import { Header } from './Header';
+import { HomeIcon, BookOpen, Sparkles, Users2, User } from 'lucide-react';
+
+const navigationItems = [
+  { name: 'Home', href: '/dashboard', icon: HomeIcon },
+  { name: 'Learn', href: '/learn', icon: BookOpen },
+  { name: 'AI Tools', href: '/ai-dashboard', icon: Sparkles },
+  { name: 'Community', href: '/community', icon: Users2 },
+  { name: 'Profile', href: '/profile', icon: User },
+];
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: LayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile Navigation Sheet */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <div className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-4 lg:hidden">
-          <SheetTrigger asChild>
-            <Button variant="ghost" className="-ml-3 h-auto p-3">
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-          </SheetTrigger>
-          <Header />
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* Header - Responsive for both mobile and desktop */}
+      <header className="sticky top-0 z-40 w-full border-b bg-background">
+        <div className="container flex h-14 items-center">
+          <Link to="/" className="flex items-center space-x-2">
+            <img 
+              src="/logo.svg" 
+              alt="ImpactHub" 
+              className="h-6 w-6" 
+            />
+            <span className="font-bold">ImpactHub</span>
+          </Link>
         </div>
-        <SheetContent side="left" className="w-72 p-0">
-          <NavigationSidebar mobile />
-        </SheetContent>
-      </Sheet>
+      </header>
 
-      {/* Desktop Layout */}
-      {/* Desktop Layout */}
-      <div className="flex h-screen">
-        {/* Desktop Sidebar - hidden on mobile */}
-        <div className="hidden lg:block">
-          <NavigationSidebar />
+      {/* Main Content */}
+      <main className="flex-1 pb-16">
+        <div className="container px-4 py-6">
+          {children}
         </div>
+      </main>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Desktop Header - hidden on mobile */}
-          <div className="hidden lg:block">
-            <Header />
-          </div>
+      {/* Mobile Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background lg:hidden">
+        <div className="container flex h-16 items-center justify-around px-4">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.href;
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-y-auto">
-            <div className="container mx-auto p-4 lg:p-8">
-              {children}
-            </div>
-          </main>
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  "flex flex-col items-center justify-center",
+                  isActive && "text-primary"
+                )}
+              >
+                <Icon className={cn(
+                  "h-5 w-5",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )} />
+                <span className={cn(
+                  "mt-1 text-xs",
+                  isActive ? "text-primary font-medium" : "text-muted-foreground"
+                )}>
+                  {item.name}
+                </span>
+              </Link>
+            );
+          })}
         </div>
-      </div>
+      </nav>
+
+      {/* Desktop Sidebar - Only visible on large screens */}
+      <nav className="fixed left-0 top-14 hidden h-[calc(100vh-3.5rem)] w-64 border-r lg:block">
+        <div className="space-y-4 py-4">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.href;
+
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  "flex items-center space-x-3 px-6 py-2",
+                  isActive && "bg-accent text-accent-foreground"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Desktop Content Padding - Only visible on large screens */}
+      <div className="hidden lg:block lg:pl-64" />
     </div>
   );
 }
