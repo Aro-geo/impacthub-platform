@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import LoadingSpinner from "@/components/ui/loading-spinner";
-import MobileNavigation from "@/components/MobileNavigation";
+import { AppLayout } from "@/components/layout/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import { useOffline } from "@/hooks/useOffline";
@@ -22,6 +22,8 @@ import AppOptimizer from "@/components/shared/AppOptimizer";
 import SessionStatusIndicator from "@/components/shared/SessionStatusIndicator";
 import { serviceWorkerUtils } from "@/utils/serviceWorkerUtils";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
+import { useConnectionRecovery } from "@/hooks/useConnectionRecovery";
+import EmergencyCacheClear from "@/components/shared/EmergencyCacheClear";
 
 // Lazy load all page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -53,6 +55,9 @@ const AppContent = () => {
   
   // Enable session persistence
   useSessionPersistence();
+  
+  // Enable connection recovery
+  useConnectionRecovery();
 
   // Run database checks when app starts in development
   useEffect(() => {
@@ -76,15 +81,16 @@ const AppContent = () => {
       {user && <AppOptimizer />}
       <SessionStatusIndicator />
       <Suspense fallback={<LoadingSpinner size="lg" text="Loading application..." />}>
-        <Routes>
-          <Route 
-            path="/" 
-            element={
-              <Suspense fallback={<LoadingSpinner text="Loading home page..." />}>
-                <Index />
-              </Suspense>
-            } 
-          />
+        <AppLayout>
+          <Routes>
+            <Route 
+              path="/" 
+              element={
+                <Suspense fallback={<LoadingSpinner text="Loading home page..." />}>
+                  <Index />
+                </Suspense>
+              } 
+            />
           <Route 
             path="/auth" 
             element={
@@ -240,10 +246,11 @@ const AppContent = () => {
             } 
           />
         </Routes>
+        </AppLayout>
       </Suspense>
       
-      {/* Mobile Navigation */}
-      <MobileNavigation isOnline={isOnline} syncStatus={syncStatus} />
+      {/* Emergency cache clear for development */}
+      {process.env.NODE_ENV === 'development' && <EmergencyCacheClear />}
     </div>
   );
 };
