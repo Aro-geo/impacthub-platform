@@ -122,22 +122,22 @@ const Index = () => {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
+      <section className="py-12 sm:py-20 px-4">
         <div className="max-w-7xl mx-auto text-center">
-          <div className="mb-8">
-            <div className="inline-flex items-center px-6 py-3 bg-white/80 rounded-full text-blue-700 font-medium mb-6 shadow-lg">
-              <Heart className="w-5 h-5 mr-2 text-red-500" />
+          <div className="mb-6 sm:mb-8">
+            <div className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-white/80 rounded-full text-blue-700 text-sm sm:text-base font-medium mb-4 sm:mb-6 shadow-lg">
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-red-500" />
               AI-Powered Education for Everyone
             </div>
             
-            <h1 className="text-4xl md:text-7xl font-heading font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-7xl font-heading font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
               Learn, Connect,
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-green-600">
                 Create Impact
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-700 mb-6 sm:mb-8 max-w-4xl mx-auto leading-relaxed">
               Transforming education through AI-powered learning pathways. Simple lessons,
               personalized guidance, and community support to help you achieve your goals.
             </p>
@@ -145,10 +145,10 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 hover:from-blue-700 hover:via-purple-700 hover:to-green-700 text-white px-12 py-6 text-xl rounded-2xl shadow-xl"
+                className="bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 hover:from-blue-700 hover:via-purple-700 hover:to-green-700 text-white px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-xl rounded-xl sm:rounded-2xl shadow-xl w-full sm:w-auto"
                 onClick={handleGetStarted}
               >
-                <Play className="mr-3 h-6 w-6" />
+                <Play className="mr-2 sm:mr-3 h-5 sm:h-6 w-5 sm:w-6" />
                 Start Your Journey - Free
               </Button>
             </div>

@@ -72,7 +72,7 @@ export function AppLayout({ children }: LayoutProps) {
                 </SheetContent>
               </Sheet>
 
-              <Link to="/" className="flex items-center space-x-2">
+              <Link to="/" className="flex items-center space-x-2 lg:hidden">
                 <img src="/logo.svg" alt="ImpactHub" className="h-6 w-6" />
                 <span className="font-bold">ImpactHub</span>
               </Link>
