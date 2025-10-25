@@ -311,20 +311,22 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
       {/* Header */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <Button onClick={onClose} variant="ghost" size="sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
+            <Button onClick={onClose} variant="ghost" size="sm" className="w-full sm:w-auto">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Lessons
             </Button>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
               {onPrevious && (
-                <Button onClick={onPrevious} variant="outline" size="sm">
-                  <ArrowLeft className="w-4 h-4" />
+                <Button onClick={onPrevious} variant="outline" size="sm" className="flex-1 sm:flex-none">
+                  <ArrowLeft className="w-4 h-4 sm:mr-0" />
+                  <span className="ml-2 sm:hidden">Previous</span>
                 </Button>
               )}
               {onNext && (
-                <Button onClick={onNext} variant="outline" size="sm">
-                  <ArrowRight className="w-4 h-4" />
+                <Button onClick={onNext} variant="outline" size="sm" className="flex-1 sm:flex-none">
+                  <span className="mr-2 sm:hidden">Next</span>
+                  <ArrowRight className="w-4 h-4 sm:ml-0" />
                 </Button>
               )}
             </div>
@@ -483,28 +485,28 @@ const LessonViewer: React.FC<LessonViewerProps> = ({
       {/* Navigation Footer */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-0 justify-between">
             <div>
               {onPrevious && (
-                <Button onClick={onPrevious} variant="outline">
+                <Button onClick={onPrevious} variant="outline" className="w-full sm:w-auto">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Previous Lesson
                 </Button>
               )}
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:space-x-2">
               {user && progress?.status !== 'completed' && isStarted && (
-                <Button onClick={completeLesson}>
-                  <CheckCircle className="w-4 h-4 mr-2" />
+                <Button onClick={completeLesson} className="w-full sm:w-auto">
+                  <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
                   Complete Lesson
                 </Button>
               )}
 
               {onNext && (
-                <Button onClick={onNext}>
+                <Button onClick={onNext} className="w-full sm:w-auto">
                   Next Lesson
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 h-4 ml-2 flex-shrink-0" />
                 </Button>
               )}
             </div>

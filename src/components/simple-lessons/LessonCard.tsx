@@ -154,28 +154,28 @@ const LessonCard = memo(({ lesson, onToggleBookmark, onStartLesson }: LessonCard
           </div>
         )}
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:space-x-2">
           {lesson.is_locked ? (
-            <Button variant="outline" className="flex-1" disabled>
-              <Lock className="mr-2 h-4 w-4" />
-              Complete Any Lesson First
+            <Button variant="outline" className="flex-1 h-auto py-2" disabled>
+              <Lock className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="text-sm">Complete Any Lesson First</span>
             </Button>
           ) : lesson.progress?.status === 'completed' ? (
-            <Button variant="outline" className="flex-1" onClick={() => onStartLesson(lesson.id)}>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Review
+            <Button variant="outline" className="flex-1 h-auto py-2" onClick={() => onStartLesson(lesson.id)}>
+              <CheckCircle className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="text-sm">Review</span>
             </Button>
           ) : (
             <Button 
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="flex-1 h-auto py-2 bg-blue-600 hover:bg-blue-700"
               onClick={() => onStartLesson(lesson.id)}
             >
-              <Play className="mr-2 h-4 w-4" />
-              {lesson.progress?.status === 'in_progress' ? 'Continue' : 'Start'}
+              <Play className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="text-sm">{lesson.progress?.status === 'in_progress' ? 'Continue' : 'Start'}</span>
             </Button>
           )}
           
-          <Badge className={getStatusColor(lesson.progress?.status || 'not_started')}>
+          <Badge className={`${getStatusColor(lesson.progress?.status || 'not_started')} text-xs sm:text-sm whitespace-nowrap`}>
             {lesson.is_locked ? 'Locked' : getStatusText(lesson.progress?.status || 'not_started')}
           </Badge>
         </div>

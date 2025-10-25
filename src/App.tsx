@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -26,7 +26,6 @@ import { useConnectionRecovery } from "@/hooks/useConnectionRecovery";
 import EmergencyCacheClear from "@/components/shared/EmergencyCacheClear";
 
 // Lazy load all page components for code splitting
-const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AIDashboard = lazy(() => import("./pages/AIDashboard"));
@@ -83,13 +82,9 @@ const AppContent = () => {
       <Suspense fallback={<LoadingSpinner size="lg" text="Loading application..." />}>
         <AppLayout>
           <Routes>
-            <Route 
-              path="/" 
-              element={
-                <Suspense fallback={<LoadingSpinner text="Loading home page..." />}>
-                  <Index />
-                </Suspense>
-              } 
+            <Route
+              path="/"
+              element={<Navigate to="/dashboard" replace />}
             />
           <Route 
             path="/auth" 

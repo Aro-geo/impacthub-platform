@@ -131,30 +131,30 @@ const ImpactLearnDashboard = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <img 
                 src="/logo.png" 
                 alt="ImpactHub Logo" 
-                className="h-10 w-10 object-contain"
+                className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
               />
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-xl flex items-center justify-center">
-                <BookOpen className="h-5 w-5 text-white" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-xl flex items-center justify-center">
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-heading font-bold text-gray-900">
+                <h1 className="text-lg sm:text-xl font-heading font-bold text-gray-900">
                   Learning Dashboard
                 </h1>
-                <p className="text-gray-600 text-sm">Continue your learning journey</p>
+                <p className="text-gray-600 text-xs sm:text-sm">Continue your learning journey</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-yellow-100 px-3 py-1 rounded-full">
-                <Zap className="h-4 w-4 text-yellow-600" />
-                <span className="text-yellow-800 font-medium">{progress.currentStreak} day streak!</span>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-2 bg-yellow-100 px-2 sm:px-3 py-1 rounded-full flex-1 sm:flex-initial justify-center sm:justify-start">
+                <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
+                <span className="text-yellow-800 font-medium text-sm">{progress.currentStreak} day streak!</span>
               </div>
-              <Button variant="outline" onClick={signOut} size="sm">
+              <Button variant="outline" onClick={signOut} size="sm" className="whitespace-nowrap">
                 Sign Out
               </Button>
             </div>
@@ -207,19 +207,19 @@ const ImpactLearnDashboard = () => {
         </div>
 
         {/* Navigation */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {navigationItems.map((item) => (
             <Button
               key={item.id}
               variant={activeTab === item.id ? "default" : "outline"}
               onClick={() => setActiveTab(item.id)}
-              className={`h-20 flex-col gap-2 text-lg ${
+              className={`h-auto py-4 sm:h-20 flex-col gap-2 text-base sm:text-lg ${
                 activeTab === item.id 
                   ? 'bg-gradient-to-r from-blue-600 to-green-600 text-white' 
                   : 'hover:bg-gray-50'
               }`}
             >
-              <item.icon className="h-8 w-8" />
+              <item.icon className="h-6 w-6 sm:h-8 sm:w-8" />
               {item.label}
             </Button>
           ))}
@@ -229,11 +229,11 @@ const ImpactLearnDashboard = () => {
         <div className="space-y-6">
           {activeTab === 'lessons' && (
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-heading font-bold text-gray-900">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6">
+                <h2 className="text-xl sm:text-2xl font-heading font-bold text-gray-900">
                   Today's Lessons
                 </h2>
-                <Button className="bg-gradient-to-r from-blue-600 to-green-600">
+                <Button className="bg-gradient-to-r from-blue-600 to-green-600 w-full sm:w-auto">
                   <Play className="mr-2 h-4 w-4" />
                   Continue Learning
                 </Button>

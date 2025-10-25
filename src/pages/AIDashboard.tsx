@@ -129,13 +129,13 @@ const AIDashboard = () => {
             setActiveTab(value);
           }
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="learning-path">Learning Path</TabsTrigger>
-            <TabsTrigger value="quiz-creator">Quiz Creator</TabsTrigger>
-            <TabsTrigger value="homework-helper">Homework Help</TabsTrigger>
-            <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
-            <TabsTrigger value="sustainability">Sustainability</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+            <TabsTrigger value="overview" className="text-sm sm:text-base">Overview</TabsTrigger>
+            <TabsTrigger value="learning-path" className="text-sm sm:text-base">Learning Path</TabsTrigger>
+            <TabsTrigger value="quiz-creator" className="text-sm sm:text-base">Quiz Creator</TabsTrigger>
+            <TabsTrigger value="homework-helper" className="text-sm sm:text-base">Homework Help</TabsTrigger>
+            <TabsTrigger value="accessibility" className="text-sm sm:text-base">Accessibility</TabsTrigger>
+            <TabsTrigger value="sustainability" className="text-sm sm:text-base">Sustainability</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -187,10 +187,10 @@ const AIDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid md:grid-cols-3 gap-4 p-2 sm:p-0">
                   <Button
                     variant="outline"
-                    className="h-20 flex-col gap-2"
+                    className="h-auto py-4 sm:h-20 flex-col gap-2"
                     onClick={() => handleToolInteraction('learning-path', 'Learning Path Generator')}
                   >
                     <Brain className="h-6 w-6" />
@@ -198,7 +198,7 @@ const AIDashboard = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="h-20 flex-col gap-2"
+                    className="h-auto py-4 sm:h-20 flex-col gap-2"
                     onClick={() => handleToolInteraction('sustainability', 'Impact Calculator')}
                   >
                     <Leaf className="h-6 w-6" />

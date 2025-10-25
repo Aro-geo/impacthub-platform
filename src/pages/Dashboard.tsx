@@ -248,7 +248,7 @@ const Dashboard = () => {
           </div>
         </div>
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 mb-8 px-2 sm:px-0">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md">
               <CardContent className="p-6 flex flex-col items-center text-center h-full">
@@ -286,11 +286,11 @@ const Dashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="lessons">Lessons</TabsTrigger>
-            <TabsTrigger value="practice">Practice</TabsTrigger>
-            <TabsTrigger value="community">Community</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2">
+            <TabsTrigger value="overview" className="text-sm sm:text-base">Overview</TabsTrigger>
+            <TabsTrigger value="lessons" className="text-sm sm:text-base">Lessons</TabsTrigger>
+            <TabsTrigger value="practice" className="text-sm sm:text-base">Practice</TabsTrigger>
+            <TabsTrigger value="community" className="text-sm sm:text-base">Community</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">

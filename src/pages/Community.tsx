@@ -42,20 +42,20 @@ const Community = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-heading font-bold text-foreground mb-2">
+          <h1 className="text-3xl sm:text-4xl font-heading font-bold text-foreground mb-2">
             Community Hub
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-base sm:text-lg">
             Connect, learn, and grow together. All community features unified in one place.
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="forum">Community Forum</TabsTrigger>
-            <TabsTrigger value="mentorship">Mentorship Hub</TabsTrigger>
-            <TabsTrigger value="ai-matcher">AI Mentor Matcher</TabsTrigger>
-            <TabsTrigger value="events">Events & Learning</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2">
+            <TabsTrigger value="forum" className="text-sm sm:text-base whitespace-normal h-auto py-2">Community Forum</TabsTrigger>
+            <TabsTrigger value="mentorship" className="text-sm sm:text-base whitespace-normal h-auto py-2">Mentorship Hub</TabsTrigger>
+            <TabsTrigger value="ai-matcher" className="text-sm sm:text-base whitespace-normal h-auto py-2">AI Mentor Matcher</TabsTrigger>
+            <TabsTrigger value="events" className="text-sm sm:text-base whitespace-normal h-auto py-2">Events & Learning</TabsTrigger>
           </TabsList>
 
           {/* All tabs show the same unified community content */}
