@@ -25,11 +25,11 @@ const Navigation = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigationItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home, requiresAuth: true },
-    { name: 'Simple Lessons', href: '/simple-lessons', icon: BookOpen, requiresAuth: true },
-    { name: 'AI Tools', href: '/ai-dashboard', icon: Brain, requiresAuth: true },
-    { name: 'Practice', href: '/practice', icon: Target, requiresAuth: true },
-    { name: 'Community', href: '/community', icon: UsersIcon, requiresAuth: false },
+    { name: 'Your Progress', href: '/dashboard', icon: Target, requiresAuth: true },
+    { name: 'Study Materials', href: '/simple-lessons', icon: BookOpen, requiresAuth: true },
+    { name: 'Practice Tests', href: '/practice', icon: Play, requiresAuth: true },
+    { name: 'Settings', href: '/settings', icon: Settings, requiresAuth: true },
+    { name: 'Help & Support', href: '/support', icon: UsersIcon, requiresAuth: false },
   ];
 
   const filteredNavItems = navigationItems.filter(item => 

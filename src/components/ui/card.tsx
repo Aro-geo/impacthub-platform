@@ -61,7 +61,16 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-4 sm:p-6 pt-0", className)} {...props} />
+  <div 
+    ref={ref} 
+    className={cn(
+      "p-4 sm:p-6 pt-0",
+      "touch-manipulation min-h-[44px]", // Better touch handling
+      "overflow-x-hidden", // Prevent horizontal scroll
+      className
+    )} 
+    {...props} 
+  />
 ))
 CardContent.displayName = "CardContent"
 

@@ -266,10 +266,10 @@ const LessonsSection: React.FC<LessonsSectionProps> = ({
 
       
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Browse Lessons</h2>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 p-4 sm:p-6">
+        <div className="w-full sm:w-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2 sm:mb-0">Browse Lessons</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             {user && filteredLessons.some(l => !l.is_locked) && filteredLessons.some(l => l.is_locked)
               ? "Complete any lesson to unlock all others"
               : user && filteredLessons.every(l => !l.is_locked) && filteredLessons.length > 0

@@ -29,18 +29,18 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   const navItems = [
     {
-      id: 'home',
-      label: 'Home',
+      id: 'dashboard',
+      label: 'Dashboard',
       icon: Home,
-      path: '/',
-      requiresAuth: false
+      path: '/dashboard',
+      requiresAuth: true
     },
     {
       id: 'learn',
       label: 'Learn',
       icon: BookOpen,
-      path: user ? '/impact-learn/dashboard' : '/impact-learn',
-      requiresAuth: false
+      path: '/simple-lessons',
+      requiresAuth: true
     },
     {
       id: 'ai',
@@ -54,13 +54,13 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       label: 'Community',
       icon: Users,
       path: '/community',
-      requiresAuth: true
+      requiresAuth: false
     },
     {
       id: 'profile',
       label: 'Profile',
       icon: User,
-      path: user ? '/dashboard' : '/auth',
+      path: user ? '/profile' : '/auth',
       requiresAuth: false
     }
   ];
@@ -118,7 +118,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 md:hidden safe-area-bottom">
-        <div className="grid grid-cols-5 h-16">
+        <div className="grid grid-cols-5 h-[72px]">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -128,8 +128,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 key={item.id}
                 onClick={() => handleNavigation(item)}
                 className={cn(
-                  "flex flex-col items-center justify-center space-y-1 transition-colors",
-                  "min-h-[44px] px-2 py-1",
+                  "flex flex-col items-center justify-center gap-1 transition-colors",
+                  "min-h-[48px] px-2 py-2",
+                  "touch-manipulation active:scale-95",
                   active 
                     ? "text-primary bg-primary/10" 
                     : "text-muted-foreground hover:text-foreground active:bg-accent"

@@ -325,14 +325,32 @@
   
   /* Adjust container padding for mobile */
   .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: var(--mobile-padding);
+    padding-right: var(--mobile-padding);
   }
   
   /* Mobile-optimized typography */
-  h1 { font-size: 1.875rem; line-height: 2.25rem; }
-  h2 { font-size: 1.5rem; line-height: 2rem; }
-  h3 { font-size: 1.25rem; line-height: 1.75rem; }
+  h1 { 
+    font-size: 1.5rem; 
+    line-height: 2rem;
+    letter-spacing: -0.025em;
+  }
+  h2 { 
+    font-size: 1.25rem; 
+    line-height: 1.75rem;
+    letter-spacing: -0.025em;
+  }
+  h3 { 
+    font-size: 1.125rem; 
+    line-height: 1.5rem;
+    letter-spacing: -0.025em;
+  }
+  
+  /* Improve text readability on mobile */
+  p, span, div {
+    font-size: 0.9375rem;
+    line-height: 1.5rem;
+  }
   
   /* Mobile-optimized spacing */
   .space-y-8 > :not([hidden]) ~ :not([hidden]) {
