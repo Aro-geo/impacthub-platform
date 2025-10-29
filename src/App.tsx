@@ -12,14 +12,12 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
-import { useOffline } from "@/hooks/useOffline";
 import { useSessionPersistence } from "@/hooks/useSessionPersistence";
 import { aiLearningObserver } from "@/services/aiLearningObserver";
 import runDatabaseChecks from "@/utils/subjectDebugger";
 import debugSimpleLessons from "@/utils/lessonDebugger";
 import DatabaseOptimizer from "@/components/shared/DatabaseOptimizer";
 import AppOptimizer from "@/components/shared/AppOptimizer";
-import SessionStatusIndicator from "@/components/shared/SessionStatusIndicator";
 import { serviceWorkerUtils } from "@/utils/serviceWorkerUtils";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { useConnectionRecovery } from "@/hooks/useConnectionRecovery";
@@ -46,7 +44,6 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const { isOnline, syncStatus } = useOffline();
   const { user } = useAuth();
   
   // Monitor page visibility for session validation
@@ -78,7 +75,6 @@ const AppContent = () => {
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {user && <DatabaseOptimizer />}
       {user && <AppOptimizer />}
-      <SessionStatusIndicator />
       <Suspense fallback={<LoadingSpinner size="lg" text="Loading application..." />}>
         <AppLayout>
           <Routes>

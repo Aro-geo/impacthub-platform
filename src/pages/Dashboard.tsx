@@ -248,16 +248,16 @@ const Dashboard = () => {
           </div>
         </div>
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 mb-8 px-2 sm:px-0">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
           {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md">
-              <CardContent className="p-6 flex flex-col items-center text-center h-full">
-                <div className={`p-4 rounded-xl bg-muted ${stat.color} mb-4`}>
-                  <stat.icon className="h-8 w-8" />
+            <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-102 border-0 shadow-md">
+              <CardContent className="p-3 sm:p-4 lg:p-6 flex flex-col items-center text-center h-full">
+                <div className={`p-2 sm:p-3 lg:p-4 rounded-lg sm:rounded-xl bg-muted ${stat.color} mb-2 sm:mb-4`}>
+                  <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8" />
                 </div>
                 <div className="mt-auto">
-                  <p className="text-3xl font-bold text-foreground mb-2">{stat.value}</p>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">{stat.value}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">{stat.label}</p>
                 </div>
               </CardContent>
             </Card>
@@ -265,18 +265,18 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-heading font-bold text-foreground mb-6">Quick Actions</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-heading font-bold text-foreground mb-4 sm:mb-6 px-2 sm:px-0">Quick Actions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {quickActions.map((action, index) => (
-              <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border-0 shadow-md" onClick={action.action}>
-                <CardContent className="p-6 flex flex-col items-center text-center h-full min-h-[180px]">
-                  <div className={`w-16 h-16 ${action.color} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
-                    <action.icon className="h-8 w-8 text-white" />
+              <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:scale-102 cursor-pointer border-0 shadow-md" onClick={action.action}>
+                <CardContent className="p-3 sm:p-4 lg:p-6 flex flex-col items-center text-center h-full min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]">
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 ${action.color} rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4`}>
+                    <action.icon className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-white" />
                   </div>
                   <div className="mt-auto">
-                    <h3 className="font-semibold text-foreground mb-2">{action.title}</h3>
-                    <p className="text-sm text-muted-foreground">{action.description}</p>
+                    <h3 className="font-semibold text-foreground text-sm sm:text-base mb-1 sm:mb-2">{action.title}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{action.description}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -285,34 +285,34 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2">
-            <TabsTrigger value="overview" className="text-sm sm:text-base">Overview</TabsTrigger>
-            <TabsTrigger value="lessons" className="text-sm sm:text-base">Lessons</TabsTrigger>
-            <TabsTrigger value="practice" className="text-sm sm:text-base">Practice</TabsTrigger>
-            <TabsTrigger value="community" className="text-sm sm:text-base">Community</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2 p-1 h-auto">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 h-auto">Overview</TabsTrigger>
+            <TabsTrigger value="lessons" className="text-xs sm:text-sm py-2 h-auto">Lessons</TabsTrigger>
+            <TabsTrigger value="practice" className="text-xs sm:text-sm py-2 h-auto">Practice</TabsTrigger>
+            <TabsTrigger value="community" className="text-xs sm:text-sm py-2 h-auto">Community</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               <div className="lg:col-span-2">
                 <Card className="border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5" />
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                       Your Learning Journey
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-sm">
                       Track your progress across all platforms
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     <div className="space-y-4">
-                      <div className="text-center py-12">
-                        <div className="text-6xl mb-4">🚀</div>
-                        <h3 className="text-xl font-semibold text-foreground mb-2">Start Your Learning Journey</h3>
-                        <p className="text-muted-foreground mb-6">Begin exploring our AI-powered tools and track your progress</p>
-                        <div className="grid md:grid-cols-2 gap-4">
+                      <div className="text-center py-6 sm:py-12">
+                        <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">🚀</div>
+                        <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">Start Your Learning Journey</h3>
+                        <p className="text-sm text-muted-foreground mb-4 sm:mb-6">Begin exploring our AI-powered tools and track your progress</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-4 sm:px-0">
                           <Button onClick={() => navigate('/ai-dashboard')} className="bg-blue-600 hover:bg-blue-700">
                             <Brain className="mr-2 h-4 w-4" />
                             Try AI Tools
