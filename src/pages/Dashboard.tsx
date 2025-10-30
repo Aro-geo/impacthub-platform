@@ -57,41 +57,30 @@ const Dashboard = () => {
   const { data: rpcDashboard, loading: rpcLoading, error: rpcError, lastFetched, refetch } = useDashboardData(!!user);
   const { healthy: connectionHealthy } = useConnectionHealth(45000);
 
-  // Merge RPC dashboard data into legacy state with improved error handling and fallback
+  // Load dashboard data
   useEffect(() => {
-    const updateStats = async () => {
-      if (rpcDashboard) {
-        // Update from RPC data
-        setDashboardStats(prev => {
-          // Calculate impact points safely
-          let newImpactPoints = prev.impactPoints;
-          if (rpcDashboard.impactPoints !== undefined && rpcDashboard.impactPoints !== null) {
-            newImpactPoints = rpcDashboard.impactPoints;
-          } else if (rpcDashboard.progress?.completed) {
-            newImpactPoints = rpcDashboard.progress.completed * 10;
-          }
-          
-          return {
-            ...prev,
-            lessonsCompleted: rpcDashboard.completedLessons !== undefined ? rpcDashboard.completedLessons : prev.lessonsCompleted,
-            impactPoints: newImpactPoints,
-            quizzesAttempted: rpcDashboard.quizAttempts !== undefined ? rpcDashboard.quizAttempts : prev.quizzesAttempted,
-            communityConnections: rpcDashboard.communityConnections !== undefined ? rpcDashboard.communityConnections : prev.communityConnections
-          };
-        });
-      } else if (user) {
-        // Fallback to direct queries if RPC fails
+    const loadDashboardData = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        // Always use direct queries for now until RPC is fixed
         await Promise.all([
           fetchLessonStats(),
           fetchQuizStats(),
           fetchCommunityStats(),
-          fetchImpactPoints()
+          fetchImpactPoints(),
+          fetchAIStats()
         ]);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
-    updateStats();
-  }, [rpcDashboard, user]);
+    loadDashboardData();
+  }, [user]);
 
   // Optimized single function to fetch all stats with minimal database calls
   // Legacy fetchAllStatsOptimized removed in favor of RPC; keep placeholder for potential fallback usage.
@@ -274,13 +263,12 @@ const Dashboard = () => {
     }
   };
 
-  const unifiedLoading = loading || rpcLoading;
   const stats = [
-    { label: 'Impact Points', value: unifiedLoading ? '...' : dashboardStats.impactPoints.toString(), icon: Award, color: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Lessons Completed', value: unifiedLoading ? '...' : dashboardStats.lessonsCompleted.toString(), icon: BookOpen, color: 'text-green-600 dark:text-green-400' },
-    { label: 'AI Interactions', value: unifiedLoading ? '...' : (aiStats?.totalInteractions?.toString() || '0'), icon: Brain, color: 'text-purple-600 dark:text-purple-400' },
-    { label: 'Quizzes Attempted', value: unifiedLoading ? '...' : dashboardStats.quizzesAttempted.toString(), icon: Target, color: 'text-green-600 dark:text-green-400' },
-    { label: 'Community Connections', value: unifiedLoading ? '...' : dashboardStats.communityConnections.toString(), icon: Users, color: 'text-indigo-600 dark:text-indigo-400' },
+    { label: 'Impact Points', value: dashboardStats.impactPoints.toString(), icon: Award, color: 'text-blue-600 dark:text-blue-400' },
+    { label: 'Lessons Completed', value: dashboardStats.lessonsCompleted.toString(), icon: BookOpen, color: 'text-green-600 dark:text-green-400' },
+    { label: 'AI Interactions', value: (aiStats?.totalInteractions?.toString() || '0'), icon: Brain, color: 'text-purple-600 dark:text-purple-400' },
+    { label: 'Quizzes Attempted', value: dashboardStats.quizzesAttempted.toString(), icon: Target, color: 'text-green-600 dark:text-green-400' },
+    { label: 'Community Connections', value: dashboardStats.communityConnections.toString(), icon: Users, color: 'text-indigo-600 dark:text-indigo-400' },
   ];
 
   const quickActions = [
