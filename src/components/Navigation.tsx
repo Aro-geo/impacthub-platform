@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Play, GraduationCap, Shield, Menu, Home, BookOpen, Brain, Users as UsersIcon, Target } from 'lucide-react';
+import { User, Settings, LogOut, Play, GraduationCap, Menu, Home, BookOpen, Brain, Users as UsersIcon, Target } from 'lucide-react';
 import FloatingAuthModal from '@/components/FloatingAuthModal';
 
 interface NavigationProps {
@@ -34,9 +34,6 @@ const Navigation = ({ className }: NavigationProps) => {
     { name: 'Learn', href: '/simple-lessons', icon: BookOpen, requiresAuth: true },
     { name: 'AI Tools', href: '/ai-dashboard', icon: Brain, requiresAuth: true },
     { name: 'Community', href: '/community', icon: UsersIcon, requiresAuth: false },
-    { name: 'Profile', href: '/profile', icon: User, requiresAuth: true },
-    { name: 'Settings', href: '/settings', icon: Settings, requiresAuth: true },
-    ...(isAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield, requiresAuth: true }] : []),
   ];
 
   const filteredNavItems = navigationItems.filter(item => 
@@ -201,7 +198,44 @@ const Navigation = ({ className }: NavigationProps) => {
                   Start Your Journey
                 </Button>
               </div>
-            ) : null}
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.user_metadata?.avatar_url} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium">{getFirstName()}</p>
+                      <p className="w-[200px] truncate text-sm text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/settings')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>

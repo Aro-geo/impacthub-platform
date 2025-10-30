@@ -36,9 +36,6 @@ const Community = lazy(() => import("./pages/Community"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const IncidentAnalysis = lazy(() => import("./pages/IncidentAnalysis"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const AdminDashboardTest = lazy(() => import("./pages/AdminDashboardTest"));
-const AdminTest = lazy(() => import("./pages/AdminTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -196,37 +193,6 @@ const AppContent = () => {
               </Suspense>
             } 
           />
-          <Route 
-            path="/admin" 
-            element={
-              <Suspense fallback={<LoadingSpinner text="Loading Admin Panel..." />}>
-                <ProtectedRoute>
-                  <AdminPanel />
-                </ProtectedRoute>
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/admin-dashboard" 
-            element={
-              <Suspense fallback={<LoadingSpinner text="Loading Admin Dashboard..." />}>
-                <ProtectedRoute>
-                  <AdminDashboardTest />
-                </ProtectedRoute>
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/admin-test" 
-            element={
-              <Suspense fallback={<LoadingSpinner text="Loading Admin Test..." />}>
-                <ProtectedRoute>
-                  <AdminTest />
-                </ProtectedRoute>
-              </Suspense>
-            } 
-          />
-          
           {/* Catch-all route */}
           <Route 
             path="*" 

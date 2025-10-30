@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
-import Navigation from '@/components/Navigation';
 import LearningRecommendations from '@/components/ai/LearningRecommendations';
 import {
   TrendingUp,
@@ -58,37 +57,110 @@ const Dashboard = () => {
   const { data: rpcDashboard, loading: rpcLoading, error: rpcError, lastFetched, refetch } = useDashboardData(!!user);
   const { healthy: connectionHealthy } = useConnectionHealth(45000);
 
-  // Merge RPC dashboard data into legacy state for minimal template change
+  // Merge RPC dashboard data into legacy state with improved error handling and fallback
   useEffect(() => {
-    if (rpcDashboard) {
-      setDashboardStats(prev => ({
-        ...prev,
-        lessonsCompleted: rpcDashboard.completedLessons ?? prev.lessonsCompleted,
-        impactPoints: (rpcDashboard.progress?.completed || 0) * 10 || prev.impactPoints,
-      }));
-      // AI interactions / community connections could be derived later if added to RPC payload
-    }
-  }, [rpcDashboard]);
+    const updateStats = async () => {
+      if (rpcDashboard) {
+        // Update from RPC data
+        setDashboardStats(prev => {
+          // Calculate impact points safely
+          let newImpactPoints = prev.impactPoints;
+          if (rpcDashboard.impactPoints !== undefined && rpcDashboard.impactPoints !== null) {
+            newImpactPoints = rpcDashboard.impactPoints;
+          } else if (rpcDashboard.progress?.completed) {
+            newImpactPoints = rpcDashboard.progress.completed * 10;
+          }
+          
+          return {
+            ...prev,
+            lessonsCompleted: rpcDashboard.completedLessons !== undefined ? rpcDashboard.completedLessons : prev.lessonsCompleted,
+            impactPoints: newImpactPoints,
+            quizzesAttempted: rpcDashboard.quizAttempts !== undefined ? rpcDashboard.quizAttempts : prev.quizzesAttempted,
+            communityConnections: rpcDashboard.communityConnections !== undefined ? rpcDashboard.communityConnections : prev.communityConnections
+          };
+        });
+      } else if (user) {
+        // Fallback to direct queries if RPC fails
+        await Promise.all([
+          fetchLessonStats(),
+          fetchQuizStats(),
+          fetchCommunityStats(),
+          fetchImpactPoints()
+        ]);
+      }
+    };
+    
+    updateStats();
+  }, [rpcDashboard, user]);
 
   // Optimized single function to fetch all stats with minimal database calls
   // Legacy fetchAllStatsOptimized removed in favor of RPC; keep placeholder for potential fallback usage.
-  const fetchAllStatsOptimized = async () => { /* deprecated: replaced by RPC get_user_dashboard */ };
+  const fetchAllStatsOptimized = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchLessonStats(),
+        fetchQuizStats(),
+        fetchCommunityStats(),
+        fetchImpactPoints(),
+        fetchAIStats()
+      ]);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchAIStats = async () => {
-    const stats = await getUserStats();
-    setAiStats(stats);
+    if (!user) return;
+    try {
+      const stats = await getUserStats();
+      setAiStats(stats);
+    } catch (error) {
+      console.error('Error fetching AI stats:', error);
+    }
   };
 
   const fetchLessonStats = async () => {
-    if (!user) return;
+    if (!user) {
+      console.debug('[Dashboard] No user available for lesson stats fetch');
+      return;
+    }
     try {
+      console.debug('[Dashboard] Fetching lesson stats for user:', user.id);
+      const start = performance.now();
+      
       const lessonStats = await lessonProgressService.getUserStats(user.id);
-      setDashboardStats(prev => ({
-        ...prev,
-        lessonsCompleted: lessonStats.completedLessons
-      }));
+      const duration = performance.now() - start;
+      
+      console.debug('[Dashboard] Lesson stats retrieved:', {
+        userId: user.id,
+        completedLessons: lessonStats.completedLessons,
+        duration: `${duration.toFixed(2)}ms`,
+        hasStats: !!lessonStats
+      });
+      
+      setDashboardStats(prev => {
+        const newStats = {
+          ...prev,
+          lessonsCompleted: lessonStats.completedLessons
+        };
+        console.debug('[Dashboard] Updated dashboard stats:', {
+          previous: prev.lessonsCompleted,
+          new: newStats.lessonsCompleted,
+          userId: user.id
+        });
+        return newStats;
+      });
     } catch (error) {
-      console.error('Error fetching lesson stats:', error);
+      console.error('[Dashboard] Error fetching lesson stats:', {
+        userId: user.id,
+        error,
+        errorMessage: error.message,
+        stack: error.stack
+      });
     }
   };
 
@@ -146,18 +218,36 @@ const Dashboard = () => {
   };
 
   const fetchImpactPoints = async () => {
-    if (!user) return;
+    if (!user) {
+      console.debug('[Dashboard] No user available for impact points fetch');
+      return;
+    }
     try {
+      console.debug('[Dashboard] Fetching impact points for user:', user.id);
+      
       // Get impact points from user profile first, then calculate additional based on activities
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('impact_points')
         .eq('id', user.id)
         .single();
 
+      if (profileError) {
+        console.error('[Dashboard] Error fetching profile points:', {
+          userId: user.id,
+          error: profileError
+        });
+      }
+
       const profilePoints = profile?.impact_points || 0;
+      console.debug('[Dashboard] Profile points retrieved:', {
+        userId: user.id,
+        points: profilePoints,
+        source: 'profile'
+      });
 
       // Calculate additional points based on activities if profile points are low
+      console.debug('[Dashboard] Fetching activity-based points');
       const [lessonStats, quizCount, communityPosts, communityComments, aiInteractionCount] = await Promise.all([
         lessonProgressService.getUserStats(user.id),
         supabase.from('lesson_quiz_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
@@ -228,23 +318,13 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-green-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <Navigation />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user?.user_metadata?.avatar_url} />
-              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl">
-                {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-3xl font-heading font-bold text-foreground">
-                Dashboard
-              </h1>
-              <p className="text-muted-foreground text-lg">Track your learning progress and achievements</p>
-            </div>
+            <h1 className="text-3xl font-heading font-bold text-foreground">
+              Dashboard
+            </h1>
+            <p className="text-muted-foreground text-lg">Track your learning progress and achievements</p>
           </div>
         </div>
         {/* Stats Cards */}

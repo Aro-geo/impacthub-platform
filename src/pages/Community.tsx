@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Navigation from '@/components/Navigation';
 import OptimizedUnifiedCommunityForum from '@/components/shared/OptimizedUnifiedCommunityForum';
 import MentorshipMatcher from '@/components/ai/MentorshipMatcher';
 
@@ -12,7 +11,6 @@ const Community = () => {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <Navigation />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -26,7 +24,6 @@ const Community = () => {
   if (!user) {
     return (
       <div className="min-h-screen">
-        <Navigation />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <p className="text-gray-600">Please sign in to access the community.</p>
@@ -38,8 +35,6 @@ const Community = () => {
 
   return (
     <div className="min-h-screen">
-      <Navigation />
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-heading font-bold text-foreground mb-2">

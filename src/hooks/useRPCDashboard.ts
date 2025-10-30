@@ -44,20 +44,42 @@ export function useDashboardData(enabled = true) {
   const [lastFetched, setLastFetched] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!user || !enabled) return;
+    if (!user || !enabled) {
+      console.debug('[Dashboard] Skipping fetch:', { user: !!user, enabled });
+      return;
+    }
+    
     setLoading(true);
     setError(null);
+    console.debug('[Dashboard] Fetching data for user:', user.id);
+    
     const { data: dash, error } = await rpcService.getUserDashboard(user.id);
+    
     if (error) {
+      console.error('[Dashboard] Error loading dashboard:', {
+        error,
+        userId: user.id
+      });
       setError(error.message || 'Failed to load dashboard');
     } else {
+      console.debug('[Dashboard] Data received:', {
+        hasData: !!dash,
+        fields: dash ? Object.keys(dash) : [],
+        timestamp: new Date().toISOString()
+      });
       setData(dash);
       setLastFetched(Date.now());
     }
     setLoading(false);
   }, [user, enabled]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { 
+    fetchData();
+    
+    // Refresh data every 5 minutes
+    const interval = setInterval(fetchData, 300000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
   return { data, loading, error, refetch: fetchData, lastFetched };
 }

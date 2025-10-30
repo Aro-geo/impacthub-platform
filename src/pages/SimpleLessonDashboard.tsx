@@ -2,7 +2,6 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import Navigation from '@/components/Navigation';
 import { 
   BookOpen, 
   Target, 
@@ -136,7 +135,6 @@ const SimpleLessonDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <Navigation />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -150,7 +148,6 @@ const SimpleLessonDashboard = () => {
   if (!user) {
     return (
       <div className="min-h-screen">
-        <Navigation />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <p className="text-muted-foreground">Please sign in to access Simple Lessons.</p>
@@ -162,8 +159,6 @@ const SimpleLessonDashboard = () => {
 
   return (
     <div className="min-h-screen">
-      <Navigation />
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">

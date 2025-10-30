@@ -63,8 +63,7 @@ export default defineConfig({
           // Feature-specific chunks
           'incident-analysis': [
             './src/services/incidentAnalysisService',
-            './src/components/admin/IncidentDashboard',
-            './src/components/admin/DatabaseSetupWarning',
+
             './src/components/shared/SystemHealthMonitor',
             './src/utils/checkDatabaseSetup',
             './src/utils/testIncidentAnalysis'

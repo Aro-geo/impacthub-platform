@@ -43,6 +43,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Optimized profile fetching with caching
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.debug('[Auth] Fetching profile for user:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('id, name, email, grade, avatar_url, role, created_at, updated_at') // Include role
@@ -50,13 +52,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user profile:', error);
+        console.error('[Auth] Error fetching user profile:', {
+          error,
+          userId,
+          code: error.code,
+          message: error.message
+        });
         return null;
       }
 
+      console.debug('[Auth] Profile fetched successfully:', {
+        hasData: !!data,
+        fields: data ? Object.keys(data) : [],
+        role: data?.role,
+        userId
+      });
+
       return data;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('[Auth] Exception fetching user profile:', {
+        error,
+        userId,
+        errorName: error.name,
+        errorMessage: error.message
+      });
       return null;
     }
   };

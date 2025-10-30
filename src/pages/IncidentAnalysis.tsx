@@ -8,9 +8,7 @@ import LoadingSpinner from '@/components/ui/loading-spinner';
 import { AlertTriangle, Activity, BarChart3, Settings } from 'lucide-react';
 
 // Lazy load heavy components
-const IncidentDashboard = lazy(() => import('@/components/admin/IncidentDashboard'));
 const SystemHealthMonitor = lazy(() => import('@/components/shared/SystemHealthMonitor'));
-const DatabaseSetupWarning = lazy(() => import('@/components/admin/DatabaseSetupWarning'));
 
 const IncidentAnalysis: React.FC = () => {
   const { user, userProfile } = useAuth();
