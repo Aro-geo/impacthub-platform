@@ -6,16 +6,37 @@ export const useConnectionRecovery = () => {
   const { session, refreshProfile } = useAuth();
 
   const handleVisibilityChange = useCallback(async () => {
-    if (document.visibilityState === 'visible' && session) {
+    if ((document.visibilityState === 'visible' || !document.hidden) && session) {
       try {
-        // Test connection with a simple query
-        const { error } = await supabase.from('profiles').select('id').limit(1);
+        // First, check the connection state
+        const { error: pingError } = await supabase.rpc('ping');
         
-        if (error) {
-          console.log('Connection lost, attempting recovery...');
-          // Force session refresh
-          await supabase.auth.refreshSession();
-          await refreshProfile();
+        if (pingError) {
+          console.log('Connection lost, initiating recovery sequence...');
+          
+          // Attempt to refresh the session first
+          try {
+            await supabase.auth.refreshSession();
+          } catch (refreshError) {
+            console.warn('Session refresh failed:', refreshError);
+          }
+          
+          // Then try to reconnect to the database
+          try {
+            await supabase.auth.getSession();
+            const { error: testError } = await supabase.from('profiles').select('id').limit(1);
+            
+            if (!testError) {
+              console.log('Connection recovered successfully');
+              await refreshProfile();
+            } else {
+              console.error('Database connection test failed:', testError);
+              // Trigger a full reconnection
+              window.dispatchEvent(new CustomEvent('supabase:reconnect-required'));
+            }
+          } catch (reconnectError) {
+            console.error('Full reconnection failed:', reconnectError);
+          }
         }
       } catch (error) {
         console.error('Connection recovery failed:', error);

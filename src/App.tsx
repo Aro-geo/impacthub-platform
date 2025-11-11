@@ -27,10 +27,7 @@ import EmergencyCacheClear from "@/components/shared/EmergencyCacheClear";
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AIDashboard = lazy(() => import("./pages/AIDashboard"));
-const ImpactLearnIndex = lazy(() => import("./pages/ImpactLearnIndex"));
-const ImpactLearnAuth = lazy(() => import("./pages/ImpactLearnAuth"));
-const ImpactLearnDashboard = lazy(() => import("./pages/ImpactLearnDashboard"));
-const ImpactLearnGuest = lazy(() => import("./pages/ImpactLearnGuest"));
+const Landing = lazy(() => import("./pages/Landing"));
 const SimpleLessonDashboard = lazy(() => import("./pages/SimpleLessonDashboard"));
 const Community = lazy(() => import("./pages/Community"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -77,8 +74,16 @@ const AppContent = () => {
           <Routes>
             <Route
               path="/"
-              element={<Navigate to="/dashboard" replace />}
+              element={<Navigate to={user ? "/dashboard" : "/landing"} replace />}
             />
+          <Route 
+            path="/landing" 
+            element={
+              <Suspense fallback={<LoadingSpinner text="Loading landing..." />}>
+                <Landing />
+              </Suspense>
+            } 
+          />
           <Route 
             path="/auth" 
             element={
@@ -108,41 +113,6 @@ const AppContent = () => {
             } 
           />
           
-          {/* ImpactLearn Routes */}
-          <Route 
-            path="/impact-learn" 
-            element={
-              <Suspense fallback={<LoadingSpinner text="Loading ImpactLearn..." />}>
-                <ImpactLearnIndex />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/impact-learn/auth" 
-            element={
-              <Suspense fallback={<LoadingSpinner text="Loading ImpactLearn authentication..." />}>
-                <ImpactLearnAuth />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/impact-learn/dashboard" 
-            element={
-              <Suspense fallback={<LoadingSpinner text="Loading ImpactLearn dashboard..." />}>
-                <ProtectedRoute>
-                  <ImpactLearnDashboard />
-                </ProtectedRoute>
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/impact-learn/guest" 
-            element={
-              <Suspense fallback={<LoadingSpinner text="Loading guest mode..." />}>
-                <ImpactLearnGuest />
-              </Suspense>
-            } 
-          />
           <Route 
             path="/simple-lessons" 
             element={

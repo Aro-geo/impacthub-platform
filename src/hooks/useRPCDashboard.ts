@@ -11,19 +11,36 @@ interface DashboardData {
   impactPoints?: number;
 }
 
-export function useConnectionHealth(intervalMs = 30000) {
+export function useConnectionHealth(intervalMs = 15000) {
   const [healthy, setHealthy] = useState<boolean | null>(null);
   const [lastChecked, setLastChecked] = useState<number | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const { user } = useAuth();
 
   const check = useCallback(async () => {
-    const { data, error } = await rpcService.ping();
-    const ok = !!data && !error;
-    setHealthy(ok);
-    setLastChecked(Date.now());
-    if (ok && user) {
-      // Soft refresh session metadata
-      await rpcService.validateAndRefreshSession(user.id);
+    try {
+      const { data, error } = await rpcService.ping();
+      const ok = !!data && !error;
+      setHealthy(ok);
+      setLastChecked(Date.now());
+      if (ok) {
+        setRetryCount(0); // Reset retry count on successful connection
+        if (user) {
+          await rpcService.validateAndRefreshSession(user.id);
+        }
+      } else {
+        // Implement exponential backoff for retries
+        const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+        setRetryCount(prev => prev + 1);
+        setTimeout(check, backoffDelay);
+      }
+    } catch (error) {
+      console.error('Connection health check failed:', error);
+      setHealthy(false);
+      // Implement same backoff for errors
+      const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+      setRetryCount(prev => prev + 1);
+      setTimeout(check, backoffDelay);
     }
   }, [user]);
 

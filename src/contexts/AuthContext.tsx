@@ -430,5 +430,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshProfile,
   };
 
+  // Subscribe to Supabase auth state changes to keep session fresh across tabs
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      try {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+
+        // Refresh profile when user changes or on token refresh
+        const newUserId = newSession?.user?.id ?? null;
+        if (newUserId && newUserId !== prevUserIdRef.current) {
+          const profile = await fetchUserProfile(newUserId);
+          setUserProfile(profile);
+          const isAdminUser = profile?.role === 'admin' || newSession?.user?.email === 'geokullo@gmail.com';
+          setIsAdmin(!!isAdminUser);
+          prevUserIdRef.current = newUserId;
+        }
+
+        // Notify/broadcast for cross‑tab sync
+        serviceWorkerUtils.notifyAuthStateChanged(!!newSession, newSession || null);
+        serviceWorkerUtils.broadcastSessionUpdate();
+      } catch (err) {
+        console.warn('[Auth] onAuthStateChange handler error', err);
+      } finally {
+        if (loading) setLoading(false);
+      }
+    });
+
+    return () => {
+      try { data.subscription?.unsubscribe(); } catch {}
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
